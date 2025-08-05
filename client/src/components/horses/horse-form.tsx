@@ -1,0 +1,230 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { insertHorseSchema, type InsertHorse, type Horse } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { X } from "lucide-react";
+
+interface HorseFormProps {
+  horse?: Horse;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
+export default function HorseForm({ horse, onClose, onSuccess }: HorseFormProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const isEditing = !!horse;
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<InsertHorse>({
+    resolver: zodResolver(insertHorseSchema),
+    defaultValues: horse ? {
+      name: horse.name,
+      breed: horse.breed,
+      age: horse.age,
+      deviceId: horse.deviceId,
+      imageUrl: horse.imageUrl || "",
+      status: horse.status,
+    } : {
+      name: "",
+      breed: "",
+      age: "",
+      deviceId: "",
+      imageUrl: "",
+      status: "active",
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: InsertHorse) => {
+      const response = await apiRequest('POST', '/api/horses', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/horses'] });
+      toast({
+        title: "Лошадь добавлена",
+        description: "Лошадь была успешно добавлена в систему",
+      });
+      onSuccess?.();
+      onClose();
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось добавить лошадь",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: InsertHorse) => {
+      const response = await apiRequest('PUT', `/api/horses/${horse!.id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/horses'] });
+      toast({
+        title: "Лошадь обновлена",
+        description: "Информация о лошади была успешно обновлена",
+      });
+      onSuccess?.();
+      onClose();
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить информацию о лошади",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: InsertHorse) => {
+    if (isEditing) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle data-testid="horse-form-title">
+            {isEditing ? 'Редактировать лошадь' : 'Добавить лошадь'}
+          </CardTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} data-testid="close-horse-form">
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Имя лошади</Label>
+            <Input
+              id="name"
+              {...register("name")}
+              className={errors.name ? "border-red-500" : ""}
+              data-testid="horse-name-input"
+            />
+            {errors.name && (
+              <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="breed">Порода</Label>
+            <Input
+              id="breed"
+              {...register("breed")}
+              className={errors.breed ? "border-red-500" : ""}
+              data-testid="horse-breed-input"
+            />
+            {errors.breed && (
+              <p className="text-sm text-red-500 mt-1">{errors.breed.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="age">Возраст</Label>
+            <Input
+              id="age"
+              type="number"
+              {...register("age")}
+              className={errors.age ? "border-red-500" : ""}
+              data-testid="horse-age-input"
+            />
+            {errors.age && (
+              <p className="text-sm text-red-500 mt-1">{errors.age.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="deviceId">ID устройства GPS</Label>
+            <Input
+              id="deviceId"
+              {...register("deviceId")}
+              placeholder="ESP32-001"
+              className={errors.deviceId ? "border-red-500" : ""}
+              data-testid="horse-device-input"
+            />
+            {errors.deviceId && (
+              <p className="text-sm text-red-500 mt-1">{errors.deviceId.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="imageUrl">URL изображения (необязательно)</Label>
+            <Input
+              id="imageUrl"
+              {...register("imageUrl")}
+              type="url"
+              placeholder="https://..."
+              className={errors.imageUrl ? "border-red-500" : ""}
+              data-testid="horse-image-input"
+            />
+            {errors.imageUrl && (
+              <p className="text-sm text-red-500 mt-1">{errors.imageUrl.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="status">Статус</Label>
+            <Select
+              value={watch("status")}
+              onValueChange={(value) => setValue("status", value as "active" | "warning" | "offline")}
+            >
+              <SelectTrigger data-testid="horse-status-select">
+                <SelectValue placeholder="Выберите статус" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Активен</SelectItem>
+                <SelectItem value="warning">Предупреждение</SelectItem>
+                <SelectItem value="offline">Офлайн</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex space-x-2 pt-4">
+            <Button
+              type="submit"
+              className="flex-1"
+              disabled={isPending}
+              data-testid="submit-horse-form"
+            >
+              {isPending ? "Сохранение..." : (isEditing ? "Обновить" : "Добавить")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isPending}
+              data-testid="cancel-horse-form"
+            >
+              Отмена
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
