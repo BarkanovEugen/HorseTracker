@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MapLibreMap from "@/components/map/maplibre-map";
 
 import { 
   MapPin, 
@@ -37,6 +39,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
   
   const [isGeofenceDialogOpen, setIsGeofenceDialogOpen] = useState(false);
+  const [geofenceCreationMode, setGeofenceCreationMode] = useState<'map' | 'manual'>('map');
   const [geofenceFormData, setGeofenceFormData] = useState({
     name: '',
     description: '',
@@ -171,6 +174,12 @@ export default function Settings() {
   };
 
   const handleAddGeofence = () => {
+    setGeofenceCreationMode('map');
+    setIsGeofenceDialogOpen(true);
+  };
+
+  const handleAddGeofenceManual = () => {
+    setGeofenceCreationMode('manual');
     setIsGeofenceDialogOpen(true);
   };
 
@@ -320,11 +329,16 @@ export default function Settings() {
                 <div className="flex flex-col space-y-2">
                 <Button onClick={handleAddGeofence} data-testid="add-geofence-empty">
                   <Plus className="w-4 h-4 mr-2" />
-                  Добавить геозону
+                  Создать на карте
                 </Button>
-                <p className="text-xs text-gray-500 text-center">
-                  Или используйте интерактивную карту на главной странице
-                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={handleAddGeofenceManual} 
+                  data-testid="add-geofence-manual-empty"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ввести координаты
+                </Button>
               </div>
               </div>
             ) : (
@@ -354,14 +368,25 @@ export default function Settings() {
                   </div>
                 ))}
                 
-                <Button 
-                  onClick={handleAddGeofence}
-                  className="w-full bg-primary hover:bg-primary/90"
-                  data-testid="add-geofence-button"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Добавить геозону
-                </Button>
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={handleAddGeofence}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                    data-testid="add-geofence-button"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Создать на карте
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={handleAddGeofenceManual}
+                    className="flex-1"
+                    data-testid="add-geofence-manual-button"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ввести координаты
+                  </Button>
+                </div>
               </>
             )}
           </CardContent>
@@ -566,78 +591,123 @@ export default function Settings() {
 
       {/* Geofence Creator Dialog */}
       <Dialog open={isGeofenceDialogOpen} onOpenChange={setIsGeofenceDialogOpen}>
-        <DialogContent className="z-[10000] max-w-2xl">
+        <DialogContent className="z-[10000] max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Добавить геозону</DialogTitle>
+            <DialogTitle>
+              {geofenceCreationMode === 'map' ? 'Создать геозону на карте' : 'Добавить геозону вручную'}
+            </DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmitGeofence} className="space-y-4">
-            <div>
-              <Label htmlFor="geofence-name">Название геозоны*</Label>
-              <Input
-                id="geofence-name"
-                value={geofenceFormData.name}
-                onChange={(e) => setGeofenceFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Например: Пастбище Север"
-                required
-                data-testid="geofence-name-input"
-              />
+          {geofenceCreationMode === 'map' ? (
+            <div className="space-y-4">
+              <div className="h-[500px] w-full border rounded-lg overflow-hidden">
+                <MapLibreMap />
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <p>• Нажмите кнопку "Добавить зону" на карте</p>
+                <p>• Кликните по карте, чтобы добавить точки полигона (минимум 3 точки)</p>
+                <p>• Нажмите "Завершить" для создания геозоны</p>
+              </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setGeofenceCreationMode('manual');
+                  }}
+                  data-testid="switch-to-manual-mode"
+                >
+                  Переключиться на ручной ввод
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsGeofenceDialogOpen(false);
+                    setGeofenceFormData({ name: '', description: '', coordinates: '' });
+                  }}
+                  data-testid="cancel-map-geofence"
+                >
+                  Отмена
+                </Button>
+              </div>
             </div>
-            
-            <div>
-              <Label htmlFor="geofence-description">Описание</Label>
-              <Textarea
-                id="geofence-description"
-                value={geofenceFormData.description}
-                onChange={(e) => setGeofenceFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Описание геозоны"
-                rows={2}
-                data-testid="geofence-description-input"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="geofence-coordinates">Координаты полигона*</Label>
-              <Textarea
-                id="geofence-coordinates"
-                value={geofenceFormData.coordinates}
-                onChange={(e) => setGeofenceFormData(prev => ({ ...prev, coordinates: e.target.value }))}
-                placeholder="[[55.7568, 37.6186], [55.7548, 37.6206], [55.7538, 37.6166], [55.7558, 37.6146], [55.7568, 37.6186]]"
-                rows={4}
-                required
-                className="font-mono text-sm"
-                data-testid="geofence-coordinates-input"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Формат: JSON массив координат [[широта, долгота], ...]. Минимум 3 точки.
-                <br />
-                Для удобства создания используйте интерактивную карту на главной странице.
-              </p>
-            </div>
-            
-            <div className="flex space-x-2 pt-4">
-              <Button
-                type="submit"
-                className="flex-1 bg-primary hover:bg-primary/90"
-                disabled={createGeofenceMutation.isPending}
-                data-testid="submit-geofence-form"
-              >
-                {createGeofenceMutation.isPending ? "Создание..." : "Создать геозону"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsGeofenceDialogOpen(false);
-                  setGeofenceFormData({ name: '', description: '', coordinates: '' });
-                }}
-                disabled={createGeofenceMutation.isPending}
-                data-testid="cancel-geofence-form"
-              >
-                Отмена
-              </Button>
-            </div>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmitGeofence} className="space-y-4">
+              <div>
+                <Label htmlFor="geofence-name">Название геозоны*</Label>
+                <Input
+                  id="geofence-name"
+                  value={geofenceFormData.name}
+                  onChange={(e) => setGeofenceFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Например: Пастбище Север"
+                  required
+                  data-testid="geofence-name-input"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="geofence-description">Описание</Label>
+                <Textarea
+                  id="geofence-description"
+                  value={geofenceFormData.description}
+                  onChange={(e) => setGeofenceFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Описание геозоны"
+                  rows={2}
+                  data-testid="geofence-description-input"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="geofence-coordinates">Координаты полигона*</Label>
+                <Textarea
+                  id="geofence-coordinates"
+                  value={geofenceFormData.coordinates}
+                  onChange={(e) => setGeofenceFormData(prev => ({ ...prev, coordinates: e.target.value }))}
+                  placeholder="[[55.7568, 37.6186], [55.7548, 37.6206], [55.7538, 37.6166], [55.7558, 37.6146], [55.7568, 37.6186]]"
+                  rows={4}
+                  required
+                  className="font-mono text-sm"
+                  data-testid="geofence-coordinates-input"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Формат: JSON массив координат [[широта, долгота], ...]. Минимум 3 точки.
+                </p>
+              </div>
+              
+              <div className="flex space-x-2 pt-4">
+                <Button
+                  type="submit"
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                  disabled={createGeofenceMutation.isPending}
+                  data-testid="submit-geofence-form"
+                >
+                  {createGeofenceMutation.isPending ? "Создание..." : "Создать геозону"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setGeofenceCreationMode('map');
+                  }}
+                  disabled={createGeofenceMutation.isPending}
+                  data-testid="switch-to-map-mode"
+                >
+                  Переключиться на карту
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsGeofenceDialogOpen(false);
+                    setGeofenceFormData({ name: '', description: '', coordinates: '' });
+                  }}
+                  disabled={createGeofenceMutation.isPending}
+                  data-testid="cancel-geofence-form"
+                >
+                  Отмена
+                </Button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 
