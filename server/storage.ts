@@ -16,6 +16,7 @@ import { db } from "./db";
 import { horses, gpsLocations, alerts, geofences, devices, users } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { telegramService } from "./telegram-bot";
 
 export interface IStorage {
   // Horses
@@ -868,6 +869,9 @@ export class DatabaseStorage implements IStorage {
     console.log(`📤 WebSocket: Alert created - ${createdAlert.id} (${createdAlert.title})`);
     (process as any).emit('alertCreated', createdAlert);
     
+    // Send Telegram notifications to users with enabled notifications
+    this.sendTelegramAlertNotifications(createdAlert);
+    
     return createdAlert;
   }
 
@@ -880,6 +884,9 @@ export class DatabaseStorage implements IStorage {
       // Notify WebSocket clients about alert dismissal
       console.log(`📤 WebSocket: Alert dismissed - ${id}`);
       (process as any).emit('alertDismissed', { ...alert, isActive: false });
+      
+      // Send Telegram dismissal notifications
+      this.sendTelegramAlertDismissedNotifications(alert);
     }
     
     return success;
@@ -1122,6 +1129,96 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // Telegram notification methods
+  private async sendTelegramAlertNotifications(alert: Alert): Promise<void> {
+    if (!telegramService.isEnabled()) {
+      return;
+    }
+
+    try {
+      // Get users with enabled Telegram notifications
+      const telegramUsers = await db.select().from(users).where(
+        and(
+          eq(users.telegramNotifications, true),
+          eq(users.isActive, true)
+        )
+      );
+
+      if (telegramUsers.length === 0) {
+        console.log('📱 No users with enabled Telegram notifications');
+        return;
+      }
+
+      // Get the horse for the alert
+      const [horse] = await db.select().from(horses).where(eq(horses.id, alert.horseId));
+      if (!horse) {
+        console.log('❌ Horse not found for alert:', alert.id);
+        return;
+      }
+
+      // Send notification to each user
+      for (const user of telegramUsers) {
+        if (user.telegramChatId) {
+          try {
+            if (alert.type === 'device_offline') {
+              await telegramService.sendDeviceOfflineNotification(user.telegramChatId, alert, horse);
+            } else {
+              await telegramService.sendAlertNotification(user.telegramChatId, alert, horse);
+            }
+          } catch (error) {
+            console.error(`❌ Failed to send Telegram notification to ${user.firstName}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error sending Telegram alert notifications:', error);
+    }
+  }
+
+  private async sendTelegramAlertDismissedNotifications(alert: Alert): Promise<void> {
+    if (!telegramService.isEnabled()) {
+      return;
+    }
+
+    try {
+      // Only send dismissal notifications for geofence alerts
+      if (alert.type !== 'geofence') {
+        return;
+      }
+
+      // Get users with enabled Telegram notifications
+      const telegramUsers = await db.select().from(users).where(
+        and(
+          eq(users.telegramNotifications, true),
+          eq(users.isActive, true)
+        )
+      );
+
+      if (telegramUsers.length === 0) {
+        return;
+      }
+
+      // Get the horse for the alert
+      const [horse] = await db.select().from(horses).where(eq(horses.id, alert.horseId));
+      if (!horse) {
+        return;
+      }
+
+      // Send dismissal notification to each user
+      for (const user of telegramUsers) {
+        if (user.telegramChatId) {
+          try {
+            await telegramService.sendAlertResolved(user.telegramChatId, alert, horse);
+          } catch (error) {
+            console.error(`❌ Failed to send Telegram dismissal notification to ${user.firstName}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error sending Telegram alert dismissal notifications:', error);
+    }
   }
 }
 

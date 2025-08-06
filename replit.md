@@ -34,6 +34,8 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Enhanced Geofence Auto-Dismissal**: Improved automatic geofence alert dismissal system with comprehensive logging and WebSocket notifications when horses return to safe zones
 - **Device Offline Monitoring**: Complete device connectivity monitoring system that creates urgent alerts for offline devices (10+ minutes) with battery >20% and auto-dismisses when devices reconnect
 - **Alert Management Testing**: Added testing API endpoints for both geofence and device connectivity monitoring with detailed diagnostic logging
+- **Telegram Bot Integration**: Complete Telegram notifications system with automatic alert delivery to mobile devices, user preference management, and support for geofence/device alerts
+- **Mobile Notification Settings**: API endpoints for configuring Telegram chat IDs and notification preferences with user authentication
 
 # User Preferences
 
@@ -124,6 +126,7 @@ Preferred communication style: Simple, everyday language.
 - **VK_REDIRECT_URI**: OAuth callback URL (defaults to /auth/vk/callback)
 - **SESSION_SECRET**: Session encryption key for secure cookie management
 - **DATABASE_URL**: PostgreSQL connection string
+- **TELEGRAM_BOT_TOKEN**: Telegram Bot API token (required for mobile notifications)
 
 ## Production Deployment
 When deploying to production:

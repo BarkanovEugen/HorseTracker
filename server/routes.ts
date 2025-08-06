@@ -443,6 +443,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Telegram notification settings
+  app.patch("/api/user/telegram", requireAuth, async (req, res) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const { telegramChatId, telegramNotifications } = req.body;
+
+    try {
+      const updates: any = {};
+      
+      if (typeof telegramNotifications === 'boolean') {
+        updates.telegramNotifications = telegramNotifications;
+      }
+      
+      if (typeof telegramChatId === 'string') {
+        updates.telegramChatId = telegramChatId.trim() || null;
+      }
+
+      const updatedUser = await storage.updateUser(userId, updates);
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating Telegram settings:", error);
+      res.status(500).json({ error: "Failed to update Telegram settings" });
+    }
+  });
+
+  app.get("/api/telegram/status", requireAuth, async (req, res) => {
+    try {
+      const { telegramService } = require('./telegram-bot');
+      res.json({
+        enabled: telegramService.isEnabled(),
+        configured: process.env.TELEGRAM_BOT_TOKEN ? true : false
+      });
+    } catch (error) {
+      console.error("Error checking Telegram status:", error);
+      res.status(500).json({ error: "Failed to check Telegram status" });
+    }
+  });
+
   // Permissions endpoint for frontend
   app.get("/api/auth/permissions", (req, res) => {
     // Debug environment variables
