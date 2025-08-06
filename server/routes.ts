@@ -372,6 +372,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Device monitoring API - Admin only
+  app.post("/api/alerts/check-devices", requireAdmin, async (req, res) => {
+    try {
+      await storage.checkDeviceConnectivity();
+      res.json({ success: true, message: "Device connectivity check completed" });
+    } catch (error) {
+      console.error('Device connectivity check failed:', error);
+      res.status(500).json({ message: "Failed to check device connectivity" });
+    }
+  });
+
   // User management API - Admin only
   app.get("/api/users", requireAdmin, async (req, res) => {
     try {

@@ -985,6 +985,87 @@ export class DatabaseStorage implements IStorage {
     return escalatedAlerts;
   }
 
+  // Check for device connectivity issues
+  async checkDeviceConnectivity(): Promise<void> {
+    console.log('🔍 STARTING device connectivity check...');
+    
+    try {
+      const devices = await this.getDevices();
+      const currentTime = new Date();
+      
+      console.log(`🔍 Checking connectivity for ${devices.length} devices at ${currentTime.toISOString()}...`);
+    
+    for (const device of devices) {
+      console.log(`📱 Checking device ${device.deviceId}: horseId=${device.horseId}, lastSignal=${device.lastSignal}, battery=${device.batteryLevel}%`);
+      
+      if (!device.horseId || !device.lastSignal) {
+        console.log(`⏭️ Skipping device ${device.deviceId}: no horse assigned or no signal recorded`);
+        continue;
+      }
+      
+      const lastSignalTime = new Date(device.lastSignal);
+      const minutesSinceLastSignal = (currentTime.getTime() - lastSignalTime.getTime()) / (1000 * 60);
+      
+      console.log(`⏰ Device ${device.deviceId}: ${Math.round(minutesSinceLastSignal)} minutes since last signal`);
+      
+      // Check if device is offline for more than 10 minutes and had sufficient battery
+      if (minutesSinceLastSignal > 10 && device.batteryLevel && parseFloat(device.batteryLevel) > 20) {
+        console.log(`⚠️ Device ${device.deviceId} qualifies for offline alert: ${Math.round(minutesSinceLastSignal)} min offline, ${device.batteryLevel}% battery`);
+        const horse = await this.getHorse(device.horseId);
+        if (!horse) continue;
+        
+        // Check if device_offline alert already exists for this horse
+        const existingAlerts = await db.select().from(alerts).where(
+          and(
+            eq(alerts.horseId, device.horseId),
+            eq(alerts.type, 'device_offline'),
+            eq(alerts.isActive, true)
+          )
+        );
+        
+        // Create alert if none exists
+        if (existingAlerts.length === 0) {
+          await this.createAlert({
+            horseId: device.horseId,
+            type: 'device_offline',
+            severity: 'urgent',
+            title: `Потеряна связь с ${horse.name}`,
+            description: `Устройство ${device.deviceId} не отвечает ${Math.round(minutesSinceLastSignal)} мин • Батарея была ${device.batteryLevel}%`,
+            isActive: true,
+            geofenceId: null,
+            escalated: true, // Device offline is immediately escalated
+            escalatedAt: currentTime,
+            pushSent: false,
+          });
+          
+          console.log(`🚨 DEVICE OFFLINE ALERT: ${horse.name} (${device.deviceId}) - ${Math.round(minutesSinceLastSignal)} minutes offline`);
+        }
+      }
+      
+      // Dismiss device_offline alerts if device is back online (sent signal in last 5 minutes)
+      if (minutesSinceLastSignal <= 5) {
+        const existingAlerts = await db.select().from(alerts).where(
+          and(
+            eq(alerts.horseId, device.horseId),
+            eq(alerts.type, 'device_offline'),
+            eq(alerts.isActive, true)
+          )
+        );
+        
+        for (const alert of existingAlerts) {
+          await this.dismissAlert(alert.id);
+          console.log(`✅ Device back online: Dismissed offline alert for ${device.deviceId}`);
+        }
+      }
+    }
+    
+    console.log('✅ Device connectivity check completed');
+    } catch (error) {
+      console.error('❌ Error during device connectivity check:', error);
+      throw error;
+    }
+  }
+
   // New method: Get sorted alerts (escalated ones first) - alias for getActiveAlerts
   async getSortedActiveAlerts(): Promise<Alert[]> {
     return this.getActiveAlerts();
