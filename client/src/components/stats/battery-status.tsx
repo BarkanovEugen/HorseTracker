@@ -3,7 +3,11 @@ import { Horse, Device } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
-export default function BatteryStatus() {
+interface BatteryStatusProps {
+  onHorseSelect?: (horse: Horse) => void;
+}
+
+export default function BatteryStatus({ onHorseSelect }: BatteryStatusProps) {
   const { data: horses = [], isLoading: horsesLoading } = useQuery<Horse[]>({
     queryKey: ['/api/horses'],
   });
@@ -69,8 +73,9 @@ export default function BatteryStatus() {
           {horsesBatteryData.map((horse) => (
             <div 
               key={horse.id} 
-              className="flex items-center justify-between"
+              className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors"
               data-testid={`battery-${horse.id}`}
+              onClick={() => onHorseSelect?.(horse)}
             >
               <span className="text-sm font-medium">{horse.name}</span>
               <div className="flex items-center space-x-2">

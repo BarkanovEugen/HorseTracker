@@ -97,7 +97,19 @@ function MapControls({
   );
 }
 
-export default function MapLibreMap() {
+interface MapLibreMapProps {
+  zoom?: number;
+  center?: [number, number];
+  selectedHorse?: Horse | null;
+  onHorseSelect?: (horse: Horse) => void;
+}
+
+export default function MapLibreMap({
+  zoom = 15,
+  center,
+  selectedHorse,
+  onHorseSelect,
+}: MapLibreMapProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -245,6 +257,7 @@ export default function MapLibreMap() {
         
         // Add click handler
         el.addEventListener('click', () => {
+          onHorseSelect?.(horse);
           toast({
             title: horse.name,
             description: `${horse.breed} • Статус: ${
@@ -275,6 +288,27 @@ export default function MapLibreMap() {
     });
 
   }, [horseLocations]);
+
+  // Center map on selected horse
+  useEffect(() => {
+    if (!map.current || !selectedHorse) return;
+
+    // Find the location of the selected horse
+    const selectedLocation = horseLocations.find(hl => hl.horse.id === selectedHorse.id);
+    if (selectedLocation) {
+      const position: [number, number] = [
+        parseFloat(selectedLocation.lastLocation.longitude), 
+        parseFloat(selectedLocation.lastLocation.latitude)
+      ];
+
+      // Center map on selected horse with smooth animation
+      map.current.easeTo({
+        center: position,
+        zoom: Math.max(map.current.getZoom() || 16, 16),
+        duration: 1000
+      });
+    }
+  }, [selectedHorse, horseLocations]);
 
   // Auto-fit bounds only on initial load, not on every update
   useEffect(() => {
