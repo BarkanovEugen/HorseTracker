@@ -80,8 +80,6 @@ export function createHorseMarkerElement(horse: Horse, size: number = 32): HTMLE
     height: ${size}px;
     position: relative;
     cursor: pointer;
-    transform-origin: center center;
-    transition: transform 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -172,12 +170,10 @@ export function createHorseMarkerElement(horse: Horse, size: number = 32): HTMLE
 
   // Add hover effects
   container.addEventListener('mouseenter', () => {
-    container.style.transform = 'scale(1.1)';
     tooltip.style.opacity = '1';
   });
 
   container.addEventListener('mouseleave', () => {
-    container.style.transform = 'scale(1)';
     tooltip.style.opacity = '0';
   });
 
@@ -195,7 +191,7 @@ export default function HorseMarker({ horse, size = 24, onClick }: HorseMarkerPr
 
   return (
     <div
-      className="relative cursor-pointer hover:scale-110 transition-transform duration-200"
+      className="relative cursor-pointer"
       style={{ width: size, height: size }}
       onClick={onClick}
       data-testid={`horse-marker-${horse.id}`}
