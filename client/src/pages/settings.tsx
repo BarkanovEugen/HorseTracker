@@ -61,6 +61,7 @@ export default function Settings() {
   
   // Telegram notification settings
   const [telegramChatId, setTelegramChatId] = useState('');
+  const [telegramName, setTelegramName] = useState('');
   const [telegramNotifications, setTelegramNotifications] = useState(false);
   
   // Mock notification settings - in a real app, this would come from user preferences API  
@@ -98,6 +99,16 @@ export default function Settings() {
     configured: boolean;
   }>({
     queryKey: ['/api/telegram/status'],
+  });
+
+  // Get Telegram recipients
+  const { data: telegramRecipients = [] } = useQuery<Array<{
+    id: string;
+    chatId: string;
+    name: string;
+    createdAt: string;
+  }>>({
+    queryKey: ['/api/telegram/recipients'],
   });
 
   // Update local state when user data loads
@@ -184,23 +195,45 @@ export default function Settings() {
     },
   });
 
-  // Telegram settings mutation
-  const updateTelegramMutation = useMutation({
-    mutationFn: async (data: { telegramChatId?: string; telegramNotifications?: boolean }) => {
-      const response = await apiRequest('PATCH', '/api/user/telegram', data);
+  // Telegram recipients mutations
+  const addTelegramRecipientMutation = useMutation({
+    mutationFn: async (data: { chatId: string; name: string }) => {
+      const response = await apiRequest('POST', '/api/telegram/recipients', data);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/telegram/recipients'] });
+      setTelegramChatId('');
+      setTelegramName('');
       toast({
-        title: "Настройки Telegram обновлены",
-        description: "Изменения сохранены успешно",
+        title: "Получатель добавлен",
+        description: "Новый получатель Telegram уведомлений добавлен",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Ошибка",
+        description: error.error || "Не удалось добавить получателя",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeTelegramRecipientMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest('DELETE', `/api/telegram/recipients/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/telegram/recipients'] });
+      toast({
+        title: "Получатель удален",
+        description: "Получатель Telegram уведомлений удален",
       });
     },
     onError: () => {
       toast({
         title: "Ошибка",
-        description: "Не удалось обновить настройки Telegram",
+        description: "Не удалось удалить получателя",
         variant: "destructive",
       });
     },
@@ -219,15 +252,25 @@ export default function Settings() {
     });
   };
 
-  const handleTelegramToggle = () => {
-    const newValue = !telegramNotifications;
-    setTelegramNotifications(newValue);
-    updateTelegramMutation.mutate({ telegramNotifications: newValue });
+  const handleAddTelegramRecipient = () => {
+    if (!telegramChatId.trim() || !telegramName.trim()) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните имя и Chat ID",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    addTelegramRecipientMutation.mutate({
+      chatId: telegramChatId.trim(),
+      name: telegramName.trim()
+    });
   };
 
-  const handleTelegramChatIdSave = () => {
-    if (telegramChatId.trim()) {
-      updateTelegramMutation.mutate({ telegramChatId: telegramChatId.trim() });
+  const handleRemoveTelegramRecipient = (id: string) => {
+    if (confirm("Удалить этого получателя уведомлений?")) {
+      removeTelegramRecipientMutation.mutate(id);
     }
   };
 
@@ -486,63 +529,93 @@ export default function Settings() {
               </div>
             ) : (
               <>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm sm:text-base">Мобильные уведомления</p>
+                <div className="space-y-4">
+                  <div>
+                    <p className="font-medium text-sm sm:text-base">Получатели уведомлений</p>
                     <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      <span className="hidden sm:inline">Получать критические алерты в Telegram</span>
-                      <span className="sm:hidden">Алерты в Telegram</span>
+                      <span className="hidden sm:inline">Управление списком получателей Telegram уведомлений</span>
+                      <span className="sm:hidden">Получатели Telegram</span>
                     </p>
                   </div>
-                  <Switch
-                    checked={telegramNotifications}
-                    onCheckedChange={handleTelegramToggle}
-                    disabled={updateTelegramMutation.isPending}
-                    data-testid="telegram-notifications-toggle"
-                    className="flex-shrink-0"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="telegram-chat-id" className="text-sm font-medium">
-                    Telegram Chat ID
-                  </Label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Input
-                      id="telegram-chat-id"
-                      type="text"
-                      placeholder="Ваш Chat ID в Telegram"
-                      value={telegramChatId}
-                      onChange={(e) => setTelegramChatId(e.target.value)}
-                      disabled={updateTelegramMutation.isPending}
-                      data-testid="telegram-chat-id-input"
-                      className="flex-1"
-                    />
-                    <Button 
-                      onClick={handleTelegramChatIdSave}
-                      disabled={!telegramChatId.trim() || updateTelegramMutation.isPending}
-                      data-testid="save-telegram-chat-id"
-                      className="w-full sm:w-auto"
-                      size="sm"
-                    >
-                      Сохранить
-                    </Button>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Для получения Chat ID напишите @userinfobot в Telegram
-                  </p>
-                </div>
-
-                {telegramNotifications && telegramChatId && (
-                  <div className="bg-green-50 dark:bg-green-900/20 p-3 sm:p-4 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-green-600" />
-                      <p className="text-sm text-green-800 dark:text-green-200">
-                        Telegram уведомления активны
-                      </p>
+                  
+                  {/* List of current recipients */}
+                  {telegramRecipients.length > 0 && (
+                    <div className="space-y-2">
+                      {telegramRecipients.map((recipient) => (
+                        <div key={recipient.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{recipient.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              Chat ID: {recipient.chatId}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveTelegramRecipient(recipient.id)}
+                            disabled={removeTelegramRecipientMutation.isPending}
+                            className="flex-shrink-0 ml-2"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Add new recipient form */}
+                  <div className="space-y-3 border-t pt-4">
+                    <Label className="text-sm font-medium">
+                      Добавить получателя
+                    </Label>
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Имя получателя"
+                        value={telegramName}
+                        onChange={(e) => setTelegramName(e.target.value)}
+                        disabled={addTelegramRecipientMutation.isPending}
+                        data-testid="telegram-name-input"
+                      />
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          placeholder="Chat ID в Telegram"
+                          value={telegramChatId}
+                          onChange={(e) => setTelegramChatId(e.target.value)}
+                          disabled={addTelegramRecipientMutation.isPending}
+                          data-testid="telegram-chat-id-input"
+                          className="flex-1"
+                        />
+                        <Button 
+                          onClick={handleAddTelegramRecipient}
+                          disabled={!telegramChatId.trim() || !telegramName.trim() || addTelegramRecipientMutation.isPending}
+                          data-testid="add-telegram-recipient"
+                          className="w-full sm:w-auto"
+                          size="sm"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Добавить
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                )}
+                  
+                  {/* Instruction text */}
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    💡 Для получения Chat ID напишите @userinfobot в Telegram
+                  </div>
+                  
+                  {/* Active recipients info */}
+                  {telegramRecipients.length > 0 && (
+                    <div className="bg-green-50 dark:bg-green-900/20 p-3 sm:p-4 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-green-600" />
+                        <p className="text-sm text-green-800 dark:text-green-200">
+                          Активных получателей: {telegramRecipients.length}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </CardContent>

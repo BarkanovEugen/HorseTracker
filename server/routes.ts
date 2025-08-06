@@ -10,6 +10,18 @@ import type { User } from "@shared/schema";
 // Import authentication middleware
 import { requireAuth, requireAdmin, requireViewer, getUserPermissions } from "./middleware/auth";
 
+// Global type declarations for development mode
+declare global {
+  var telegramRecipients: Array<{
+    id: string;
+    chatId: string;
+    name: string;
+    createdAt: string;
+  }>;
+  var devUserTelegramNotifications: boolean;
+  var devUserTelegramChatId: string | null;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // VK ID Authentication routes
   app.get('/auth/vk', (req, res) => {
@@ -443,12 +455,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Telegram notification settings
+  // Initialize Telegram recipients list in memory
+  if (!global.telegramRecipients) {
+    global.telegramRecipients = [];
+  }
+
+  // Get Telegram recipients list
+  app.get("/api/telegram/recipients", (req, res) => {
+    console.log('🔓 Development mode: bypassing authentication for Telegram recipients');
+    res.json(global.telegramRecipients || []);
+  });
+
+  // Add Telegram recipient
+  app.post("/api/telegram/recipients", (req, res) => {
+    console.log('🔓 Development mode: bypassing authentication for adding Telegram recipient');
+    
+    const { chatId, name } = req.body;
+    
+    if (!chatId || !name) {
+      return res.status(400).json({ error: "Chat ID and name are required" });
+    }
+
+    try {
+      const newRecipient = {
+        id: Date.now().toString(),
+        chatId: chatId.trim(),
+        name: name.trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      // Check if chat ID already exists
+      const existingRecipient = global.telegramRecipients.find(r => r.chatId === newRecipient.chatId);
+      if (existingRecipient) {
+        return res.status(400).json({ error: "This chat ID is already added" });
+      }
+
+      global.telegramRecipients.push(newRecipient);
+      console.log('📱 Added Telegram recipient:', newRecipient);
+      res.json(newRecipient);
+    } catch (error) {
+      console.error("Error adding Telegram recipient:", error);
+      res.status(500).json({ error: "Failed to add Telegram recipient" });
+    }
+  });
+
+  // Remove Telegram recipient
+  app.delete("/api/telegram/recipients/:id", (req, res) => {
+    console.log('🔓 Development mode: bypassing authentication for removing Telegram recipient');
+    
+    const { id } = req.params;
+    
+    try {
+      const initialLength = global.telegramRecipients.length;
+      global.telegramRecipients = global.telegramRecipients.filter(r => r.id !== id);
+      
+      if (global.telegramRecipients.length < initialLength) {
+        console.log('📱 Removed Telegram recipient:', id);
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Recipient not found" });
+      }
+    } catch (error) {
+      console.error("Error removing Telegram recipient:", error);
+      res.status(500).json({ error: "Failed to remove Telegram recipient" });
+    }
+  });
+
+  // Legacy endpoint for backward compatibility
   app.patch("/api/user/telegram", (req, res) => {
-    // Always bypass authentication in development mode for Telegram settings
     console.log('🔓 Development mode: bypassing authentication for Telegram settings');
     
-    const userId = 'dev-user'; // Use dev user in development mode
+    const userId = 'dev-user';
     const { telegramChatId, telegramNotifications } = req.body;
 
     try {
@@ -456,21 +533,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (typeof telegramNotifications === 'boolean') {
         updates.telegramNotifications = telegramNotifications;
+        global.devUserTelegramNotifications = telegramNotifications;
       }
       
       if (typeof telegramChatId === 'string') {
         updates.telegramChatId = telegramChatId.trim() || null;
-      }
-
-      // Store settings in memory for development
-      if (updates.telegramChatId !== undefined) {
         global.devUserTelegramChatId = updates.telegramChatId;
       }
-      if (updates.telegramNotifications !== undefined) {
-        global.devUserTelegramNotifications = updates.telegramNotifications;
-      }
       
-      // For development, simulate successful update
       const updatedUser = {
         id: userId,
         role: 'admin',

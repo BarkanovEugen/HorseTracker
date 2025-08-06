@@ -18,6 +18,16 @@ import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { telegramService } from "./telegram-bot";
 
+// Global type declarations for development mode
+declare global {
+  var telegramRecipients: Array<{
+    id: string;
+    chatId: string;
+    name: string;
+    createdAt: string;
+  }>;
+}
+
 export interface IStorage {
   // Horses
   getHorses(): Promise<Horse[]>;
@@ -1138,12 +1148,11 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
-      // Check for development user settings first
-      const devTelegramEnabled = global.devUserTelegramNotifications;
-      const devTelegramChatId = global.devUserTelegramChatId;
+      // Check for development Telegram recipients first
+      const telegramRecipients = global.telegramRecipients || [];
       
-      if (devTelegramEnabled && devTelegramChatId) {
-        console.log('📱 Sending Telegram notification to dev user');
+      if (telegramRecipients.length > 0) {
+        console.log(`📱 Sending Telegram notification to ${telegramRecipients.length} recipients`);
         
         // Get the horse for the alert
         const [horse] = await db.select().from(horses).where(eq(horses.id, alert.horseId));
@@ -1152,15 +1161,18 @@ export class DatabaseStorage implements IStorage {
           return;
         }
         
-        try {
-          if (alert.type === 'device_offline') {
-            await telegramService.sendDeviceOfflineNotification(devTelegramChatId, alert, horse);
-          } else {
-            await telegramService.sendAlertNotification(devTelegramChatId, alert, horse);
+        // Send to all recipients
+        for (const recipient of telegramRecipients) {
+          try {
+            if (alert.type === 'device_offline') {
+              await telegramService.sendDeviceOfflineNotification(recipient.chatId, alert, horse);
+            } else {
+              await telegramService.sendAlertNotification(recipient.chatId, alert, horse);
+            }
+            console.log(`📤 Telegram уведомление отправлено ${recipient.name} (${recipient.chatId})`);
+          } catch (error) {
+            console.error(`❌ Failed to send Telegram notification to ${recipient.name}:`, error);
           }
-          console.log(`📤 Telegram уведомление отправлено в dev chat ${devTelegramChatId}`);
-        } catch (error) {
-          console.error('❌ Failed to send Telegram notification to dev user:', error);
         }
         return;
       }
@@ -1215,12 +1227,11 @@ export class DatabaseStorage implements IStorage {
         return;
       }
 
-      // Check for development user settings first
-      const devTelegramEnabled = global.devUserTelegramNotifications;
-      const devTelegramChatId = global.devUserTelegramChatId;
+      // Check for development Telegram recipients first
+      const telegramRecipients = global.telegramRecipients || [];
       
-      if (devTelegramEnabled && devTelegramChatId) {
-        console.log('📱 Sending Telegram dismissal notification to dev user');
+      if (telegramRecipients.length > 0) {
+        console.log(`📱 Sending Telegram dismissal notification to ${telegramRecipients.length} recipients`);
         
         // Get the horse for the alert
         const [horse] = await db.select().from(horses).where(eq(horses.id, alert.horseId));
@@ -1228,11 +1239,14 @@ export class DatabaseStorage implements IStorage {
           return;
         }
         
-        try {
-          await telegramService.sendAlertResolved(devTelegramChatId, alert, horse);
-          console.log(`📤 Telegram уведомление о закрытии отправлено в dev chat ${devTelegramChatId}`);
-        } catch (error) {
-          console.error('❌ Failed to send Telegram dismissal notification to dev user:', error);
+        // Send dismissal notification to all recipients
+        for (const recipient of telegramRecipients) {
+          try {
+            await telegramService.sendAlertResolved(recipient.chatId, alert, horse);
+            console.log(`📤 Telegram уведомление о закрытии отправлено ${recipient.name} (${recipient.chatId})`);
+          } catch (error) {
+            console.error(`❌ Failed to send Telegram dismissal notification to ${recipient.name}:`, error);
+          }
         }
         return;
       }
