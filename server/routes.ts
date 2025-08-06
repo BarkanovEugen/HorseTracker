@@ -408,7 +408,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Permissions endpoint for frontend
   app.get("/api/auth/permissions", (req, res) => {
     // Temporary bypass for development when VK auth is not configured
-    if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
+    const hasVkKeys = process.env.VK_CLIENT_ID && process.env.VK_CLIENT_SECRET && 
+                      process.env.VK_CLIENT_ID.trim() !== '' && process.env.VK_CLIENT_SECRET.trim() !== '';
+    
+    if (!hasVkKeys) {
+      console.log('🔓 Development mode: bypassing authentication for permissions');
       return res.json({
         canEdit: true,
         canView: true,
@@ -439,7 +443,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth user endpoint for frontend
   app.get("/api/auth/user", (req, res) => {
     // Temporary bypass for development when VK auth is not configured
-    if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
+    const hasVkKeys = process.env.VK_CLIENT_ID && process.env.VK_CLIENT_SECRET && 
+                      process.env.VK_CLIENT_ID.trim() !== '' && process.env.VK_CLIENT_SECRET.trim() !== '';
+    
+    if (!hasVkKeys) {
+      console.log('🔓 Development mode: bypassing authentication for user');
       return res.json({ 
         id: 'dev-user', 
         role: 'admin', 
