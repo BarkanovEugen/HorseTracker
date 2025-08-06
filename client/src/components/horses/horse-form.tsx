@@ -1,26 +1,30 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { insertHorseSchema, type InsertHorse, type Horse } from "@shared/schema";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { insertHorseSchema, type InsertHorse, type Horse, type Device } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface HorseFormProps {
+  open: boolean;
   horse?: Horse;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export default function HorseForm({ horse, onClose, onSuccess }: HorseFormProps) {
+export default function HorseForm({ open, horse, onClose, onSuccess }: HorseFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!horse;
+
+  const { data: devices = [] } = useQuery<Device[]>({
+    queryKey: ['/api/devices'],
+  });
 
   const {
     register,
@@ -104,19 +108,13 @@ export default function HorseForm({ horse, onClose, onSuccess }: HorseFormProps)
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle data-testid="horse-form-title">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="z-[10000] max-w-md">
+        <DialogHeader>
+          <DialogTitle data-testid="horse-form-title">
             {isEditing ? 'Редактировать лошадь' : 'Добавить лошадь'}
-          </CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose} data-testid="close-horse-form">
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      
-      <CardContent>
+          </DialogTitle>
+        </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label htmlFor="name">Имя лошади</Label>
@@ -160,13 +158,33 @@ export default function HorseForm({ horse, onClose, onSuccess }: HorseFormProps)
 
           <div>
             <Label htmlFor="deviceId">ID устройства GPS</Label>
-            <Input
-              id="deviceId"
-              {...register("deviceId")}
-              placeholder="ESP32-001"
-              className={errors.deviceId ? "border-red-500" : ""}
-              data-testid="horse-device-input"
-            />
+            <Select
+              value={watch("deviceId") || ""}
+              onValueChange={(value) => setValue("deviceId", value)}
+            >
+              <SelectTrigger 
+                className={errors.deviceId ? "border-red-500" : ""}
+                data-testid="horse-device-select"
+              >
+                <SelectValue placeholder="Выберите устройство" />
+              </SelectTrigger>
+              <SelectContent className="z-[10010]">
+                {devices.map((device) => (
+                  <SelectItem key={device.id} value={device.deviceId}>
+                    {device.deviceId} {device.horseId ? '(занято)' : '(свободно)'}
+                  </SelectItem>
+                ))}
+                <SelectItem value="manual">Ввести вручную</SelectItem>
+              </SelectContent>
+            </Select>
+            {watch("deviceId") === "manual" && (
+              <Input
+                className={`mt-2 ${errors.deviceId ? "border-red-500" : ""}`}
+                {...register("deviceId")}
+                placeholder="Введите ID устройства"
+                data-testid="horse-device-manual-input"
+              />
+            )}
             {errors.deviceId && (
               <p className="text-sm text-red-500 mt-1">{errors.deviceId.message}</p>
             )}
@@ -196,7 +214,7 @@ export default function HorseForm({ horse, onClose, onSuccess }: HorseFormProps)
               <SelectTrigger data-testid="horse-status-select">
                 <SelectValue placeholder="Выберите статус" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[10010]">
                 <SelectItem value="active">Активен</SelectItem>
                 <SelectItem value="warning">Предупреждение</SelectItem>
                 <SelectItem value="offline">Офлайн</SelectItem>
@@ -224,7 +242,7 @@ export default function HorseForm({ horse, onClose, onSuccess }: HorseFormProps)
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

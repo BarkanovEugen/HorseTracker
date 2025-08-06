@@ -119,17 +119,13 @@ export default function Horses() {
         </div>
       )}
 
-      {/* Add/Edit Horse Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogOverlay />
-        <DialogContent className="max-w-md p-0">
-          <HorseForm
-            horse={editingHorse}
-            onClose={handleCloseForm}
-            onSuccess={handleCloseForm}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Add/Edit Horse Form */}
+      <HorseForm
+        open={isFormOpen}
+        horse={editingHorse}
+        onClose={handleCloseForm}
+        onSuccess={handleCloseForm}
+      />
 
       {/* View Horse Details Dialog */}
       <Dialog open={!!viewingHorse} onOpenChange={(open) => !open && handleCloseView()}>

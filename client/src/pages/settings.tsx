@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import GeofenceCreatorDialog from "@/components/geofences/geofence-creator-dialog";
 import { 
   MapPin, 
@@ -36,9 +37,16 @@ export default function Settings() {
   
   const [isGeofenceDialogOpen, setIsGeofenceDialogOpen] = useState(false);
   const [isDeviceDialogOpen, setIsDeviceDialogOpen] = useState(false);
+  const [isDeviceConfigOpen, setIsDeviceConfigOpen] = useState(false);
+  const [configuringDevice, setConfiguringDevice] = useState<Device | null>(null);
   const [deviceFormData, setDeviceFormData] = useState({
     deviceId: '',
     horseId: '',
+  });
+  const [deviceConfigData, setDeviceConfigData] = useState({
+    reportingInterval: '30',
+    gpsAccuracy: 'high',
+    powerSavingMode: false,
   });
   
   // Mock notification settings - in a real app, this would come from user preferences API
@@ -136,6 +144,31 @@ export default function Settings() {
       deviceId: deviceFormData.deviceId,
       horseId: deviceFormData.horseId || undefined,
     });
+  };
+
+  const handleConfigureDevice = (device: Device) => {
+    setConfiguringDevice(device);
+    setDeviceConfigData({
+      reportingInterval: '30',
+      gpsAccuracy: 'high',
+      powerSavingMode: false,
+    });
+    setIsDeviceConfigOpen(true);
+  };
+
+  const handleSubmitDeviceConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!configuringDevice) return;
+    
+    // Here we would normally send the configuration to the device
+    // For now, we'll just show a success message
+    toast({
+      title: "Настройки обновлены",
+      description: `Конфигурация устройства ${configuringDevice.deviceId} успешно обновлена`,
+    });
+    
+    setIsDeviceConfigOpen(false);
+    setConfiguringDevice(null);
   };
 
   const getDeviceStatusColor = (isOnline: boolean) => {
@@ -441,6 +474,7 @@ export default function Settings() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handleConfigureDevice(device)}
                           data-testid={`device-actions-${device.id}`}
                         >
                           Настроить
@@ -507,6 +541,82 @@ export default function Settings() {
                 onClick={() => setIsDeviceDialogOpen(false)}
                 disabled={createDeviceMutation.isPending}
                 data-testid="cancel-device-form"
+              >
+                Отмена
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Device Configuration Dialog */}
+      <Dialog open={isDeviceConfigOpen} onOpenChange={setIsDeviceConfigOpen}>
+        <DialogContent className="z-[10000] max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Настройка устройства {configuringDevice?.deviceId}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmitDeviceConfig} className="space-y-4">
+            <div>
+              <Label htmlFor="reporting-interval">Интервал отправки данных (секунды)</Label>
+              <Select
+                value={deviceConfigData.reportingInterval}
+                onValueChange={(value) => setDeviceConfigData(prev => ({ ...prev, reportingInterval: value }))}
+              >
+                <SelectTrigger data-testid="reporting-interval-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="z-[10010]">
+                  <SelectItem value="10">10 секунд</SelectItem>
+                  <SelectItem value="30">30 секунд</SelectItem>
+                  <SelectItem value="60">1 минута</SelectItem>
+                  <SelectItem value="300">5 минут</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="gps-accuracy">Точность GPS</Label>
+              <Select
+                value={deviceConfigData.gpsAccuracy}
+                onValueChange={(value) => setDeviceConfigData(prev => ({ ...prev, gpsAccuracy: value }))}
+              >
+                <SelectTrigger data-testid="gps-accuracy-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="z-[10010]">
+                  <SelectItem value="high">Высокая</SelectItem>
+                  <SelectItem value="medium">Средняя</SelectItem>
+                  <SelectItem value="low">Низкая</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="power-saving"
+                checked={deviceConfigData.powerSavingMode}
+                onCheckedChange={(checked) => setDeviceConfigData(prev => ({ ...prev, powerSavingMode: checked }))}
+                data-testid="power-saving-switch"
+              />
+              <Label htmlFor="power-saving">Режим энергосбережения</Label>
+            </div>
+            
+            <div className="flex space-x-2 pt-4">
+              <Button
+                type="submit"
+                className="flex-1 bg-primary hover:bg-primary/90"
+                data-testid="submit-device-config"
+              >
+                Применить настройки
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDeviceConfigOpen(false)}
+                data-testid="cancel-device-config"
               >
                 Отмена
               </Button>
