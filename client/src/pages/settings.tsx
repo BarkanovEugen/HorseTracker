@@ -1,21 +1,18 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Geofence, Device, InsertGeofence } from "@shared/schema";
+import { Geofence, Device } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import GeofenceCreatorDialog from "@/components/geofences/geofence-creator-dialog";
 import { 
   MapPin, 
   Bell, 
   Cpu, 
   Plus, 
-  Edit, 
   Trash2, 
   Wifi, 
   WifiOff,
@@ -35,7 +32,6 @@ export default function Settings() {
   const queryClient = useQueryClient();
   
   const [isGeofenceDialogOpen, setIsGeofenceDialogOpen] = useState(false);
-  const [editingGeofence, setEditingGeofence] = useState<Geofence | undefined>(undefined);
   const [isDeviceDialogOpen, setIsDeviceDialogOpen] = useState(false);
   
   // Mock notification settings - in a real app, this would come from user preferences API
@@ -74,29 +70,6 @@ export default function Settings() {
     },
   });
 
-  const createGeofenceMutation = useMutation({
-    mutationFn: async (data: InsertGeofence) => {
-      const response = await apiRequest('POST', '/api/geofences', data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/geofences'] });
-      setIsGeofenceDialogOpen(false);
-      setEditingGeofence(undefined);
-      toast({
-        title: "Геозона создана",
-        description: "Новая геозона была успешно создана",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось создать геозону",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleNotificationToggle = (key: keyof NotificationSettings) => {
     setNotifications(prev => ({
       ...prev,
@@ -116,13 +89,7 @@ export default function Settings() {
     }
   };
 
-  const handleEditGeofence = (geofence: Geofence) => {
-    setEditingGeofence(geofence);
-    setIsGeofenceDialogOpen(true);
-  };
-
   const handleAddGeofence = () => {
-    setEditingGeofence(undefined);
     setIsGeofenceDialogOpen(true);
   };
 
@@ -218,18 +185,10 @@ export default function Settings() {
                     <div>
                       <p className="font-medium">{geofence.name}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {geofence.description} • Радиус: {geofence.radius}м
+                        {geofence.description} • Полигональная зона
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditGeofence(geofence)}
-                        data-testid={`edit-geofence-${geofence.id}`}
-                      >
-                        <Edit className="w-4 h-4 text-primary" />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -418,40 +377,29 @@ export default function Settings() {
                         <div className="flex items-center space-x-2">
                           <div className="w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
-                              className={`h-full transition-all duration-300 ${getBatteryColor(device.batteryLevel || '0')}`}
+                              className={`h-full transition-all ${getBatteryColor(device.batteryLevel || '0')}`}
                               style={{ width: `${device.batteryLevel || 0}%` }}
                             />
                           </div>
-                          <span 
-                            className={`text-sm font-semibold ${
-                              parseInt(device.batteryLevel || '0') > 20 ? 'text-green-600' : 'text-red-600'
-                            }`}
-                            data-testid={`device-battery-${device.id}`}
-                          >
+                          <span className="text-sm font-mono">
                             {device.batteryLevel || 0}%
                           </span>
+                          <Battery className="w-3 h-3 text-gray-400" />
                         </div>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                        {formatLastSignal(device.lastSignal)}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            data-testid={`configure-device-${device.id}`}
-                          >
-                            <SettingsIcon className="w-4 h-4 text-primary" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            data-testid={`remove-device-${device.id}`}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
-                        </div>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {formatLastSignal(device.lastSignal)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          data-testid={`device-actions-${device.id}`}
+                        >
+                          Настроить
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -462,136 +410,11 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Geofence Dialog */}
-      <Dialog open={isGeofenceDialogOpen} onOpenChange={setIsGeofenceDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingGeofence ? 'Редактировать геозону' : 'Добавить геозону'}
-            </DialogTitle>
-          </DialogHeader>
-          <GeofenceForm
-            geofence={editingGeofence}
-            onSubmit={(data) => createGeofenceMutation.mutate(data)}
-            onCancel={() => {
-              setIsGeofenceDialogOpen(false);
-              setEditingGeofence(undefined);
-            }}
-            isLoading={createGeofenceMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Geofence Creator Dialog */}
+      <GeofenceCreatorDialog 
+        open={isGeofenceDialogOpen} 
+        onOpenChange={setIsGeofenceDialogOpen} 
+      />
     </div>
-  );
-}
-
-// Geofence Form Component
-interface GeofenceFormProps {
-  geofence?: Geofence;
-  onSubmit: (data: InsertGeofence) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-}
-
-function GeofenceForm({ geofence, onSubmit, onCancel, isLoading }: GeofenceFormProps) {
-  const [formData, setFormData] = useState<InsertGeofence>({
-    name: geofence?.name || "",
-    description: geofence?.description || "",
-    centerLat: geofence?.centerLat || "55.7558",
-    centerLng: geofence?.centerLng || "37.6176",
-    radius: geofence?.radius || "500",
-    isActive: geofence?.isActive ?? true,
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="geofence-name">Название геозоны</Label>
-        <Input
-          id="geofence-name"
-          value={formData.name}
-          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-          placeholder="Пастбище Север"
-          required
-          data-testid="geofence-name-input"
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="geofence-description">Описание</Label>
-        <Input
-          id="geofence-description"
-          value={formData.description || ""}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          placeholder="Основная зона выпаса"
-          data-testid="geofence-description-input"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="geofence-lat">Широта</Label>
-          <Input
-            id="geofence-lat"
-            type="number"
-            step="any"
-            value={formData.centerLat}
-            onChange={(e) => setFormData(prev => ({ ...prev, centerLat: e.target.value }))}
-            required
-            data-testid="geofence-lat-input"
-          />
-        </div>
-        <div>
-          <Label htmlFor="geofence-lng">Долгота</Label>
-          <Input
-            id="geofence-lng"
-            type="number"
-            step="any"
-            value={formData.centerLng}
-            onChange={(e) => setFormData(prev => ({ ...prev, centerLng: e.target.value }))}
-            required
-            data-testid="geofence-lng-input"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="geofence-radius">Радиус (метры)</Label>
-        <Input
-          id="geofence-radius"
-          type="number"
-          min="1"
-          value={formData.radius}
-          onChange={(e) => setFormData(prev => ({ ...prev, radius: e.target.value }))}
-          required
-          data-testid="geofence-radius-input"
-        />
-      </div>
-
-      <div className="flex space-x-2 pt-4">
-        <Button
-          type="submit"
-          className="flex-1 bg-primary hover:bg-primary/90"
-          disabled={isLoading}
-          data-testid="submit-geofence-form"
-        >
-          {isLoading ? "Сохранение..." : (geofence ? "Обновить" : "Создать")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-          data-testid="cancel-geofence-form"
-        >
-          Отмена
-        </Button>
-      </div>
-    </form>
   );
 }
