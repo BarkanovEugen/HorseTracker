@@ -203,14 +203,8 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
             <Label htmlFor="deviceId">ID устройства GPS</Label>
             <div className="space-y-2">
               <Select
-                value={devices.find(device => device.deviceId === watch("deviceId")) ? watch("deviceId") : "manual"}
-                onValueChange={(value) => {
-                  if (value === "manual") {
-                    setValue("deviceId", "");
-                  } else {
-                    setValue("deviceId", value);
-                  }
-                }}
+                value={watch("deviceId") || ""}
+                onValueChange={(value) => setValue("deviceId", value)}
               >
                 <SelectTrigger 
                   className={errors.deviceId ? "border-red-500" : ""}
@@ -224,10 +218,10 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
                       {device.deviceId} {device.horseId && device.horseId !== horse?.id ? '(занято)' : '(свободно)'}
                     </SelectItem>
                   ))}
-                  <SelectItem value="manual">Ввести вручную</SelectItem>
+                  <SelectItem value="">Ввести вручную</SelectItem>
                 </SelectContent>
               </Select>
-              {(!devices.find(device => device.deviceId === watch("deviceId")) || watch("deviceId") === "") && (
+              {!devices.find(device => device.deviceId === watch("deviceId")) && (
                 <Input
                   className={errors.deviceId ? "border-red-500" : ""}
                   value={watch("deviceId") || ""}
