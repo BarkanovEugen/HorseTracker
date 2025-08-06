@@ -28,7 +28,7 @@ export default function History() {
     // Ensure location has timestamp
     if (!location.timestamp) return false;
     
-    if (selectedHorse && location.horseId !== selectedHorse) return false;
+    if (selectedHorse && selectedHorse !== "all" && location.horseId !== selectedHorse) return false;
     if (fromDate && new Date(location.timestamp) < new Date(fromDate)) return false;
     if (toDate && new Date(location.timestamp) > new Date(toDate)) return false;
     return true;
@@ -133,7 +133,7 @@ export default function History() {
                   <SelectValue placeholder="Все лошади" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Все лошади</SelectItem>
+                  <SelectItem value="all">Все лошади</SelectItem>
                   {horses.map(horse => (
                     <SelectItem key={horse.id} value={horse.id}>
                       {horse.name}

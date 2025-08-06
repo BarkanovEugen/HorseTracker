@@ -26,6 +26,23 @@ interface GeofenceFormData {
   description: string;
 }
 
+// Component for auto-fitting map bounds
+function MapBoundsController({ bounds }: { bounds: [[number, number], [number, number]] | null }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (bounds && map) {
+      try {
+        map.fitBounds(bounds, { padding: [20, 20] });
+      } catch (error) {
+        console.warn('Failed to fit bounds:', error);
+      }
+    }
+  }, [bounds, map]);
+  
+  return null;
+}
+
 // Component for handling polygon drawing
 function PolygonDrawer({ 
   isDrawing, 
@@ -271,6 +288,33 @@ export default function LeafletMapPolygon() {
     };
   }).filter(item => item.lastLocation);
 
+  // Calculate map bounds to fit all horses
+  const getMapBounds = (): [[number, number], [number, number]] | null => {
+    if (horseLocations.length === 0) return null;
+    
+    const lats = horseLocations.map(hl => parseFloat(hl.lastLocation.latitude));
+    const lngs = horseLocations.map(hl => parseFloat(hl.lastLocation.longitude));
+    
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    
+    // Add padding
+    const latPadding = (maxLat - minLat) * 0.1 || 0.01;
+    const lngPadding = (maxLng - minLng) * 0.1 || 0.01;
+    
+    return [
+      [minLat - latPadding, minLng - lngPadding],
+      [maxLat + latPadding, maxLng + lngPadding]
+    ];
+  };
+
+  const mapBounds = getMapBounds();
+  const defaultCenter: [number, number] = horseLocations.length > 0 
+    ? [parseFloat(horseLocations[0].lastLocation.latitude), parseFloat(horseLocations[0].lastLocation.longitude)]
+    : [55.7558, 37.6176]; // Moscow coordinates
+
   const toggleDrawingMode = () => {
     if (isDrawingMode) {
       setIsDrawingMode(false);
@@ -404,8 +448,8 @@ export default function LeafletMapPolygon() {
             data-testid="leaflet-map-container"
           >
             <MapContainer
-              center={[55.7558, 37.6176]} // Moscow coordinates
-              zoom={13}
+              center={defaultCenter}
+              zoom={mapBounds ? 13 : 13}
               style={{ height: '100%', width: '100%' }}
               ref={mapRef}
             >
@@ -413,6 +457,8 @@ export default function LeafletMapPolygon() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
+              
+              <MapBoundsController bounds={mapBounds} />
               
               <MapController 
                 onToggleDrawing={toggleDrawingMode}
