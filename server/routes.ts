@@ -242,6 +242,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
 
+  // Listen for alert events and broadcast them via WebSocket
+  process.on('alertCreated', (alert) => {
+    broadcast(JSON.stringify({
+      type: 'alert_created',
+      data: alert
+    }));
+  });
+
+  process.on('alertDismissed', (alert) => {
+    broadcast(JSON.stringify({
+      type: 'alert_dismissed',
+      data: alert
+    }));
+  });
+
   // Simulate GPS updates for development
   if (process.env.NODE_ENV === 'development') {
     setInterval(async () => {

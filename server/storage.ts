@@ -24,6 +24,7 @@ export interface IStorage {
   getLocationsByHorse(horseId: string): Promise<GpsLocation[]>;
   getRecentLocations(limit?: number): Promise<GpsLocation[]>;
   createLocation(location: InsertGpsLocation): Promise<GpsLocation>;
+  checkGeofenceViolations(horseId: string, latitude: number, longitude: number): Promise<void>;
 
   // Alerts
   getActiveAlerts(): Promise<Alert[]>;
@@ -59,6 +60,26 @@ export class MemStorage implements IStorage {
     this.geofences = new Map();
     this.devices = new Map();
     this.initializeMockData();
+  }
+
+  // Helper function to check if a point is inside a polygon using ray casting algorithm
+  private isPointInPolygon(latitude: number, longitude: number, polygon: [number, number][]): boolean {
+    let isInside = false;
+    const x = longitude;
+    const y = latitude;
+    
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][1]; // longitude
+      const yi = polygon[i][0]; // latitude
+      const xj = polygon[j][1]; // longitude
+      const yj = polygon[j][0]; // latitude
+      
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        isInside = !isInside;
+      }
+    }
+    
+    return isInside;
   }
 
   private initializeMockData() {
@@ -211,18 +232,8 @@ export class MemStorage implements IStorage {
 
     locations.forEach(loc => this.locations.set(loc.id, loc));
 
-    // Initialize sample alerts
+    // Initialize sample alerts - removed static geofence alerts as they will be generated dynamically
     const alerts = [
-      {
-        id: "alert-1",
-        horseId: "horse-1",
-        type: "geofence_exit",
-        severity: "urgent",
-        title: "Буран покинул безопасную зону",
-        description: "3 минуты назад • Пастбище Север",
-        isActive: true,
-        createdAt: new Date(),
-      },
       {
         id: "alert-2",
         horseId: "horse-2",
@@ -330,7 +341,71 @@ export class MemStorage implements IStorage {
       batteryLevel: location.batteryLevel ?? null
     };
     this.locations.set(id, newLocation);
+    
+    // Check for geofence violations
+    await this.checkGeofenceViolations(
+      location.horseId, 
+      parseFloat(location.latitude), 
+      parseFloat(location.longitude)
+    );
+    
     return newLocation;
+  }
+
+  async checkGeofenceViolations(horseId: string, latitude: number, longitude: number): Promise<void> {
+    const horse = await this.getHorse(horseId);
+    if (!horse) return;
+
+    const geofences = await this.getGeofences();
+    const activeGeofences = geofences.filter(g => g.isActive);
+    
+    // Check if horse is inside any safe zone
+    let isInSafeZone = false;
+    
+    for (const geofence of activeGeofences) {
+      try {
+        let coordinates: [number, number][];
+        if (typeof geofence.coordinates === 'string') {
+          coordinates = JSON.parse(geofence.coordinates);
+        } else {
+          coordinates = geofence.coordinates as [number, number][];
+        }
+        
+        if (this.isPointInPolygon(latitude, longitude, coordinates)) {
+          isInSafeZone = true;
+          break;
+        }
+      } catch (error) {
+        console.error('Error parsing geofence coordinates:', error, geofence.coordinates);
+      }
+    }
+
+    // Check existing alerts for this horse
+    const existingAlerts = Array.from(this.alerts.values()).filter(
+      alert => alert.horseId === horseId && alert.isActive
+    );
+
+    const hasGeofenceAlert = existingAlerts.some(alert => alert.type === 'geofence');
+
+    // Create or dismiss alerts based on current status
+    if (!isInSafeZone && !hasGeofenceAlert) {
+      // Horse is outside safe zone and no alert exists - create alert
+      await this.createAlert({
+        horseId: horseId,
+        type: 'geofence',
+        severity: 'high',
+        title: `${horse.name} покинул безопасную зону`,
+        description: `Только что • За пределами геозон`,
+        isActive: true,
+      });
+    } else if (isInSafeZone && hasGeofenceAlert) {
+      // Horse is back in safe zone and alert exists - dismiss alert
+      for (const alert of existingAlerts) {
+        if (alert.type === 'geofence') {
+          await this.dismissAlert(alert.id);
+        }
+      }
+    }
   }
 
   // Alerts
@@ -351,6 +426,12 @@ export class MemStorage implements IStorage {
       isActive: alert.isActive ?? true
     };
     this.alerts.set(id, newAlert);
+    
+    // Trigger WebSocket broadcast (will be handled in routes.ts)
+    process.nextTick(() => {
+      process.emit('alertCreated', newAlert);
+    });
+    
     return newAlert;
   }
 
@@ -360,6 +441,12 @@ export class MemStorage implements IStorage {
     
     alert.isActive = false;
     this.alerts.set(id, alert);
+    
+    // Trigger WebSocket broadcast (will be handled in routes.ts)
+    process.nextTick(() => {
+      process.emit('alertDismissed', alert);
+    });
+    
     return true;
   }
 
