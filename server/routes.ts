@@ -176,6 +176,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/devices", async (req, res) => {
+    try {
+      const validatedData = insertDeviceSchema.parse(req.body);
+      const device = await storage.createDevice(validatedData);
+      res.status(201).json(device);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid device data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create device" });
+    }
+  });
+
+  app.delete("/api/devices/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteDevice(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Device not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete device" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket server for real-time updates

@@ -245,7 +245,8 @@ export class MemStorage implements IStorage {
       ...horse, 
       id, 
       createdAt: new Date(),
-      status: horse.status || "active"
+      status: horse.status || "active",
+      imageUrl: horse.imageUrl ?? null
     };
     this.horses.set(id, newHorse);
     return newHorse;
@@ -280,7 +281,9 @@ export class MemStorage implements IStorage {
     const newLocation: GpsLocation = { 
       ...location, 
       id, 
-      timestamp: new Date() 
+      timestamp: new Date(),
+      accuracy: location.accuracy ?? null,
+      batteryLevel: location.batteryLevel ?? null
     };
     this.locations.set(id, newLocation);
     return newLocation;

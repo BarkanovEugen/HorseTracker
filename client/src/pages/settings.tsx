@@ -435,7 +435,7 @@ export default function Settings() {
                       </td>
                       <td className="py-3 px-4">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {formatLastSignal(device.lastSignal)}
+                          {formatLastSignal(device.lastSignal || undefined)}
                         </span>
                       </td>
                       <td className="py-3 px-4">
