@@ -65,13 +65,17 @@ function HorseHeadIcon({ color, size = 16 }: { color: string; size?: number }) {
 
 // Creates a DOM element for the horse marker
 export function createHorseMarkerElement(horse: Horse, size: number = 32): HTMLElement {
-  const statusColors = {
-    active: horse.markerColor || '#22c55e',
-    warning: '#eab308',
-    offline: '#ef4444',
+  // Always use the user's chosen color as the base color
+  const markerColor = horse.markerColor || '#22c55e';
+  
+  // Define border colors for different statuses to maintain visual indicators
+  const borderColors = {
+    active: 'rgba(255, 255, 255, 0.8)',
+    warning: '#fbbf24', // Yellow border for warning
+    offline: '#f87171', // Red border for offline
   };
-
-  const markerColor = statusColors[horse.status as keyof typeof statusColors] || statusColors.active;
+  
+  const borderColor = borderColors[horse.status as keyof typeof borderColors] || borderColors.active;
 
   // Create main container
   const container = document.createElement('div');
@@ -95,7 +99,7 @@ export function createHorseMarkerElement(horse: Horse, size: number = 32): HTMLE
     width: ${size}px;
     height: ${size}px;
     background: ${markerColor};
-    border: 3px solid white;
+    border: 3px solid ${borderColor};
     border-radius: 50%;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     display: flex;
@@ -134,22 +138,7 @@ export function createHorseMarkerElement(horse: Horse, size: number = 32): HTMLE
 
   background.appendChild(iconContainer);
 
-  // Create status indicator dot
-  const statusDot = document.createElement('div');
-  statusDot.style.cssText = `
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    border: 2px solid white;
-    background: ${horse.status === 'active' ? '#22c55e' : 
-                 horse.status === 'warning' ? '#eab308' : '#ef4444'};
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  `;
-
-  background.appendChild(statusDot);
+  // Status is now indicated by border color, no need for separate dot
   container.appendChild(background);
 
   // Create tooltip
@@ -186,13 +175,17 @@ export function createHorseMarkerElement(horse: Horse, size: number = 32): HTMLE
 }
 
 export default function HorseMarker({ horse, size = 24, onClick }: HorseMarkerProps) {
-  const statusColors = {
-    active: horse.markerColor || '#22c55e',
-    warning: '#eab308', 
-    offline: '#ef4444',
+  // Always use the user's chosen color as the base color
+  const markerColor = horse.markerColor || '#22c55e';
+  
+  // Define border colors for different statuses to maintain visual indicators
+  const borderColors = {
+    active: 'rgba(255, 255, 255, 0.8)',
+    warning: '#fbbf24', // Yellow border for warning
+    offline: '#f87171', // Red border for offline
   };
-
-  const markerColor = statusColors[horse.status as keyof typeof statusColors] || statusColors.active;
+  
+  const borderColor = borderColors[horse.status as keyof typeof borderColors] || borderColors.active;
 
   return (
     <div
@@ -203,20 +196,14 @@ export default function HorseMarker({ horse, size = 24, onClick }: HorseMarkerPr
     >
       {/* Circular background */}
       <div
-        className="w-full h-full rounded-full border-2 border-white shadow-lg flex items-center justify-center relative"
-        style={{ backgroundColor: markerColor }}
+        className="w-full h-full rounded-full border-2 shadow-lg flex items-center justify-center relative"
+        style={{ 
+          backgroundColor: markerColor,
+          borderColor: borderColor
+        }}
       >
         {/* Horse icon */}
         <HorseHeadIcon color="white" size={size * 0.6} />
-        
-        {/* Status indicator */}
-        <div
-          className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-white shadow-sm"
-          style={{
-            backgroundColor: horse.status === 'active' ? '#22c55e' : 
-                           horse.status === 'warning' ? '#eab308' : '#ef4444'
-          }}
-        />
       </div>
     </div>
   );
