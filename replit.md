@@ -24,6 +24,7 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **MapLibre Stability**: Fixed critical map crashes with proper error handling and null checks, suppressed tile loading warnings
 - **Development Authentication**: Temporary auth bypass for testing when VK keys not provided, all users have admin access for development
 - **Trail Visualization**: Interactive trail viewer modal with MapLibre map showing horse routes with time range selection (1h-24h), distance calculation, and GPS point details
+- **Dashboard Trail Display**: 10-minute horse trail display when clicking on horse markers on main map with automatic trail switching between horses
 
 # User Preferences
 

@@ -336,17 +336,12 @@ export default function MapLibreMap({
         el.addEventListener('click', () => {
           onHorseSelect?.(horse);
           
-          // Show 10-minute trail for this horse
-          const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-          const recentTrail = locations
-            .filter(loc => loc.horseId === horse.id && new Date(loc.timestamp!) >= tenMinutesAgo)
-            .sort((a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime());
-          
-          setHorseTrail({ horseId: horse.id, locations: recentTrail });
-          
           toast({
             title: horse.name,
-            description: `${horse.breed} • Показан маршрут за 10 минут (${recentTrail.length} точек)`,
+            description: `${horse.breed} • Статус: ${
+              horse.status === 'active' ? 'Активен' :
+              horse.status === 'warning' ? 'Предупреждение' : 'Не в сети'
+            }`,
           });
         });
 
@@ -460,12 +455,20 @@ export default function MapLibreMap({
     }
   }, [horseTrail]);
 
-  // Clear trail when selected horse changes or resets
+  // Update trail when selected horse changes
   useEffect(() => {
     if (!selectedHorse) {
       setHorseTrail(null);
+    } else {
+      // Show 10-minute trail for selected horse
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      const recentTrail = locations
+        .filter(loc => loc.horseId === selectedHorse.id && new Date(loc.timestamp!) >= tenMinutesAgo)
+        .sort((a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime());
+      
+      setHorseTrail({ horseId: selectedHorse.id, locations: recentTrail });
     }
-  }, [selectedHorse]);
+  }, [selectedHorse, locations]);
 
   // Auto-fit bounds only on initial load, not on every update
   useEffect(() => {
@@ -806,16 +809,16 @@ export default function MapLibreMap({
             />
             
             {/* Trail info */}
-            {horseTrail && horseTrail.locations.length > 0 && (
+            {selectedHorse && horseTrail && horseTrail.locations.length > 0 && (
               <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-3 h-0.5 bg-blue-500"></div>
-                  <span>Маршрут за 10 минут ({horseTrail.locations.length} точек)</span>
+                  <span>{selectedHorse.name}: маршрут за 10 минут ({horseTrail.locations.length} точек)</span>
                   <Button 
                     size="sm" 
                     variant="ghost" 
                     className="h-6 w-6 p-0 ml-2"
-                    onClick={() => setHorseTrail(null)}
+                    onClick={() => onResetView?.()}
                   >
                     <X className="w-3 h-3" />
                   </Button>
