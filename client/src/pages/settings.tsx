@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import GeofenceCreatorDialog from "@/components/geofences/geofence-creator-dialog";
+
 import { 
   MapPin, 
   Bell, 
@@ -35,7 +35,7 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [isGeofenceDialogOpen, setIsGeofenceDialogOpen] = useState(false);
+
   const [isDeviceDialogOpen, setIsDeviceDialogOpen] = useState(false);
   const [isDeviceConfigOpen, setIsDeviceConfigOpen] = useState(false);
   const [configuringDevice, setConfiguringDevice] = useState<Device | null>(null);
@@ -133,7 +133,10 @@ export default function Settings() {
   };
 
   const handleAddGeofence = () => {
-    setIsGeofenceDialogOpen(true);
+    toast({
+      title: "Создание геозон",
+      description: "Для создания геозон перейдите на главную страницу и используйте интерактивную карту",
+    });
   };
 
   const handleSubmitDevice = (e: React.FormEvent) => {
@@ -490,10 +493,7 @@ export default function Settings() {
       </Card>
 
       {/* Geofence Creator Dialog */}
-      <GeofenceCreatorDialog 
-        open={isGeofenceDialogOpen} 
-        onOpenChange={setIsGeofenceDialogOpen} 
-      />
+
 
       {/* Device Creation Dialog */}
       <Dialog open={isDeviceDialogOpen} onOpenChange={setIsDeviceDialogOpen}>
