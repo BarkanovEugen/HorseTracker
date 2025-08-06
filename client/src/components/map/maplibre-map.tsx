@@ -133,6 +133,7 @@ export default function MapLibreMap({
     name: '',
     description: '',
   });
+  const [horseTrail, setHorseTrail] = useState<{horseId: string, locations: GpsLocation[]} | null>(null);
 
   const { data: locations = [], isLoading: locationsLoading } = useQuery<GpsLocation[]>({
     queryKey: ['/api/locations'],
@@ -334,12 +335,18 @@ export default function MapLibreMap({
         // Add click handler
         el.addEventListener('click', () => {
           onHorseSelect?.(horse);
+          
+          // Show 10-minute trail for this horse
+          const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+          const recentTrail = locations
+            .filter(loc => loc.horseId === horse.id && new Date(loc.timestamp!) >= tenMinutesAgo)
+            .sort((a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime());
+          
+          setHorseTrail({ horseId: horse.id, locations: recentTrail });
+          
           toast({
             title: horse.name,
-            description: `${horse.breed} • Статус: ${
-              horse.status === 'active' ? 'Активен' :
-              horse.status === 'warning' ? 'Предупреждение' : 'Не в сети'
-            }`,
+            description: `${horse.breed} • Показан маршрут за 10 минут (${recentTrail.length} точек)`,
           });
         });
 
@@ -404,6 +411,61 @@ export default function MapLibreMap({
       }
     }
   }, [selectedHorse, horseLocations]);
+
+  // Handle horse trail visualization
+  useEffect(() => {
+    if (!map.current || !horseTrail) return;
+
+    // Remove existing trail
+    if (map.current.getLayer('horse-trail-line')) {
+      map.current.removeLayer('horse-trail-line');
+    }
+    if (map.current.getSource('horse-trail')) {
+      map.current.removeSource('horse-trail');
+    }
+
+    // Add trail if there are enough points
+    if (horseTrail.locations.length >= 2) {
+      const coordinates = horseTrail.locations.map(loc => [
+        parseFloat(loc.longitude), 
+        parseFloat(loc.latitude)
+      ]);
+
+      map.current.addSource('horse-trail', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: coordinates
+          }
+        }
+      });
+
+      map.current.addLayer({
+        id: 'horse-trail-line',
+        type: 'line',
+        source: 'horse-trail',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#3b82f6',
+          'line-width': 3,
+          'line-opacity': 0.8
+        }
+      });
+    }
+  }, [horseTrail]);
+
+  // Clear trail when selected horse changes or resets
+  useEffect(() => {
+    if (!selectedHorse) {
+      setHorseTrail(null);
+    }
+  }, [selectedHorse]);
 
   // Auto-fit bounds only on initial load, not on every update
   useEffect(() => {
@@ -742,6 +804,24 @@ export default function MapLibreMap({
               onCancelDrawing={handleCancelDrawing}
               canComplete={drawingPoints.length >= 3}
             />
+            
+            {/* Trail info */}
+            {horseTrail && horseTrail.locations.length > 0 && (
+              <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-3 h-0.5 bg-blue-500"></div>
+                  <span>Маршрут за 10 минут ({horseTrail.locations.length} точек)</span>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="h-6 w-6 p-0 ml-2"
+                    onClick={() => setHorseTrail(null)}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
