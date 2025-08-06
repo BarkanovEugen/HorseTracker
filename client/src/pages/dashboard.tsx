@@ -68,12 +68,14 @@ export default function Dashboard() {
           {/* Right Content Area */}
           <div className="flex-1 flex flex-col">
             {/* Map - Takes most vertical space */}
-            <div className="flex-1 min-h-0">
-              <MapLibreMap 
-                selectedHorse={selectedHorse}
-                onHorseSelect={setSelectedHorse}
-                onResetView={handleResetView}
-              />
+            <div className="flex-1 min-h-0 relative">
+              <div className="absolute inset-0">
+                <MapLibreMap 
+                  selectedHorse={selectedHorse}
+                  onHorseSelect={setSelectedHorse}
+                  onResetView={handleResetView}
+                />
+              </div>
             </div>
 
             {/* Bottom Panel - Alerts */}

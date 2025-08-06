@@ -673,7 +673,7 @@ export default function MapLibreMap({
 
   return (
     <>
-      <Card className="h-full shadow-lg">
+      <Card className="h-full shadow-lg flex flex-col">
         <CardHeader className="py-2 sm:py-3 px-3 sm:px-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-gray-800 dark:to-gray-800">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 dark:text-white flex items-center gap-1.5">
@@ -693,12 +693,12 @@ export default function MapLibreMap({
           )}
         </CardHeader>
         
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 relative">
           <div 
-            className="h-full w-full relative rounded-b-lg overflow-hidden"
+            className="absolute inset-0 w-full h-full rounded-b-lg overflow-hidden"
             data-testid="maplibre-map-container"
           >
-            <div ref={mapContainer} className="w-full h-full min-h-[250px]" />
+            <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
             
             {!mapLoaded && (
               <div className="absolute inset-0 bg-muted rounded-md flex items-center justify-center">
