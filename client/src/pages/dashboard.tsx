@@ -43,7 +43,7 @@ export default function Dashboard() {
 
           {/* Horse Status - Directly under map on mobile */}
           <div className="order-2">
-            <HorseStatus onHorseSelect={handleHorseSelect} />
+            <HorseStatus onHorseSelect={handleHorseSelect} selectedHorse={selectedHorse} />
           </div>
 
           {/* Stats Section */}
@@ -63,7 +63,7 @@ export default function Dashboard() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Лошади</h2>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
-              <HorseStatus onHorseSelect={handleHorseSelect} />
+              <HorseStatus onHorseSelect={handleHorseSelect} selectedHorse={selectedHorse} />
             </div>
             <div className="p-6 border-t border-gray-200 dark:border-gray-700">
               <QuickStats />

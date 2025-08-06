@@ -10,6 +10,7 @@ import HorseForm from "@/components/horses/horse-form";
 
 interface HorseStatusProps {
   onHorseSelect?: (horse: Horse) => void;
+  selectedHorse?: Horse | null;
 }
 
 // Ray casting algorithm for point-in-polygon test
@@ -29,7 +30,7 @@ function isPointInPolygon(point: [number, number], polygon: [number, number][]):
   return inside;
 }
 
-export default function HorseStatus({ onHorseSelect }: HorseStatusProps) {
+export default function HorseStatus({ onHorseSelect, selectedHorse }: HorseStatusProps) {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingHorse, setEditingHorse] = useState<Horse | null>(null);
   const canEdit = useCanEdit();
@@ -159,12 +160,21 @@ export default function HorseStatus({ onHorseSelect }: HorseStatusProps) {
             <div 
               key={horse.id} 
               className={`relative p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
-                horse.isInSafeZone 
-                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                selectedHorse?.id === horse.id 
+                  ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600 shadow-lg ring-2 ring-blue-400 dark:ring-blue-600'
+                  : horse.isInSafeZone 
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
               }`}
               data-testid={`horse-${horse.id}`}
-              onClick={() => onHorseSelect?.(horse)}
+              onClick={() => {
+                // Toggle logic: if same horse is clicked, deselect it
+                if (selectedHorse?.id === horse.id) {
+                  onHorseSelect?.(horse); // This will trigger the toggle logic in dashboard
+                } else {
+                  onHorseSelect?.(horse);
+                }
+              }}
             >
               {/* Edit button */}
               {canEdit && (
