@@ -1014,6 +1014,15 @@ export class DatabaseStorage implements IStorage {
         escalatedAlerts.push(escalatedAlert);
         
         console.log(`🔔 PUSH NOTIFICATION: ${escalatedAlert.title} - ${escalatedAlert.description}`);
+        console.log(`🚨 ALERT ESCALATED: ${escalatedAlert.title} - sending Telegram notifications`);
+        
+        // Send Telegram notifications for escalated alert
+        this.sendTelegramAlertNotifications(escalatedAlert);
+        
+        // Trigger WebSocket broadcast for escalation
+        process.nextTick(() => {
+          (process as any).emit('alertEscalated', escalatedAlert);
+        });
       }
     }
     
@@ -1147,6 +1156,12 @@ export class DatabaseStorage implements IStorage {
       return;
     }
 
+    // Only send notifications for escalated (critical) alerts
+    if (!alert.escalated) {
+      console.log(`📱 Skipping Telegram notification - alert not escalated: ${alert.title}`);
+      return;
+    }
+
     try {
       // Check for development Telegram recipients first
       const telegramRecipients = global.telegramRecipients || [];
@@ -1222,8 +1237,9 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
-      // Only send dismissal notifications for geofence alerts
-      if (alert.type !== 'geofence') {
+      // Only send dismissal notifications for escalated geofence alerts
+      if (alert.type !== 'geofence' || !alert.escalated) {
+        console.log(`📱 Skipping Telegram dismissal notification - alert not escalated or not geofence: ${alert.title}`);
         return;
       }
 
