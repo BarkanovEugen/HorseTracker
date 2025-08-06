@@ -67,8 +67,8 @@ export default function Dashboard() {
 
           {/* Right Content Area */}
           <div className="flex-1 flex flex-col">
-            {/* Map - Takes most vertical space */}
-            <div className="flex-1 min-h-0 relative">
+            {/* Map - Balanced space with alerts */}
+            <div className="h-[60vh] xl:h-[65vh] relative">
               <div className="absolute inset-0">
                 <MapLibreMap 
                   selectedHorse={selectedHorse}
@@ -79,7 +79,7 @@ export default function Dashboard() {
             </div>
 
             {/* Bottom Panel - Alerts */}
-            <div className="h-64 xl:h-80 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex-1 min-h-[300px] xl:min-h-[350px] bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
               <div className="p-6 h-full flex flex-col">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Уведомления</h3>
                 <div className="flex-1 overflow-y-auto">
