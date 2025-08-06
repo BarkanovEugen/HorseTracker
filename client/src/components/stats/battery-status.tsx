@@ -228,20 +228,23 @@ export default function HorseStatus({ onHorseSelect }: HorseStatusProps) {
         </div>
       </div>
 
-      {/* Add Horse Dialog */}
-      <HorseForm
-        open={showAddDialog}
-        onClose={() => setShowAddDialog(false)}
-        onSuccess={() => setShowAddDialog(false)}
-      />
+      {/* Horse Form Dialogs */}
+      {showAddDialog && (
+        <HorseForm
+          open={showAddDialog}
+          onClose={() => setShowAddDialog(false)}
+          onSuccess={() => setShowAddDialog(false)}
+        />
+      )}
 
-      {/* Edit Horse Dialog */}
-      <HorseForm
-        open={!!editingHorse}
-        horse={editingHorse || undefined}
-        onClose={() => setEditingHorse(null)}
-        onSuccess={() => setEditingHorse(null)}
-      />
+      {editingHorse && (
+        <HorseForm
+          open={!!editingHorse}
+          horse={editingHorse}
+          onClose={() => setEditingHorse(null)}
+          onSuccess={() => setEditingHorse(null)}
+        />
+      )}
     </>
   );
 }

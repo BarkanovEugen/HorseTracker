@@ -137,7 +137,7 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="z-[10000] max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle data-testid="horse-form-title">
             {isEditing ? 'Редактировать лошадь' : 'Добавить лошадь'}
@@ -196,7 +196,7 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
               >
                 <SelectValue placeholder="Выберите устройство" />
               </SelectTrigger>
-              <SelectContent className="z-[10010]">
+              <SelectContent>
                 {devices.map((device) => (
                   <SelectItem key={device.id} value={device.deviceId}>
                     {device.deviceId} {device.horseId ? '(занято)' : '(свободно)'}
@@ -266,7 +266,7 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
               <SelectTrigger data-testid="horse-status-select">
                 <SelectValue placeholder="Выберите статус" />
               </SelectTrigger>
-              <SelectContent className="z-[10010]">
+              <SelectContent>
                 <SelectItem value="active">Активен</SelectItem>
                 <SelectItem value="warning">Предупреждение</SelectItem>
                 <SelectItem value="offline">Офлайн</SelectItem>
