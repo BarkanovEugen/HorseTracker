@@ -751,6 +751,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
     }, 10000); // Every 10 seconds
+
+    // Alert escalation check - every 30 seconds
+    setInterval(async () => {
+      try {
+        const escalatedAlerts = await storage.escalateOldAlerts();
+        if (escalatedAlerts.length > 0) {
+          console.log(`🚨 Escalated ${escalatedAlerts.length} alerts`);
+          // Broadcast escalated alerts via WebSocket
+          for (const alert of escalatedAlerts) {
+            broadcast(JSON.stringify({
+              type: 'alert_escalated',
+              data: alert
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error checking for alert escalation:', error);
+      }
+    }, 30000); // Every 30 seconds
   }
 
   return httpServer;
