@@ -243,8 +243,12 @@ export default function MapLibreMap({
         }, 100);
       });
 
-      // Add error handling
+      // Add error handling - suppress tile loading errors
       map.current.on('error', (e) => {
+        // Suppress common tile loading errors and abort errors
+        if (e.error?.status === 0 || e.error?.message?.includes('AbortError') || e.error?.message?.includes('signal is aborted')) {
+          return; // These are normal when user moves map quickly
+        }
         console.error('MapLibre: Map error', e.error);
         setMapLoaded(true); // Still show the map container
       });

@@ -119,7 +119,7 @@ export default function HorseCard({ horse, device, onView, onEdit }: HorseCardPr
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Последний сигнал:</span>
                 <span data-testid={`horse-last-signal-${horse.id}`}>
-                  {formatLastSignal(device.lastSignal)}
+                  {formatLastSignal(device.lastSignal || undefined)}
                 </span>
               </div>
             </>

@@ -20,6 +20,9 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Horse Status Enhancement**: Renamed "Батареи" to "Лошади" with zone status indicators (safe/outside) alongside battery levels
 - **Mobile Layout Optimization**: Reorganized layout with horses section positioned directly under map on mobile devices
 - **VK ID Authentication**: Modern VK ID integration with OAuth2 flow, user profile management, and session handling
+- **Role-Based Access Control**: Complete permissions system with admin/viewer roles, protected API endpoints, conditional UI rendering
+- **MapLibre Stability**: Fixed critical map crashes with proper error handling and null checks, suppressed tile loading warnings
+- **Development Authentication**: Temporary auth bypass for testing when VK keys not provided, all users have admin access for development
 
 # User Preferences
 
