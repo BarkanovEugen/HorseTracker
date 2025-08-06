@@ -6,7 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,31 +34,17 @@ interface PendingGeofence {
 }
 
 function GeofenceCreator({ 
-  onGeofenceCreate 
+  onGeofenceCreate,
+  isDrawing 
 }: { 
-  onGeofenceCreate: (lat: number, lng: number, radius: number) => void 
+  onGeofenceCreate: (lat: number, lng: number, radius: number) => void;
+  isDrawing: boolean;
 }) {
-  const [isDrawing, setIsDrawing] = useState(false);
-
-  const map = useMap();
-
-  // Use effect to listen for drawing mode changes
-  React.useEffect(() => {
-    const currentMode = (map as any)._drawingMode || false;
-    if (currentMode !== isDrawing) {
-      setIsDrawing(currentMode);
-    }
-  }, [map, isDrawing]);
-
   useMapEvents({
     click(e) {
       if (isDrawing) {
         const defaultRadius = 200; // 200 meters default
         onGeofenceCreate(e.latlng.lat, e.latlng.lng, defaultRadius);
-        // Reset drawing mode
-        (map as any)._drawingMode = false;
-        map.getContainer().style.cursor = '';
-        setIsDrawing(false);
       }
     },
   });
@@ -66,7 +52,12 @@ function GeofenceCreator({
   return null;
 }
 
-function MapController() {
+interface MapControllerProps {
+  onToggleDrawing: () => void;
+  isDrawing: boolean;
+}
+
+function MapController({ onToggleDrawing, isDrawing }: MapControllerProps) {
   const map = useMap();
   
   const centerMap = () => {
@@ -74,16 +65,15 @@ function MapController() {
     map.setView([55.7558, 37.6176], 13);
   };
 
-  const toggleGeofenceCreation = () => {
-    const currentMode = (map as any)._drawingMode;
-    (map as any)._drawingMode = !currentMode;
-    
-    if (!currentMode) {
+  React.useEffect(() => {
+    if (isDrawing) {
       map.getContainer().style.cursor = 'crosshair';
+      map.getContainer().classList.add('drawing-mode');
     } else {
       map.getContainer().style.cursor = '';
+      map.getContainer().classList.remove('drawing-mode');
     }
-  };
+  }, [isDrawing, map]);
 
   return (
     <div className="absolute top-4 left-4 z-[1000] flex space-x-2">
@@ -99,13 +89,13 @@ function MapController() {
       </Button>
       <Button
         size="sm"
-        variant="outline"
+        variant={isDrawing ? "default" : "outline"}
         className="bg-white dark:bg-gray-800 shadow-lg"
-        onClick={toggleGeofenceCreation}
+        onClick={onToggleDrawing}
         data-testid="add-geofence-map-button"
       >
         <Plus className="w-4 h-4 mr-1" />
-        Добавить зону
+        {isDrawing ? 'Отменить' : 'Добавить зону'}
       </Button>
     </div>
   );
@@ -116,6 +106,7 @@ export default function LeafletMap() {
   const queryClient = useQueryClient();
   const mapRef = useRef<L.Map | null>(null);
 
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [isGeofenceDialogOpen, setIsGeofenceDialogOpen] = useState(false);
   const [pendingGeofence, setPendingGeofence] = useState<{ lat: number; lng: number; radius: number } | null>(null);
   const [formData, setFormData] = useState<GeofenceFormData>({
@@ -175,10 +166,19 @@ export default function LeafletMap() {
     };
   }).filter(item => item.lastLocation);
 
+  const toggleDrawingMode = () => {
+    setIsDrawingMode(!isDrawingMode);
+    if (pendingGeofence) {
+      setPendingGeofence(null);
+      setFormData({ name: '', description: '', radius: 200 });
+    }
+  };
+
   const handleGeofenceCreate = useCallback((lat: number, lng: number, radius: number) => {
     setPendingGeofence({ lat, lng, radius });
     setFormData(prev => ({ ...prev, radius }));
     setIsGeofenceDialogOpen(true);
+    setIsDrawingMode(false);
   }, []);
 
   const handleSaveGeofence = () => {
@@ -279,9 +279,15 @@ export default function LeafletMap() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
               
-              <MapController />
+              <MapController 
+                onToggleDrawing={toggleDrawingMode}
+                isDrawing={isDrawingMode}
+              />
               
-              <GeofenceCreator onGeofenceCreate={handleGeofenceCreate} />
+              <GeofenceCreator 
+                onGeofenceCreate={handleGeofenceCreate} 
+                isDrawing={isDrawingMode}
+              />
               
               {/* Horse Markers */}
               {horseLocations.map(({ horse, lastLocation }) => (
@@ -333,6 +339,9 @@ export default function LeafletMap() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Создать геозону</DialogTitle>
+            <DialogDescription>
+              Заполните информацию о новой геозоне и настройте её параметры.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
