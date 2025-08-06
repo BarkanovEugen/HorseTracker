@@ -7,11 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, MapPin, Clock, TrendingUp } from "lucide-react";
+import TrailViewerModal from "@/components/history/trail-viewer-modal";
 
 export default function History() {
   const [selectedHorse, setSelectedHorse] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
+  const [trailModalOpen, setTrailModalOpen] = useState(false);
+  const [selectedTrailHorse, setSelectedTrailHorse] = useState<Horse | null>(null);
+  const [selectedTrailLocations, setSelectedTrailLocations] = useState<GpsLocation[]>([]);
 
   const { data: horses = [], isLoading: horsesLoading } = useQuery<Horse[]>({
     queryKey: ['/api/horses'],
@@ -67,7 +71,9 @@ export default function History() {
 
   const handleViewTrail = (entry: any) => {
     console.log("Viewing trail for:", entry.horse.name, entry.locations);
-    // TODO: Implement trail visualization
+    setSelectedTrailHorse(entry.horse);
+    setSelectedTrailLocations(entry.locations);
+    setTrailModalOpen(true);
   };
 
   const formatTime = (timestamp: Date | string) => {
@@ -271,6 +277,20 @@ export default function History() {
           )}
         </CardContent>
       </Card>
+
+      {/* Trail Viewer Modal */}
+      {selectedTrailHorse && (
+        <TrailViewerModal
+          isOpen={trailModalOpen}
+          onClose={() => {
+            setTrailModalOpen(false);
+            setSelectedTrailHorse(null);
+            setSelectedTrailLocations([]);
+          }}
+          horse={selectedTrailHorse}
+          initialLocations={selectedTrailLocations}
+        />
+      )}
     </div>
   );
 }
