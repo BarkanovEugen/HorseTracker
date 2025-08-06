@@ -60,7 +60,10 @@ function MapControls({
         <Button
           size="sm"
           className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-          onClick={onToggleDrawing}
+          onClick={() => {
+            console.log('Toggling drawing mode to true');
+            onToggleDrawing();
+          }}
           data-testid="add-geofence-button"
         >
           <Plus className="w-4 h-4 mr-1" />
@@ -220,17 +223,6 @@ export default function MapLibreMap({
     // Add navigation control
     map.current.addControl(new maplibregl.NavigationControl());
 
-    // Handle drawing mode clicks
-    const handleMapClick = (e: maplibregl.MapMouseEvent) => {
-      if (isDrawingMode) {
-        e.preventDefault();
-        const newPoint: [number, number] = [e.lngLat.lat, e.lngLat.lng];
-        setDrawingPoints(prev => [...prev, newPoint]);
-      }
-    };
-
-    map.current.on('click', handleMapClick);
-
     return () => {
       if (map.current) {
         map.current.remove();
@@ -238,6 +230,28 @@ export default function MapLibreMap({
       }
     };
   }, [isLoading]);
+
+  // Handle map click events for drawing
+  useEffect(() => {
+    if (!map.current) return;
+
+    const handleMapClick = (e: maplibregl.MapMouseEvent) => {
+      if (isDrawingMode) {
+        e.preventDefault();
+        const newPoint: [number, number] = [e.lngLat.lat, e.lngLat.lng];
+        setDrawingPoints(prev => [...prev, newPoint]);
+        console.log('Added point:', newPoint, 'Total points:', drawingPoints.length + 1);
+      }
+    };
+
+    map.current.on('click', handleMapClick);
+
+    return () => {
+      if (map.current) {
+        map.current.off('click', handleMapClick);
+      }
+    };
+  }, [isDrawingMode]); // Only depend on isDrawingMode, not drawingPoints
 
   // Update horse markers
   useEffect(() => {
@@ -532,12 +546,15 @@ export default function MapLibreMap({
   }, [drawingPoints, isDrawingMode]);
 
   const toggleDrawingMode = () => {
+    console.log('Toggle drawing mode called. Current mode:', isDrawingMode);
     if (isDrawingMode) {
       setIsDrawingMode(false);
       setDrawingPoints([]);
+      console.log('Drawing mode disabled');
     } else {
       setIsDrawingMode(true);
       setDrawingPoints([]);
+      console.log('Drawing mode enabled');
     }
   };
 
