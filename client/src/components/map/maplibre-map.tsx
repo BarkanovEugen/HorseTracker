@@ -220,36 +220,42 @@ export default function MapLibreMap({
       }
     }
 
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: MAP_STYLE,
-      center: center,
-      zoom: zoom,
-      attributionControl: false, // Disable attribution for faster loading
-      logoPosition: 'bottom-right',
-    });
+    try {
+      map.current = new maplibregl.Map({
+        container: mapContainer.current,
+        style: JSON.parse(JSON.stringify(MAP_STYLE)), // Deep clone the style
+        center: center,
+        zoom: zoom,
+        attributionControl: false, // Disable attribution for faster loading
+        logoPosition: 'bottom-right',
+      });
 
-    // Wait for style to load before marking as loaded
-    map.current.on('load', () => {
-      console.log('MapLibre: Map loaded successfully');
-      setMapLoaded(true);
+      // Wait for style to load before marking as loaded
+      map.current.on('load', () => {
+        console.log('MapLibre: Map loaded successfully');
+        setMapLoaded(true);
+        
+        // Force resize after loading to fix mobile display issues
+        setTimeout(() => {
+          if (map.current) {
+            map.current.resize();
+          }
+        }, 100);
+      });
+
+      // Add error handling
+      map.current.on('error', (e) => {
+        console.error('MapLibre: Map error', e.error);
+        setMapLoaded(true); // Still show the map container
+      });
       
-      // Force resize after loading to fix mobile display issues
-      setTimeout(() => {
-        if (map.current) {
-          map.current.resize();
-        }
-      }, 100);
-    });
+      // Add navigation control
+      map.current.addControl(new maplibregl.NavigationControl());
 
-    // Add error handling
-    map.current.on('error', (e) => {
-      console.error('MapLibre: Map error', e.error);
+    } catch (error) {
+      console.error('MapLibre: Failed to initialize map', error);
       setMapLoaded(true); // Still show the map container
-    });
-    
-    // Add navigation control
-    map.current.addControl(new maplibregl.NavigationControl());
+    }
 
     return () => {
       if (map.current) {

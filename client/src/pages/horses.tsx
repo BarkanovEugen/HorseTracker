@@ -84,14 +84,16 @@ export default function Horses() {
             Управление профилями лошадей и их устройствами GPS
           </p>
         </div>
-        <Button 
-          onClick={handleAddHorse}
-          className="bg-primary hover:bg-primary/90"
-          data-testid="add-horse-button"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Добавить лошадь
-        </Button>
+        {canEdit && (
+          <Button 
+            onClick={handleAddHorse}
+            className="bg-primary hover:bg-primary/90"
+            data-testid="add-horse-button"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Добавить лошадь
+          </Button>
+        )}
       </div>
 
       {/* Horses Grid */}
@@ -100,12 +102,14 @@ export default function Horses() {
           <div className="text-6xl mb-4">🐎</div>
           <h3 className="text-xl font-semibold mb-2">Нет лошадей</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Добавьте первую лошадь для начала мониторинга
+            {canEdit ? "Добавьте первую лошадь для начала мониторинга" : "Лошади пока не добавлены"}
           </p>
-          <Button onClick={handleAddHorse} className="bg-primary hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
-            Добавить лошадь
-          </Button>
+          {canEdit && (
+            <Button onClick={handleAddHorse} className="bg-primary hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-2" />
+              Добавить лошадь
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

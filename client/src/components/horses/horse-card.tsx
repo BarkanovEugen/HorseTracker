@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Edit, Wifi, WifiOff } from "lucide-react";
+import { useCanEdit } from "@/hooks/use-permissions";
 
 interface HorseCardProps {
   horse: Horse;
@@ -12,6 +13,7 @@ interface HorseCardProps {
 }
 
 export default function HorseCard({ horse, device, onView, onEdit }: HorseCardProps) {
+  const canEdit = useCanEdit();
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -134,15 +136,17 @@ export default function HorseCard({ horse, device, onView, onEdit }: HorseCardPr
             <Eye className="w-4 h-4 mr-1" />
             Детали
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={onEdit}
-            data-testid={`edit-horse-${horse.id}`}
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Изменить
-          </Button>
+          {canEdit && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={onEdit}
+              data-testid={`edit-horse-${horse.id}`}
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              Изменить
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
