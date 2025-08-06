@@ -409,9 +409,9 @@ export default function MapLibreMap({
 
   // Handle horse trail visualization
   useEffect(() => {
-    if (!map.current || !horseTrail) return;
+    if (!map.current) return;
 
-    // Remove existing trail
+    // Always remove existing trail first
     if (map.current.getLayer('horse-trail-line')) {
       map.current.removeLayer('horse-trail-line');
     }
@@ -419,8 +419,8 @@ export default function MapLibreMap({
       map.current.removeSource('horse-trail');
     }
 
-    // Add trail if there are enough points
-    if (horseTrail.locations.length >= 2) {
+    // Add trail if there's a trail and enough points
+    if (horseTrail && horseTrail.locations.length >= 2) {
       const coordinates = horseTrail.locations.map(loc => [
         parseFloat(loc.longitude), 
         parseFloat(loc.latitude)
