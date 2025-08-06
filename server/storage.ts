@@ -330,7 +330,8 @@ export class MemStorage implements IStorage {
       ...geofence, 
       id, 
       createdAt: new Date(),
-      isActive: geofence.isActive ?? true
+      isActive: geofence.isActive ?? true,
+      description: geofence.description ?? null
     };
     this.geofences.set(id, newGeofence);
     return newGeofence;
@@ -360,7 +361,15 @@ export class MemStorage implements IStorage {
 
   async createDevice(device: InsertDevice): Promise<Device> {
     const id = randomUUID();
-    const newDevice: Device = { ...device, id };
+    const newDevice: Device = { 
+      ...device, 
+      id,
+      horseId: device.horseId ?? null,
+      batteryLevel: device.batteryLevel ?? null,
+      isOnline: device.isOnline ?? false,
+      lastSignal: device.lastSignal ?? null,
+      firmwareVersion: device.firmwareVersion ?? null
+    };
     this.devices.set(id, newDevice);
     return newDevice;
   }

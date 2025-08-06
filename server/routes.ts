@@ -178,10 +178,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/devices", async (req, res) => {
     try {
+      console.log("POST /api/devices - Request body:", req.body);
       const validatedData = insertDeviceSchema.parse(req.body);
+      console.log("POST /api/devices - Validated data:", validatedData);
       const device = await storage.createDevice(validatedData);
+      console.log("POST /api/devices - Created device:", device);
       res.status(201).json(device);
     } catch (error) {
+      console.error("POST /api/devices - Error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid device data", errors: error.errors });
       }
