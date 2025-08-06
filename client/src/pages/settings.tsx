@@ -297,47 +297,52 @@ export default function Settings() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold flex items-center" data-testid="settings-title">
-          <SettingsIcon className="w-6 h-6 mr-2 text-primary" />
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center" data-testid="settings-title">
+          <SettingsIcon className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-primary" />
           Настройки Системы
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base">
           Управление геозонами, уведомлениями и устройствами
         </p>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Geofence Settings */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MapPin className="w-5 h-5 mr-2 text-primary" />
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" />
               Геозоны
             </CardTitle>
           </CardHeader>
           
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4 pt-0">
             {geofences.length === 0 ? (
               <div className="text-center py-8">
                 <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Нет настроенных геозон
                 </p>
-                <div className="flex flex-col space-y-2">
-                <Button onClick={handleAddGeofence} data-testid="add-geofence-empty">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Создать на карте
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <Button 
+                  onClick={handleAddGeofence} 
+                  data-testid="add-geofence-empty"
+                  className="w-full sm:flex-1"
+                >
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  <span className="text-sm sm:text-base">Создать на карте</span>
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={handleAddGeofenceManual} 
                   data-testid="add-geofence-manual-empty"
+                  className="w-full sm:flex-1"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ввести координаты
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  <span className="text-sm sm:text-base">Координаты</span>
                 </Button>
               </div>
               </div>
@@ -346,45 +351,51 @@ export default function Settings() {
                 {geofences.map((geofence) => (
                   <div
                     key={geofence.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    className="flex items-start justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg gap-3"
                     data-testid={`geofence-${geofence.id}`}
                   >
-                    <div>
-                      <p className="font-medium">{geofence.name}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {geofence.description} • Полигональная зона
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">{geofence.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {geofence.description && (
+                          <>
+                            <span className="hidden sm:inline">{geofence.description} • </span>
+                          </>
+                        )}
+                        Полигональная зона
                       </p>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeleteGeofence(geofence.id)}
                         data-testid={`delete-geofence-${geofence.id}`}
+                        className="h-8 w-8 sm:h-9 sm:w-9"
                       >
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" />
                       </Button>
                     </div>
                   </div>
                 ))}
                 
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button 
                     onClick={handleAddGeofence}
-                    className="flex-1 bg-primary hover:bg-primary/90"
+                    className="w-full sm:flex-1 bg-primary hover:bg-primary/90"
                     data-testid="add-geofence-button"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Создать на карте
+                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                    <span className="text-sm sm:text-base">Создать на карте</span>
                   </Button>
                   <Button 
                     variant="outline"
                     onClick={handleAddGeofenceManual}
-                    className="flex-1"
+                    className="w-full sm:flex-1"
                     data-testid="add-geofence-manual-button"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Ввести координаты
+                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                    <span className="text-sm sm:text-base">Координаты</span>
                   </Button>
                 </div>
               </>
@@ -394,67 +405,75 @@ export default function Settings() {
         
         {/* Notification Settings */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Bell className="w-5 h-5 mr-2 text-primary" />
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" />
               Уведомления
             </CardTitle>
           </CardHeader>
           
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Покидание геозоны</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Уведомления при выходе из безопасной зоны
+          <CardContent className="space-y-4 sm:space-y-6 pt-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm sm:text-base">Покидание геозоны</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <span className="hidden sm:inline">Уведомления при выходе из безопасной зоны</span>
+                  <span className="sm:hidden">Выход из зоны</span>
                 </p>
               </div>
               <Switch
                 checked={notifications.geofenceExit}
                 onCheckedChange={() => handleNotificationToggle('geofenceExit')}
                 data-testid="notification-geofence-toggle"
+                className="flex-shrink-0"
               />
             </div>
             
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Низкий заряд батареи</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Предупреждения при заряде менее 20%
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm sm:text-base">Низкий заряд батареи</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <span className="hidden sm:inline">Предупреждения при заряде менее 20%</span>
+                  <span className="sm:hidden">Заряд меньше 20%</span>
                 </p>
               </div>
               <Switch
                 checked={notifications.lowBattery}
                 onCheckedChange={() => handleNotificationToggle('lowBattery')}
                 data-testid="notification-battery-toggle"
+                className="flex-shrink-0"
               />
             </div>
             
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Потеря сигнала</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Уведомления при отключении устройства
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm sm:text-base">Потеря сигнала</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <span className="hidden sm:inline">Уведомления при отключении устройства</span>
+                  <span className="sm:hidden">Отключение устройства</span>
                 </p>
               </div>
               <Switch
                 checked={notifications.deviceOffline}
                 onCheckedChange={() => handleNotificationToggle('deviceOffline')}
                 data-testid="notification-offline-toggle"
+                className="flex-shrink-0"
               />
             </div>
             
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Ежедневные отчеты</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Сводка активности лошадей
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm sm:text-base">Ежедневные отчеты</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <span className="hidden sm:inline">Сводка активности лошадей</span>
+                  <span className="sm:hidden">Сводка активности</span>
                 </p>
               </div>
               <Switch
                 checked={notifications.dailyReports}
                 onCheckedChange={() => handleNotificationToggle('dailyReports')}
                 data-testid="notification-reports-toggle"
+                className="flex-shrink-0"
               />
             </div>
           </CardContent>
@@ -463,38 +482,108 @@ export default function Settings() {
       
       {/* Device Management */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center">
-              <Cpu className="w-5 h-5 mr-2 text-primary" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" />
               Управление Устройствами
             </CardTitle>
             <Button 
               onClick={() => setIsDeviceDialogOpen(true)}
-              className="bg-primary hover:bg-primary/90"
+              className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
               data-testid="add-device-button"
+              size="sm"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Добавить устройство
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+              <span className="text-sm">Добавить устройство</span>
             </Button>
           </div>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="pt-0">
           {devices.length === 0 ? (
-            <div className="text-center py-12">
-              <Cpu className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Нет устройств</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <div className="text-center py-8 sm:py-12">
+              <Cpu className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+              <h3 className="text-base sm:text-lg font-semibold mb-2">Нет устройств</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
                 Добавьте устройства GPS для мониторинга лошадей
               </p>
-              <Button onClick={() => setIsDeviceDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Добавить устройство
+              <Button 
+                onClick={() => setIsDeviceDialogOpen(true)}
+                className="w-full sm:w-auto"
+              >
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                <span className="text-sm">Добавить устройство</span>
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              {/* Mobile cards view */}
+              <div className="block sm:hidden space-y-3">
+              {devices.map((device) => (
+                <div
+                  key={device.id}
+                  className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3"
+                  data-testid={`device-card-${device.id}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Cpu className="w-4 h-4 text-gray-400" />
+                      <span className="font-mono text-sm font-medium">{device.deviceId}</span>
+                    </div>
+                    <Badge className={getDeviceStatusColor(device.isOnline)}>
+                      <div className="flex items-center space-x-1">
+                        {device.isOnline ? (
+                          <Wifi className="w-3 h-3" />
+                        ) : (
+                          <WifiOff className="w-3 h-3" />
+                        )}
+                        <span className="text-xs">{getDeviceStatusText(device)}</span>
+                      </div>
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">Лошадь</p>
+                      <p className="font-medium">
+                        {device.horseId ? `№${device.horseId.slice(-4)}` : 'Не назначено'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">Батарея</p>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-12 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all ${getBatteryColor(device.batteryLevel || '0')}`}
+                            style={{ width: `${device.batteryLevel || 0}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-mono">{device.batteryLevel || 0}%</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">Последний сигнал</p>
+                      <p className="text-xs">{formatLastSignal(device.lastSignal || undefined)}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleConfigureDevice(device)}
+                      data-testid={`device-actions-mobile-${device.id}`}
+                    >
+                      Настроить
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table view */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full" data-testid="devices-table">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -585,38 +674,41 @@ export default function Settings() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* Geofence Creator Dialog */}
       <Dialog open={isGeofenceDialogOpen} onOpenChange={setIsGeofenceDialogOpen}>
-        <DialogContent className="z-[10000] max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="z-[10000] w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
               {geofenceCreationMode === 'map' ? 'Создать геозону на карте' : 'Добавить геозону вручную'}
             </DialogTitle>
           </DialogHeader>
           
           {geofenceCreationMode === 'map' ? (
-            <div className="space-y-4">
-              <div className="h-[500px] w-full border rounded-lg overflow-hidden">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="h-[300px] sm:h-[500px] w-full border rounded-lg overflow-hidden">
                 <MapLibreMap />
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                <p>• Нажмите кнопку "Добавить зону" на карте</p>
-                <p>• Кликните по карте, чтобы добавить точки полигона (минимум 3 точки)</p>
-                <p>• Нажмите "Завершить" для создания геозоны</p>
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                <p>• <span className="hidden sm:inline">Нажмите кнопку "Добавить зону" на карте</span><span className="sm:hidden">Нажмите "Зона" на карте</span></p>
+                <p>• <span className="hidden sm:inline">Кликните по карте, чтобы добавить точки полигона (минимум 3 точки)</span><span className="sm:hidden">Кликните для добавления точек (мин. 3)</span></p>
+                <p>• <span className="hidden sm:inline">Нажмите "Завершить" для создания геозоны</span><span className="sm:hidden">Нажмите "Готово"</span></p>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setGeofenceCreationMode('manual');
                   }}
                   data-testid="switch-to-manual-mode"
+                  className="w-full sm:flex-1"
                 >
-                  Переключиться на ручной ввод
+                  <span className="hidden sm:inline">Переключиться на ручной ввод</span>
+                  <span className="sm:hidden">Ручной ввод</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -625,13 +717,14 @@ export default function Settings() {
                     setGeofenceFormData({ name: '', description: '', coordinates: '' });
                   }}
                   data-testid="cancel-map-geofence"
+                  className="w-full sm:flex-1"
                 >
                   Отмена
                 </Button>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmitGeofence} className="space-y-4">
+            <form onSubmit={handleSubmitGeofence} className="space-y-3 sm:space-y-4">
               <div>
                 <Label htmlFor="geofence-name">Название геозоны*</Label>
                 <Input
@@ -673,10 +766,10 @@ export default function Settings() {
                 </p>
               </div>
               
-              <div className="flex space-x-2 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                 <Button
                   type="submit"
-                  className="flex-1 bg-primary hover:bg-primary/90"
+                  className="w-full sm:flex-1 bg-primary hover:bg-primary/90"
                   disabled={createGeofenceMutation.isPending}
                   data-testid="submit-geofence-form"
                 >
@@ -690,8 +783,10 @@ export default function Settings() {
                   }}
                   disabled={createGeofenceMutation.isPending}
                   data-testid="switch-to-map-mode"
+                  className="w-full sm:flex-1"
                 >
-                  Переключиться на карту
+                  <span className="hidden sm:inline">Переключиться на карту</span>
+                  <span className="sm:hidden">Карта</span>
                 </Button>
                 <Button
                   type="button"
@@ -702,6 +797,7 @@ export default function Settings() {
                   }}
                   disabled={createGeofenceMutation.isPending}
                   data-testid="cancel-geofence-form"
+                  className="w-full sm:flex-1"
                 >
                   Отмена
                 </Button>
@@ -713,12 +809,12 @@ export default function Settings() {
 
       {/* Device Creation Dialog */}
       <Dialog open={isDeviceDialogOpen} onOpenChange={setIsDeviceDialogOpen}>
-        <DialogContent className="z-[10000]">
+        <DialogContent className="z-[10000] w-[95vw] max-w-md">
           <DialogHeader>
-            <DialogTitle>Добавить устройство</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">Добавить устройство</DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmitDevice} className="space-y-4">
+          <form onSubmit={handleSubmitDevice} className="space-y-3 sm:space-y-4">
             <div>
               <Label htmlFor="device-id">ID устройства</Label>
               <Input
