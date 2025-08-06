@@ -64,13 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get('/api/auth/user', (req, res) => {
-    if (req.isAuthenticated()) {
-      res.json(req.user);
-    } else {
-      res.status(401).json({ error: "Not authenticated" });
-    }
-  });
+  // Auth user endpoint moved to end of file
 
   app.get('/api/auth/vk-config', (req, res) => {
     const { isVKIDConfigured } = require('./auth');
@@ -136,10 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User permissions endpoint
-  app.get("/api/auth/permissions", requireAuth, (req, res) => {
-    const permissions = getUserPermissions(req.user);
-    res.json(permissions);
-  });
+  // Auth permissions endpoint moved to end of file
 
   // Admin only: User management
   app.get("/api/users", requireAdmin, async (req, res) => {
