@@ -85,7 +85,10 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all related queries to ensure UI updates immediately
       queryClient.invalidateQueries({ queryKey: ['/api/horses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/locations'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/devices'] });
       toast({
         title: "Лошадь добавлена",
         description: "Лошадь была успешно добавлена в систему",
@@ -108,7 +111,10 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all related queries to ensure UI updates immediately
       queryClient.invalidateQueries({ queryKey: ['/api/horses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/locations'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/devices'] });
       toast({
         title: "Лошадь обновлена",
         description: "Информация о лошади была успешно обновлена",
