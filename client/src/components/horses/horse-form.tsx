@@ -201,42 +201,36 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
 
           <div>
             <Label htmlFor="deviceId">ID устройства GPS</Label>
-            <div className="space-y-2">
-              <Select
-                value={devices.find(device => device.deviceId === watch("deviceId")) ? watch("deviceId") : "manual"}
-                onValueChange={(value) => {
-                  if (value === "manual") {
-                    setValue("deviceId", "");
-                  } else {
-                    setValue("deviceId", value);
-                  }
-                }}
+            <Select
+              value={watch("deviceId") || ""}
+              onValueChange={(value) => setValue("deviceId", value)}
+            >
+              <SelectTrigger 
+                className={errors.deviceId ? "border-red-500" : ""}
+                data-testid="horse-device-select"
               >
-                <SelectTrigger 
-                  className={errors.deviceId ? "border-red-500" : ""}
-                  data-testid="horse-device-select"
-                >
-                  <SelectValue placeholder="Выберите устройство" />
-                </SelectTrigger>
-                <SelectContent>
-                  {devices.map((device) => (
+                <SelectValue placeholder="Выберите устройство из списка" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="" disabled>
+                  Выберите устройство
+                </SelectItem>
+                {devices
+                  .filter(device => !device.horseId || device.horseId === horse?.id)
+                  .map((device) => (
                     <SelectItem key={device.id} value={device.deviceId}>
-                      {device.deviceId} {device.horseId && device.horseId !== horse?.id ? '(занято)' : '(свободно)'}
+                      {device.deviceId} (свободно)
                     </SelectItem>
                   ))}
-                  <SelectItem value="manual">Ввести вручную</SelectItem>
-                </SelectContent>
-              </Select>
-              {(!devices.find(device => device.deviceId === watch("deviceId")) || watch("deviceId") === "") && (
-                <Input
-                  className={errors.deviceId ? "border-red-500" : ""}
-                  value={watch("deviceId") || ""}
-                  onChange={(e) => setValue("deviceId", e.target.value)}
-                  placeholder="Введите ID устройства"
-                  data-testid="horse-device-manual-input"
-                />
-              )}
-            </div>
+                {devices
+                  .filter(device => device.horseId && device.horseId !== horse?.id)
+                  .map((device) => (
+                    <SelectItem key={device.id} value={device.deviceId} disabled>
+                      {device.deviceId} (занято)
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
             {errors.deviceId && (
               <p className="text-sm text-red-500 mt-1">{errors.deviceId.message}</p>
             )}
