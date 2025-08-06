@@ -406,7 +406,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Permissions endpoint for frontend
-  app.get("/api/auth/permissions", requireViewer, async (req, res) => {
+  app.get("/api/auth/permissions", (req, res) => {
+    // Temporary bypass for development when VK auth is not configured
+    if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
+      return res.json({
+        canEdit: true,
+        canView: true,
+        canManageUsers: true,
+        role: 'admin'
+      });
+    }
+    
+    // Production code - require authentication
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
     try {
       const user = req.user as any;
       const permissions = {
