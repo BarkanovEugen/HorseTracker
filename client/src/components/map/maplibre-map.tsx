@@ -314,6 +314,9 @@ export default function MapLibreMap({
     };
   }, [isDrawingMode]); // Only depend on isDrawingMode, not drawingPoints
 
+  // Store horse properties to detect changes
+  const horsePropsRef = useRef<Map<string, { markerColor: string; status: string }>>(new Map());
+
   // Update horse markers
   useEffect(() => {
     if (!map.current) return;
@@ -322,14 +325,25 @@ export default function MapLibreMap({
     horseLocations.forEach(({ horse, lastLocation }) => {
       const existingMarker = markersRef.current.get(horse.id);
       const newPosition: [number, number] = [parseFloat(lastLocation.longitude), parseFloat(lastLocation.latitude)];
+      const currentProps = { markerColor: horse.markerColor || '#22c55e', status: horse.status };
+      const savedProps = horsePropsRef.current.get(horse.id);
 
-      if (existingMarker) {
-        // Update existing marker position
+      // Check if horse properties changed (color or status)
+      const propsChanged = !savedProps || 
+        savedProps.markerColor !== currentProps.markerColor || 
+        savedProps.status !== currentProps.status;
+
+      if (existingMarker && !propsChanged) {
+        // Update existing marker position only if properties haven't changed
         existingMarker.setLngLat(newPosition);
       } else {
-        // Create new marker
+        // Remove existing marker if it exists (for recreation)
+        if (existingMarker) {
+          existingMarker.remove();
+          markersRef.current.delete(horse.id);
+        }
 
-        
+        // Create new marker with updated properties
         const el = createHorseMarkerElement(horse, 40);
         
         // Add click handler
@@ -353,6 +367,9 @@ export default function MapLibreMap({
           .addTo(map.current!);
 
         markersRef.current.set(horse.id, marker);
+        
+        // Save current properties for next comparison
+        horsePropsRef.current.set(horse.id, currentProps);
       }
     });
 
@@ -362,6 +379,7 @@ export default function MapLibreMap({
       if (!currentHorseIds.has(horseId)) {
         marker.remove();
         markersRef.current.delete(horseId);
+        horsePropsRef.current.delete(horseId);
       }
     });
 
