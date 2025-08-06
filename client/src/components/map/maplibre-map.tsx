@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createHorseMarkerElement } from "./horse-marker";
-import { Crosshair, MapIcon, Plus, Save, X, CheckCircle, XCircle } from "lucide-react";
+import { Crosshair, MapIcon, Plus, Save, X, CheckCircle, XCircle, Maximize2 } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 interface GeofenceFormData {
@@ -102,6 +102,7 @@ interface MapLibreMapProps {
   center?: [number, number];
   selectedHorse?: Horse | null;
   onHorseSelect?: (horse: Horse) => void;
+  onResetView?: () => void;
 }
 
 export default function MapLibreMap({
@@ -109,6 +110,7 @@ export default function MapLibreMap({
   center,
   selectedHorse,
   onHorseSelect,
+  onResetView,
 }: MapLibreMapProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -289,24 +291,43 @@ export default function MapLibreMap({
 
   }, [horseLocations]);
 
-  // Center map on selected horse
+  // Center map on selected horse or fit all horses
   useEffect(() => {
-    if (!map.current || !selectedHorse) return;
+    if (!map.current) return;
 
-    // Find the location of the selected horse
-    const selectedLocation = horseLocations.find(hl => hl.horse.id === selectedHorse.id);
-    if (selectedLocation) {
-      const position: [number, number] = [
-        parseFloat(selectedLocation.lastLocation.longitude), 
-        parseFloat(selectedLocation.lastLocation.latitude)
-      ];
+    if (selectedHorse) {
+      // Find the location of the selected horse
+      const selectedLocation = horseLocations.find(hl => hl.horse.id === selectedHorse.id);
+      if (selectedLocation) {
+        const position: [number, number] = [
+          parseFloat(selectedLocation.lastLocation.longitude), 
+          parseFloat(selectedLocation.lastLocation.latitude)
+        ];
 
-      // Center map on selected horse with smooth animation
-      map.current.easeTo({
-        center: position,
-        zoom: Math.max(map.current.getZoom() || 16, 16),
-        duration: 1000
+        // Center map on selected horse with smooth animation
+        map.current.easeTo({
+          center: position,
+          zoom: Math.max(map.current.getZoom() || 16, 16),
+          duration: 1000
+        });
+      }
+    } else if (horseLocations.length > 0) {
+      // Fit all horses in view with padding
+      const bounds = new maplibregl.LngLatBounds();
+      horseLocations.forEach(hl => {
+        bounds.extend([
+          parseFloat(hl.lastLocation.longitude), 
+          parseFloat(hl.lastLocation.latitude)
+        ]);
       });
+      
+      if (!bounds.isEmpty()) {
+        map.current.fitBounds(bounds, { 
+          padding: 80, 
+          duration: 1000,
+          maxZoom: 16 
+        });
+      }
     }
   }, [selectedHorse, horseLocations]);
 
@@ -586,6 +607,21 @@ export default function MapLibreMap({
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                   <p className="text-sm text-muted-foreground">Загрузка карты...</p>
                 </div>
+              </div>
+            )}
+            
+            {selectedHorse && onResetView && (
+              <div className="absolute top-4 right-4 z-10 mb-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="bg-white/90 hover:bg-white text-gray-700 shadow-lg border"
+                  onClick={onResetView}
+                  data-testid="reset-view-button"
+                >
+                  <Maximize2 className="w-4 h-4 mr-1" />
+                  Показать всех
+                </Button>
               </div>
             )}
             

@@ -10,7 +10,10 @@ export default function Dashboard() {
 
   const handleHorseSelect = (horse: Horse) => {
     setSelectedHorse(horse);
-    // Map will center on selected horse through selectedHorse prop
+  };
+
+  const handleResetView = () => {
+    setSelectedHorse(null);
   };
 
   return (
@@ -25,6 +28,7 @@ export default function Dashboard() {
           <MapLibreMap 
             selectedHorse={selectedHorse}
             onHorseSelect={setSelectedHorse}
+            onResetView={handleResetView}
           />
         </div>
         
