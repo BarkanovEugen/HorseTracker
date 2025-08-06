@@ -219,10 +219,13 @@ export default function MapLibreMap({
     if (horseLocations.length > 0) {
       const bounds = new maplibregl.LngLatBounds();
       horseLocations.forEach((hl: { horse: Horse; lastLocation: GpsLocation }) => {
-        bounds.extend([
-          parseFloat(hl.lastLocation.longitude), 
-          parseFloat(hl.lastLocation.latitude)
-        ]);
+        // Only extend bounds if location data exists
+        if (hl.lastLocation && hl.lastLocation.longitude && hl.lastLocation.latitude) {
+          bounds.extend([
+            parseFloat(hl.lastLocation.longitude), 
+            parseFloat(hl.lastLocation.latitude)
+          ]);
+        }
       });
       
       if (!bounds.isEmpty()) {
@@ -338,6 +341,12 @@ export default function MapLibreMap({
 
     // Update or create markers for each horse
     horseLocations.forEach(({ horse, lastLocation }: { horse: Horse; lastLocation: GpsLocation }) => {
+      // Skip horses without location data
+      if (!lastLocation || !lastLocation.longitude || !lastLocation.latitude) {
+        console.log(`Skipping ${horse.name}: no location data`);
+        return;
+      }
+      
       const existingMarker = markersRef.current.get(horse.id);
       const newPosition: [number, number] = [parseFloat(lastLocation.longitude), parseFloat(lastLocation.latitude)];
       const currentProps = { markerColor: horse.markerColor || '#22c55e', status: horse.status };

@@ -1,0 +1,54 @@
+
+chunk-RPCDYKBN.js?v=fc324672:16670 Uncaught TypeError: Cannot read properties of undefined (reading 'longitude')
+    at maplibre-map.tsx:223:38
+    at Array.forEach (<anonymous>)
+    at maplibre-map.tsx:221:22
+chunk-RPCDYKBN.js?v=fc324672:14032 The above error occurred in the <MapLibreMap> component:
+
+    at MapLibreMap (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/map/maplibre-map.tsx:187:3)
+    at div
+    at div
+    at div
+    at div
+    at Dashboard (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/pages/dashboard.tsx:25:45)
+    at Route (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fc324672:323:16)
+    at Switch (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fc324672:379:17)
+    at main
+    at div
+    at AppContent (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/App.tsx?v=IPx_HpgzBj9QndQkP_LNG:39:3)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…unner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=fc324672:38:15)
+    at TooltipProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=fc324672:61:5)
+    at WebSocketProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/contexts/websocket-context.tsx:20:37)
+    at ThemeProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/contexts/theme-context.tsx:20:33)
+    at QueryClientProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=fc324672:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+chunk-RPCDYKBN.js?v=fc324672:14032 The above error occurred in the <MapLibreMap> component:
+
+    at MapLibreMap (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/map/maplibre-map.tsx:187:3)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at Dashboard (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/pages/dashboard.tsx:25:45)
+    at Route (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fc324672:323:16)
+    at Switch (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fc324672:379:17)
+    at main
+    at div
+    at AppContent (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/App.tsx?v=IPx_HpgzBj9QndQkP_LNG:39:3)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…unner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=fc324672:38:15)
+    at TooltipProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=fc324672:61:5)
+    at WebSocketProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/contexts/websocket-context.tsx:20:37)
+    at ThemeProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/contexts/theme-context.tsx:20:33)
+    at QueryClientProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.de…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=fc324672:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+chunk-RPCDYKBN.js?v=fc324672:9129 Uncaught TypeError: Cannot read properties of undefined (reading 'longitude')
+    at maplibre-map.tsx:223:38
+    at Array.forEach (<anonymous>)
+    at maplibre-map.tsx:221:22
