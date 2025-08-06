@@ -239,13 +239,15 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
               <input
                 id="markerColor"
                 type="color"
-                {...register("markerColor")}
+                value={watch("markerColor") || "#22c55e"}
+                onChange={(e) => setValue("markerColor", e.target.value)}
                 className="w-12 h-10 rounded-md border border-gray-300 cursor-pointer"
                 data-testid="horse-marker-color-input"
               />
               <div className="flex-1">
                 <Input
-                  {...register("markerColor")}
+                  value={watch("markerColor") || ""}
+                  onChange={(e) => setValue("markerColor", e.target.value)}
                   placeholder="#22c55e"
                   className={errors.markerColor ? "border-red-500" : ""}
                   data-testid="horse-marker-color-text-input"
