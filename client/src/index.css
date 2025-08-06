@@ -178,3 +178,13 @@
   border-color: hsl(240, 3.7%, 15.9%);
   color: hsl(0, 0%, 98%);
 }
+
+/* Fix dialog z-index to appear above the map */
+[role="dialog"] {
+  z-index: 9999 !important;
+}
+
+/* Ensure dialog overlay is also above the map */
+[data-radix-dialog-overlay] {
+  z-index: 9998 !important;
+}

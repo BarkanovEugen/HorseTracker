@@ -464,7 +464,7 @@ export default function LeafletMapPolygon() {
 
       {/* Geofence Creation Dialog */}
       <Dialog open={isGeofenceDialogOpen} onOpenChange={setIsGeofenceDialogOpen}>
-        <DialogContent>
+        <DialogContent className="z-[10000]">
           <DialogHeader>
             <DialogTitle>Создать геозону</DialogTitle>
             <DialogDescription>
