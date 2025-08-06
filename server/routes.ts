@@ -383,6 +383,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test geofence alert API - Admin only (for testing auto-dismissal)
+  app.post("/api/alerts/test-geofence/:horseId", requireAdmin, async (req, res) => {
+    try {
+      const { horseId } = req.params;
+      const horse = await storage.getHorse(horseId);
+      
+      if (!horse) {
+        return res.status(404).json({ message: "Horse not found" });
+      }
+      
+      // Create a test geofence alert
+      const alert = await storage.createAlert({
+        horseId: horseId,
+        type: 'geofence',
+        severity: 'warning',
+        title: `${horse.name} покинул безопасную зону (ТЕСТ)`,
+        description: `Тестовый алерт • Переместите лошадь в геозону для автозакрытия`,
+        isActive: true,
+        geofenceId: null,
+        escalated: false,
+        escalatedAt: null,
+        pushSent: false,
+      });
+      
+      console.log(`🧪 TEST: Создан тестовый геозонный алерт для ${horse.name}`);
+      res.json({ success: true, alert, message: "Test geofence alert created" });
+    } catch (error) {
+      console.error('Failed to create test geofence alert:', error);
+      res.status(500).json({ message: "Failed to create test alert" });
+    }
+  });
+
   // User management API - Admin only
   app.get("/api/users", requireAdmin, async (req, res) => {
     try {

@@ -819,6 +819,7 @@ export class DatabaseStorage implements IStorage {
     // Create or dismiss alerts based on current status
     if (!isInSafeZone && !hasGeofenceAlert) {
       // Horse is outside safe zone and no alert exists - create alert
+      console.log(`⚠️ GEOFENCE ALERT: ${horse.name} покинул безопасную зону`);
       await this.createAlert({
         horseId: horseId,
         type: 'geofence',
@@ -833,9 +834,11 @@ export class DatabaseStorage implements IStorage {
       });
     } else if (isInSafeZone && hasGeofenceAlert) {
       // Horse is back in safe zone and alert exists - dismiss alert
+      console.log(`✅ GEOFENCE RESOLVED: ${horse.name} вернулся в безопасную зону, закрываем алерт`);
       for (const alert of existingAlerts) {
         if (alert.type === 'geofence') {
           await this.dismissAlert(alert.id);
+          console.log(`✅ Закрыт алерт о геозоне для ${horse.name}: ${alert.title}`);
         }
       }
     }
@@ -864,7 +867,14 @@ export class DatabaseStorage implements IStorage {
 
   async dismissAlert(id: string): Promise<boolean> {
     const result = await db.update(alerts).set({ isActive: false }).where(eq(alerts.id, id));
-    return (result.rowCount ?? 0) > 0;
+    const success = (result.rowCount ?? 0) > 0;
+    
+    if (success) {
+      // Notify WebSocket clients about alert dismissal
+      console.log(`📤 WebSocket: Alert dismissed - ${id}`);
+    }
+    
+    return success;
   }
 
   // Geofences

@@ -31,6 +31,9 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Device Selection Redesign**: Completely reworked device selection in horse edit form - removed manual input option, now only allows selection from existing devices in database with clear free/occupied status
 - **Smart Horse Display Logic**: Enhanced marker display logic to show all horses with active devices on map, even without recent GPS data - ensures connected horses are always visible
 - **Database Relationship Sync**: Fixed updateHorse function to properly synchronize device-horse relationships in both directions when device assignments change
+- **Enhanced Geofence Auto-Dismissal**: Improved automatic geofence alert dismissal system with comprehensive logging and WebSocket notifications when horses return to safe zones
+- **Device Offline Monitoring**: Complete device connectivity monitoring system that creates urgent alerts for offline devices (10+ minutes) with battery >20% and auto-dismisses when devices reconnect
+- **Alert Management Testing**: Added testing API endpoints for both geofence and device connectivity monitoring with detailed diagnostic logging
 
 # User Preferences
 
