@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Geofence, Device } from "@shared/schema";
+import { Geofence, Device, Horse } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 import { 
   MapPin, 
@@ -35,7 +36,12 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-
+  const [isGeofenceDialogOpen, setIsGeofenceDialogOpen] = useState(false);
+  const [geofenceFormData, setGeofenceFormData] = useState({
+    name: '',
+    description: '',
+    coordinates: '',
+  });
   const [isDeviceDialogOpen, setIsDeviceDialogOpen] = useState(false);
   const [isDeviceConfigOpen, setIsDeviceConfigOpen] = useState(false);
   const [configuringDevice, setConfiguringDevice] = useState<Device | null>(null);
@@ -65,6 +71,10 @@ export default function Settings() {
     queryKey: ['/api/devices'],
   });
 
+  const { data: horses = [] } = useQuery<Horse[]>({
+    queryKey: ['/api/horses'],
+  });
+
   const deleteGeofenceMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest('DELETE', `/api/geofences/${id}`);
@@ -80,6 +90,34 @@ export default function Settings() {
       toast({
         title: "Ошибка",
         description: "Не удалось удалить геозону",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createGeofenceMutation = useMutation({
+    mutationFn: async (data: { name: string; description: string; coordinates: string }) => {
+      const response = await apiRequest('POST', '/api/geofences', {
+        name: data.name,
+        description: data.description || null,
+        coordinates: data.coordinates,
+        isActive: true,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/geofences'] });
+      setIsGeofenceDialogOpen(false);
+      setGeofenceFormData({ name: '', description: '', coordinates: '' });
+      toast({
+        title: "Геозона создана",
+        description: "Новая геозона была успешно создана",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать геозону",
         variant: "destructive",
       });
     },
@@ -133,10 +171,39 @@ export default function Settings() {
   };
 
   const handleAddGeofence = () => {
-    toast({
-      title: "Создание геозон",
-      description: "Для создания геозон перейдите на главную страницу и используйте интерактивную карту",
-    });
+    setIsGeofenceDialogOpen(true);
+  };
+
+  const handleSubmitGeofence = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!geofenceFormData.name.trim() || !geofenceFormData.coordinates.trim()) {
+      toast({
+        title: "Ошибка валидации",
+        description: "Заполните все обязательные поля",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Validate coordinates format
+      const coords = JSON.parse(geofenceFormData.coordinates);
+      if (!Array.isArray(coords) || coords.length < 3) {
+        throw new Error('Invalid coordinates');
+      }
+      
+      createGeofenceMutation.mutate({
+        name: geofenceFormData.name,
+        description: geofenceFormData.description,
+        coordinates: geofenceFormData.coordinates,
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка координат",
+        description: "Неверный формат координат. Используйте JSON формат: [[lat,lng], [lat,lng], ...]",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmitDevice = (e: React.FormEvent) => {
@@ -250,10 +317,15 @@ export default function Settings() {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Нет настроенных геозон
                 </p>
+                <div className="flex flex-col space-y-2">
                 <Button onClick={handleAddGeofence} data-testid="add-geofence-empty">
                   <Plus className="w-4 h-4 mr-2" />
                   Добавить геозону
                 </Button>
+                <p className="text-xs text-gray-500 text-center">
+                  Или используйте интерактивную карту на главной странице
+                </p>
+              </div>
               </div>
             ) : (
               <>
@@ -493,7 +565,81 @@ export default function Settings() {
       </Card>
 
       {/* Geofence Creator Dialog */}
-
+      <Dialog open={isGeofenceDialogOpen} onOpenChange={setIsGeofenceDialogOpen}>
+        <DialogContent className="z-[10000] max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Добавить геозону</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmitGeofence} className="space-y-4">
+            <div>
+              <Label htmlFor="geofence-name">Название геозоны*</Label>
+              <Input
+                id="geofence-name"
+                value={geofenceFormData.name}
+                onChange={(e) => setGeofenceFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Например: Пастбище Север"
+                required
+                data-testid="geofence-name-input"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="geofence-description">Описание</Label>
+              <Textarea
+                id="geofence-description"
+                value={geofenceFormData.description}
+                onChange={(e) => setGeofenceFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Описание геозоны"
+                rows={2}
+                data-testid="geofence-description-input"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="geofence-coordinates">Координаты полигона*</Label>
+              <Textarea
+                id="geofence-coordinates"
+                value={geofenceFormData.coordinates}
+                onChange={(e) => setGeofenceFormData(prev => ({ ...prev, coordinates: e.target.value }))}
+                placeholder="[[55.7568, 37.6186], [55.7548, 37.6206], [55.7538, 37.6166], [55.7558, 37.6146], [55.7568, 37.6186]]"
+                rows={4}
+                required
+                className="font-mono text-sm"
+                data-testid="geofence-coordinates-input"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Формат: JSON массив координат [[широта, долгота], ...]. Минимум 3 точки.
+                <br />
+                Для удобства создания используйте интерактивную карту на главной странице.
+              </p>
+            </div>
+            
+            <div className="flex space-x-2 pt-4">
+              <Button
+                type="submit"
+                className="flex-1 bg-primary hover:bg-primary/90"
+                disabled={createGeofenceMutation.isPending}
+                data-testid="submit-geofence-form"
+              >
+                {createGeofenceMutation.isPending ? "Создание..." : "Создать геозону"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsGeofenceDialogOpen(false);
+                  setGeofenceFormData({ name: '', description: '', coordinates: '' });
+                }}
+                disabled={createGeofenceMutation.isPending}
+                data-testid="cancel-geofence-form"
+              >
+                Отмена
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Device Creation Dialog */}
       <Dialog open={isDeviceDialogOpen} onOpenChange={setIsDeviceDialogOpen}>

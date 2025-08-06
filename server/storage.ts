@@ -429,7 +429,7 @@ export class MemStorage implements IStorage {
     
     // Trigger WebSocket broadcast (will be handled in routes.ts)
     process.nextTick(() => {
-      process.emit('alertCreated', newAlert);
+      (process as any).emit('alertCreated', newAlert);
     });
     
     return newAlert;
@@ -444,7 +444,7 @@ export class MemStorage implements IStorage {
     
     // Trigger WebSocket broadcast (will be handled in routes.ts)
     process.nextTick(() => {
-      process.emit('alertDismissed', alert);
+      (process as any).emit('alertDismissed', alert);
     });
     
     return true;
