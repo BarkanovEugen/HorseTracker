@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GpsLocation, Horse } from '@shared/schema';
@@ -68,26 +68,52 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
   useEffect(() => {
     if (!isOpen || !mapContainer.current || map.current) return;
 
-    try {
-      map.current = new maplibregl.Map({
-        container: mapContainer.current,
-        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-        center: [37.6173, 55.7558], // Moscow center
-        zoom: 12,
-        attributionControl: false,
-      });
+    // Add a small delay to ensure the container is properly rendered
+    setTimeout(() => {
+      if (!mapContainer.current || map.current) return;
 
-      map.current.on('load', () => {
-        console.log('Trail map loaded successfully');
-      });
+      try {
+        console.log('Initializing trail map...');
+        
+        map.current = new maplibregl.Map({
+          container: mapContainer.current,
+          style: {
+            version: 8,
+            sources: {
+              'osm': {
+                type: 'raster',
+                tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                tileSize: 256,
+                attribution: '© OpenStreetMap contributors'
+              }
+            },
+            layers: [{
+              id: 'osm',
+              type: 'raster',
+              source: 'osm'
+            }]
+          },
+          center: [37.6173, 55.7558], // Moscow center
+          zoom: 12,
+          attributionControl: false,
+        });
 
-      map.current.on('error', (e) => {
-        console.error('MapLibre error in trail viewer:', e);
-      });
+        map.current.on('load', () => {
+          console.log('Trail map loaded successfully');
+        });
 
-    } catch (error) {
-      console.error('Failed to initialize trail map:', error);
-    }
+        map.current.on('error', (e) => {
+          console.error('MapLibre error in trail viewer:', e);
+        });
+
+        map.current.on('styledata', () => {
+          console.log('Trail map style loaded');
+        });
+
+      } catch (error) {
+        console.error('Failed to initialize trail map:', error);
+      }
+    }, 100);
 
     return () => {
       if (map.current) {
@@ -99,7 +125,14 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
 
   // Update trail on map when locations change
   useEffect(() => {
-    if (!map.current || !map.current.isStyleLoaded() || !filteredLocations.length) return;
+    if (!map.current || !filteredLocations.length) return;
+
+    // Wait for map to be fully loaded
+    const updateTrail = () => {
+      if (!map.current || !map.current.isStyleLoaded()) {
+        setTimeout(updateTrail, 200);
+        return;
+      }
 
     // Remove existing trail layers and sources
     if (map.current.getLayer('trail-line')) {
@@ -163,14 +196,14 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
 
     // Add trail points
     const pointFeatures = filteredLocations.map((loc, index) => ({
-      type: 'Feature',
+      type: 'Feature' as const,
       properties: {
         timestamp: loc.timestamp,
         battery: loc.batteryLevel,
         index: index
       },
       geometry: {
-        type: 'Point',
+        type: 'Point' as const,
         coordinates: [parseFloat(loc.longitude), parseFloat(loc.latitude)]
       }
     }));
@@ -258,7 +291,7 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
         if (!map.current) return;
         
         const bounds = new maplibregl.LngLatBounds();
-        coordinates.forEach(coord => bounds.extend(coord));
+        coordinates.forEach(coord => bounds.extend(coord as [number, number]));
         
         if (!bounds.isEmpty()) {
           map.current.fitBounds(bounds, {
@@ -289,15 +322,17 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
       }
     });
 
-    // Change cursor on hover
-    map.current.on('mouseenter', 'trail-points', () => {
-      if (map.current) map.current.getCanvas().style.cursor = 'pointer';
-    });
+      // Change cursor on hover
+      map.current.on('mouseenter', 'trail-points', () => {
+        if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+      });
 
-    map.current.on('mouseleave', 'trail-points', () => {
-      if (map.current) map.current.getCanvas().style.cursor = '';
-    });
+      map.current.on('mouseleave', 'trail-points', () => {
+        if (map.current) map.current.getCanvas().style.cursor = '';
+      });
+    };
 
+    updateTrail();
   }, [filteredLocations, horse.markerColor]);
 
   // Calculate trail statistics
@@ -357,6 +392,9 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
             <MapPin className="w-5 h-5" />
             Маршрут лошади: {horse.name}
           </DialogTitle>
+          <DialogDescription>
+            Интерактивная карта с детальным маршрутом перемещения лошади
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col flex-1 gap-4">
