@@ -201,33 +201,42 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
 
           <div>
             <Label htmlFor="deviceId">ID устройства GPS</Label>
-            <Select
-              value={watch("deviceId") || ""}
-              onValueChange={(value) => setValue("deviceId", value)}
-            >
-              <SelectTrigger 
-                className={errors.deviceId ? "border-red-500" : ""}
-                data-testid="horse-device-select"
+            <div className="space-y-2">
+              <Select
+                value={devices.find(device => device.deviceId === watch("deviceId")) ? watch("deviceId") : "manual"}
+                onValueChange={(value) => {
+                  if (value === "manual") {
+                    setValue("deviceId", "");
+                  } else {
+                    setValue("deviceId", value);
+                  }
+                }}
               >
-                <SelectValue placeholder="Выберите устройство" />
-              </SelectTrigger>
-              <SelectContent>
-                {devices.map((device) => (
-                  <SelectItem key={device.id} value={device.deviceId}>
-                    {device.deviceId} {device.horseId ? '(занято)' : '(свободно)'}
-                  </SelectItem>
-                ))}
-                <SelectItem value="manual">Ввести вручную</SelectItem>
-              </SelectContent>
-            </Select>
-            {watch("deviceId") === "manual" && (
-              <Input
-                className={`mt-2 ${errors.deviceId ? "border-red-500" : ""}`}
-                {...register("deviceId")}
-                placeholder="Введите ID устройства"
-                data-testid="horse-device-manual-input"
-              />
-            )}
+                <SelectTrigger 
+                  className={errors.deviceId ? "border-red-500" : ""}
+                  data-testid="horse-device-select"
+                >
+                  <SelectValue placeholder="Выберите устройство" />
+                </SelectTrigger>
+                <SelectContent>
+                  {devices.map((device) => (
+                    <SelectItem key={device.id} value={device.deviceId}>
+                      {device.deviceId} {device.horseId && device.horseId !== horse?.id ? '(занято)' : '(свободно)'}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="manual">Ввести вручную</SelectItem>
+                </SelectContent>
+              </Select>
+              {(!devices.find(device => device.deviceId === watch("deviceId")) || watch("deviceId") === "") && (
+                <Input
+                  className={errors.deviceId ? "border-red-500" : ""}
+                  value={watch("deviceId") || ""}
+                  onChange={(e) => setValue("deviceId", e.target.value)}
+                  placeholder="Введите ID устройства"
+                  data-testid="horse-device-manual-input"
+                />
+              )}
+            </div>
             {errors.deviceId && (
               <p className="text-sm text-red-500 mt-1">{errors.deviceId.message}</p>
             )}
