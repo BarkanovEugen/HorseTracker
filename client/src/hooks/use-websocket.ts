@@ -22,8 +22,27 @@ export function useRealtimeUpdates() {
         break;
       
       case 'alert_created':
-        // Invalidate alerts queries
+      case 'alert_dismissed':
+      case 'alert_escalated':
+        // Invalidate alerts queries for all alert events
         queryClient.invalidateQueries({ queryKey: ['/api/alerts'] });
+        break;
+      
+      case 'push_notification':
+        // Show browser notification if supported
+        if ('Notification' in window && Notification.permission === 'granted') {
+          const notification = new Notification(lastMessage.data.title, {
+            body: lastMessage.data.body,
+            icon: lastMessage.data.icon || '/favicon.ico',
+            tag: lastMessage.data.tag,
+            requireInteraction: lastMessage.data.requireInteraction || false
+          });
+          
+          // Auto-close notification after 5 seconds unless it requires interaction
+          if (!lastMessage.data.requireInteraction) {
+            setTimeout(() => notification.close(), 5000);
+          }
+        }
         break;
       
       default:

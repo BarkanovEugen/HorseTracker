@@ -13,9 +13,19 @@ import Horses from "@/pages/horses";
 import History from "@/pages/history";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
+import { useEffect } from "react";
 
 function AppContent() {
   useRealtimeUpdates();
+
+  // Request notification permissions when app loads
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then((permission) => {
+        console.log('Notification permission:', permission);
+      });
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">

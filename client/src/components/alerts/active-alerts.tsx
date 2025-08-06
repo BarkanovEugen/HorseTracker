@@ -10,8 +10,22 @@ export default function ActiveAlerts() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: alerts = [], isLoading } = useQuery<Alert[]>({
+  const { data: alertsData = [], isLoading } = useQuery<Alert[]>({
     queryKey: ['/api/alerts'],
+  });
+
+  // Sort alerts: escalated first, then by creation date (newest first)
+  const alerts = alertsData.sort((a, b) => {
+    // Escalated alerts always come first
+    if (a.escalated && !b.escalated) return -1;
+    if (!a.escalated && b.escalated) return 1;
+    
+    // If both escalated or both not escalated, sort by creation date
+    if (a.createdAt && b.createdAt) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    
+    return 0;
   });
 
   const dismissMutation = useMutation({
@@ -34,8 +48,13 @@ export default function ActiveAlerts() {
     },
   });
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
+  const getSeverityColor = (alert: Alert) => {
+    // Escalated alerts get special red styling regardless of base severity
+    if (alert.escalated) {
+      return 'bg-red-100 dark:bg-red-900/40 border-l-red-600 border-2';
+    }
+    
+    switch (alert.severity) {
       case 'urgent':
         return 'bg-red-50 dark:bg-red-900/20 border-l-red-500';
       case 'warning':
@@ -45,8 +64,13 @@ export default function ActiveAlerts() {
     }
   };
 
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
+  const getSeverityIcon = (alert: Alert) => {
+    // Escalated alerts get special pulsing red icon
+    if (alert.escalated) {
+      return <AlertTriangle className="w-5 h-5 text-red-600 animate-pulse" />;
+    }
+    
+    switch (alert.severity) {
       case 'urgent':
         return <AlertTriangle className="w-5 h-5 text-red-500" />;
       case 'warning':
@@ -56,8 +80,13 @@ export default function ActiveAlerts() {
     }
   };
 
-  const getSeverityTextColor = (severity: string) => {
-    switch (severity) {
+  const getSeverityTextColor = (alert: Alert) => {
+    // Escalated alerts get bold red text
+    if (alert.escalated) {
+      return 'text-red-900 dark:text-red-100 font-bold';
+    }
+    
+    switch (alert.severity) {
       case 'urgent':
         return 'text-red-800 dark:text-red-200';
       case 'warning':
@@ -118,21 +147,26 @@ export default function ActiveAlerts() {
           {alerts.map((alert) => (
             <div
               key={alert.id}
-              className={`p-4 border-l-4 ${getSeverityColor(alert.severity)} ${
-                alert.severity === 'urgent' ? 'animate-pulse' : ''
-              }`}
+              className={`p-4 border-l-4 ${getSeverityColor(alert)} ${
+                alert.escalated ? 'animate-pulse' : alert.severity === 'urgent' ? 'animate-pulse' : ''
+              } ${alert.escalated ? 'ring-2 ring-red-200 dark:ring-red-800' : ''}`}
               data-testid={`alert-${alert.id}`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  {getSeverityIcon(alert.severity)}
+                  {getSeverityIcon(alert)}
                   <div>
-                    <p className={`font-medium ${getSeverityTextColor(alert.severity)}`}>
+                    <p className={`font-medium ${getSeverityTextColor(alert)}`}>
                       {alert.title}
                     </p>
-                    <p className={`text-sm ${getSeverityTextColor(alert.severity).replace('800', '600').replace('200', '300')}`}>
+                    <p className={`text-sm ${getSeverityTextColor(alert).replace('900', '700').replace('800', '600').replace('200', '300').replace('100', '200')}`}>
                       {alert.description}
                     </p>
+                    {alert.escalated && alert.escalatedAt && (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                        🚨 Эскалировано: {new Date(alert.escalatedAt).toLocaleTimeString('ru-RU')}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Button
@@ -140,7 +174,7 @@ export default function ActiveAlerts() {
                   size="sm"
                   onClick={() => dismissMutation.mutate(alert.id)}
                   disabled={dismissMutation.isPending}
-                  className={`${getSeverityTextColor(alert.severity)} hover:bg-opacity-20`}
+                  className={`${getSeverityTextColor(alert)} hover:bg-opacity-20`}
                   data-testid={`dismiss-alert-${alert.id}`}
                 >
                   <X className="w-4 h-4" />

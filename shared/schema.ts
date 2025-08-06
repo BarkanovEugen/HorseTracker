@@ -33,6 +33,10 @@ export const alerts = pgTable("alerts", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   isActive: boolean("is_active").notNull().default(true),
+  geofenceId: varchar("geofence_id").references(() => geofences.id), // Track which geofence triggered the alert
+  escalated: boolean("escalated").notNull().default(false), // Track if alert has been escalated to critical after 2 minutes
+  escalatedAt: timestamp("escalated_at"), // When the alert was escalated
+  pushSent: boolean("push_sent").notNull().default(false), // Track if push notification was sent
   createdAt: timestamp("created_at").defaultNow(),
 });
 

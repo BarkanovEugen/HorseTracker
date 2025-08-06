@@ -72,7 +72,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Alerts API
   app.get("/api/alerts", async (req, res) => {
     try {
-      const alerts = await storage.getActiveAlerts();
+      // Check and escalate old alerts before returning
+      await storage.escalateOldAlerts();
+      const alerts = await storage.getSortedActiveAlerts();
       res.json(alerts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch alerts" });
@@ -254,6 +256,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     broadcast(JSON.stringify({
       type: 'alert_dismissed',
       data: alert
+    }));
+  });
+
+  process.on('alertEscalated', (alert) => {
+    broadcast(JSON.stringify({
+      type: 'alert_escalated',
+      data: alert
+    }));
+  });
+
+  process.on('pushNotification', (notification) => {
+    broadcast(JSON.stringify({
+      type: 'push_notification',
+      data: notification
     }));
   });
 

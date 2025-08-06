@@ -246,7 +246,33 @@ export class MemStorage implements IStorage {
       },
     ];
 
-    alerts.forEach(alert => this.alerts.set(alert.id, alert));
+    // Add required fields to sample alerts
+    const fullAlerts = alerts.map(alert => ({
+      ...alert,
+      geofenceId: null,
+      escalated: false,
+      escalatedAt: null,
+      pushSent: false
+    }));
+    fullAlerts.forEach(alert => this.alerts.set(alert.id, alert));
+
+    // Add a test geofence violation alert that's older than 2 minutes for escalation testing
+    const oldGeofenceAlert: Alert = {
+      id: randomUUID(),
+      horseId: 'horse-1',
+      type: 'geofence',
+      severity: 'warning',
+      title: 'Лошадь покинула безопасную зону',
+      description: 'Буран покинул геозону "Пастбище Север"',
+      isActive: true,
+      geofenceId: 'geo-1',
+      escalated: false,
+      escalatedAt: null,
+      pushSent: false,
+      // Set creation time to 3 minutes ago to trigger escalation
+      createdAt: new Date(Date.now() - 3 * 60 * 1000)
+    };
+    this.alerts.set(oldGeofenceAlert.id, oldGeofenceAlert);
 
     // Initialize sample geofences with polygon coordinates
     const geofences = [
@@ -393,10 +419,14 @@ export class MemStorage implements IStorage {
       await this.createAlert({
         horseId: horseId,
         type: 'geofence',
-        severity: 'high',
+        severity: 'warning', // Start with warning, will escalate to urgent after 2 minutes
         title: `${horse.name} покинул безопасную зону`,
         description: `Только что • За пределами геозон`,
         isActive: true,
+        geofenceId: null, // Will be set to specific geofence if needed
+        escalated: false,
+        escalatedAt: null,
+        pushSent: false,
       });
     } else if (isInSafeZone && hasGeofenceAlert) {
       // Horse is back in safe zone and alert exists - dismiss alert
@@ -406,6 +436,80 @@ export class MemStorage implements IStorage {
         }
       }
     }
+  }
+
+  // New method: Check and escalate alerts that have been active for more than 2 minutes
+  async escalateOldAlerts(): Promise<Alert[]> {
+    const escalatedAlerts: Alert[] = [];
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    
+    for (const alert of Array.from(this.alerts.values())) {
+      if (alert.isActive && 
+          alert.type === 'geofence' && 
+          !alert.escalated && 
+          alert.createdAt && 
+          alert.createdAt < twoMinutesAgo) {
+        
+        // Escalate the alert
+        const escalatedAlert: Alert = {
+          ...alert,
+          severity: 'urgent',
+          escalated: true,
+          escalatedAt: new Date(),
+          title: `🚨 КРИТИЧНО: ${alert.title.replace('покинул', 'находится вне зоны более 2 минут')}`,
+          description: `Более 2 минут • Требуется немедленное внимание`,
+        };
+        
+        this.alerts.set(alert.id, escalatedAlert);
+        escalatedAlerts.push(escalatedAlert);
+        
+        // Trigger push notification if not sent yet
+        if (!escalatedAlert.pushSent) {
+          await this.sendPushNotification(escalatedAlert);
+          escalatedAlert.pushSent = true;
+          this.alerts.set(alert.id, escalatedAlert);
+        }
+        
+        // Trigger WebSocket broadcast for escalation
+        process.nextTick(() => {
+          (process as any).emit('alertEscalated', escalatedAlert);
+        });
+      }
+    }
+    
+    return escalatedAlerts;
+  }
+
+  // New method: Send push notification (placeholder implementation)
+  private async sendPushNotification(alert: Alert): Promise<void> {
+    // In a real implementation, this would send actual push notifications
+    // For now, we'll just log and trigger a browser notification via WebSocket
+    console.log(`🔔 PUSH NOTIFICATION: ${alert.title} - ${alert.description}`);
+    
+    process.nextTick(() => {
+      (process as any).emit('pushNotification', {
+        title: alert.title,
+        body: alert.description,
+        icon: '🐎',
+        tag: alert.id,
+        requireInteraction: true
+      });
+    });
+  }
+
+  // New method: Get sorted alerts (escalated ones first)
+  async getSortedActiveAlerts(): Promise<Alert[]> {
+    const alerts = Array.from(this.alerts.values()).filter(alert => alert.isActive);
+    
+    // Sort by: escalated alerts first, then by creation time (newest first)
+    return alerts.sort((a, b) => {
+      if (a.escalated && !b.escalated) return -1;
+      if (!a.escalated && b.escalated) return 1;
+      if (a.createdAt && b.createdAt) {
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      }
+      return 0;
+    });
   }
 
   // Alerts
@@ -423,7 +527,11 @@ export class MemStorage implements IStorage {
       ...alert, 
       id, 
       createdAt: new Date(),
-      isActive: alert.isActive ?? true
+      isActive: alert.isActive ?? true,
+      geofenceId: alert.geofenceId ?? null,
+      escalated: alert.escalated ?? false,
+      escalatedAt: alert.escalatedAt ?? null,
+      pushSent: alert.pushSent ?? false
     };
     this.alerts.set(id, newAlert);
     
