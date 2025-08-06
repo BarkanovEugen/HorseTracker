@@ -610,12 +610,13 @@ export default function MapLibreMap({
               </div>
             )}
             
+            {/* Reset View Button */}
             {selectedHorse && onResetView && (
-              <div className="absolute top-4 right-4 z-10 mb-2">
+              <div className="absolute top-4 left-4 z-20">
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="bg-white/90 hover:bg-white text-gray-700 shadow-lg border"
+                  className="bg-white/95 hover:bg-white text-gray-700 shadow-lg border"
                   onClick={onResetView}
                   data-testid="reset-view-button"
                 >
