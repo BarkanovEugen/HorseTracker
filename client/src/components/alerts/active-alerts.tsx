@@ -134,55 +134,66 @@ export default function ActiveAlerts() {
   }
 
   return (
-    <Card className="mb-4 sm:mb-6">
-      <div className="bg-gradient-to-r from-red-500 to-orange-500 px-4 sm:px-6 py-3">
-        <h2 className="text-white font-semibold flex items-center text-sm sm:text-base" data-testid="alerts-title">
-          <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-          Активные Уведомления
+    <Card className="overflow-hidden shadow-lg">
+      <div className="bg-gradient-to-r from-red-500 to-orange-500 px-3 sm:px-5 py-2.5 sm:py-3">
+        <h2 className="text-white font-bold flex items-center text-sm sm:text-base" data-testid="alerts-title">
+          <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-pulse" />
+          <span className="truncate">Активные Уведомления</span>
+          <span className="ml-auto bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">
+            {alerts.length}
+          </span>
         </h2>
       </div>
       
-      <CardContent className="p-0">
+      <CardContent className="p-0 max-h-64 sm:max-h-96 overflow-y-auto">
         <div className="divide-y divide-gray-200 dark:divide-gray-700">
           {alerts.map((alert) => (
             <div
               key={alert.id}
-              className={`p-3 sm:p-4 border-l-4 ${getSeverityColor(alert)} ${
+              className={`p-3 sm:p-4 border-l-4 transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 ${getSeverityColor(alert)} ${
                 alert.escalated ? 'pulse-red-border' : ''
               }`}
               data-testid={`alert-${alert.id}`}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
-                  <div className="flex-shrink-0 mt-1">
-                    {getSeverityIcon(alert)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-medium text-sm sm:text-base ${getSeverityTextColor(alert)} truncate sm:whitespace-normal`}>
-                      {alert.title}
-                    </p>
-                    <p className={`text-xs sm:text-sm ${getSeverityTextColor(alert).replace('900', '700').replace('800', '600').replace('200', '300').replace('100', '200')} mt-1`}>
-                      {alert.description}
-                    </p>
-                    {alert.escalated && alert.escalatedAt && (
-                      <p className="text-xs text-red-600 dark:text-red-400 mt-1 flex items-center">
-                        <span className="mr-1">🚨</span>
-                        <span className="hidden sm:inline">Эскалировано: </span>
-                        <span className="sm:hidden">Эск: </span>
-                        {new Date(alert.escalatedAt).toLocaleTimeString('ru-RU')}
-                      </p>
-                    )}
-                  </div>
+              <div className="flex items-start gap-2 sm:gap-3">
+                {/* Icon */}
+                <div className="flex-shrink-0 mt-0.5">
+                  {getSeverityIcon(alert)}
                 </div>
+                
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className={`font-semibold text-sm sm:text-base ${getSeverityTextColor(alert)} leading-tight`}>
+                    {alert.title}
+                  </p>
+                  <p className={`text-xs sm:text-sm ${getSeverityTextColor(alert).replace('900', '700').replace('800', '600').replace('200', '300').replace('100', '200')} mt-0.5 leading-relaxed`}>
+                    {alert.description}
+                  </p>
+                  {alert.escalated && alert.escalatedAt && (
+                    <div className="mt-1.5 flex items-center gap-1">
+                      <span className="text-red-600 dark:text-red-400 text-xs font-bold animate-pulse">
+                        🚨 КРИТИЧНО
+                      </span>
+                      <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(alert.escalatedAt).toLocaleTimeString('ru-RU', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Dismiss Button */}
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={() => dismissMutation.mutate(alert.id)}
                   disabled={dismissMutation.isPending}
-                  className={`${getSeverityTextColor(alert)} hover:bg-opacity-20 flex-shrink-0 ml-2`}
+                  className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 hover:bg-red-100 dark:hover:bg-red-900/20"
                   data-testid={`dismiss-alert-${alert.id}`}
                 >
-                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 dark:text-gray-400" />
                 </Button>
               </div>
             </div>

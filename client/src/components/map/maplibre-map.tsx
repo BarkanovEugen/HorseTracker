@@ -628,25 +628,32 @@ export default function MapLibreMap({
 
   return (
     <>
-      <Card className="h-full">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base sm:text-lg">GPS Карта</CardTitle>
+      <Card className="h-full shadow-lg">
+        <CardHeader className="py-2 sm:py-3 px-3 sm:px-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-gray-800 dark:to-gray-800">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 dark:text-white flex items-center gap-1.5">
+              <MapIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+              <span>GPS Карта</span>
+            </CardTitle>
+            {isDrawingMode && (
+              <span className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                Точек: {drawingPoints.length}/3
+              </span>
+            )}
+          </div>
           {isDrawingMode && (
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              <span className="hidden sm:inline">Кликните на карте, чтобы добавить точки многоугольника. </span>
-              <span className="sm:hidden">Кликните для добавления точек. </span>
-              Точек: {drawingPoints.length}
-              {drawingPoints.length < 3 ? ` (мин. 3)` : ` (готово)`}
+            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Нажмите на карте для добавления точек
             </p>
           )}
         </CardHeader>
         
-        <CardContent className="pt-0">
+        <CardContent className="p-0">
           <div 
-            className="h-[256px] sm:h-[320px] lg:h-[384px] w-full relative rounded-lg overflow-hidden"
+            className="h-full w-full relative rounded-b-lg overflow-hidden"
             data-testid="maplibre-map-container"
           >
-            <div ref={mapContainer} className="w-full h-full" />
+            <div ref={mapContainer} className="w-full h-full min-h-[250px]" />
             
             {!mapLoaded && (
               <div className="absolute inset-0 bg-muted rounded-md flex items-center justify-center">

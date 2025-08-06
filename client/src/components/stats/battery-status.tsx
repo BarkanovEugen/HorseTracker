@@ -64,29 +64,33 @@ export default function BatteryStatus({ onHorseSelect }: BatteryStatusProps) {
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base sm:text-lg">Батареи</CardTitle>
+    <Card className="h-full shadow-md hover:shadow-lg transition-shadow">
+      <CardHeader className="pb-2 sm:pb-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800">
+        <CardTitle className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 dark:text-white">
+          🔋 Батареи
+        </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="space-y-2 sm:space-y-3">
+      <CardContent className="pt-3 sm:pt-4">
+        <div className="space-y-2 sm:space-y-2.5">
           {horsesBatteryData.map((horse) => (
             <div 
               key={horse.id} 
-              className="flex items-center justify-between p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+              className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all group"
               data-testid={`battery-${horse.id}`}
               onClick={() => onHorseSelect?.(horse)}
             >
-              <span className="text-xs sm:text-sm font-medium truncate mr-2">{horse.name}</span>
-              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                <div className="w-8 sm:w-12 h-1.5 sm:h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 truncate mr-2 group-hover:text-primary transition-colors">
+                {horse.name}
+              </span>
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <div className="w-12 sm:w-16 h-2 sm:h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
                   <div 
-                    className={`h-full transition-all duration-300 ${getBatteryColor(horse.batteryLevel)}`}
+                    className={`h-full transition-all duration-500 ${getBatteryColor(horse.batteryLevel)} shadow-sm`}
                     style={{ width: `${horse.batteryLevel}%` }}
-                  ></div>
+                  />
                 </div>
                 <span 
-                  className={`text-xs font-semibold ${getBatteryTextColor(horse.batteryLevel)} min-w-max`}
+                  className={`text-[10px] sm:text-xs font-bold ${getBatteryTextColor(horse.batteryLevel)} min-w-[28px] sm:min-w-[32px] text-right`}
                   data-testid={`battery-percentage-${horse.id}`}
                 >
                   {horse.batteryLevel}%

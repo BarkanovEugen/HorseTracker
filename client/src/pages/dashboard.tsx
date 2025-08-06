@@ -17,25 +17,27 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Active Alerts - Prominent position at top */}
       <ActiveAlerts />
 
-      {/* Main Content - Mobile first, responsive layout */}
-      <div className="flex flex-col lg:grid lg:grid-cols-4 gap-4 sm:gap-6">
-        {/* Stats Section - Above map on mobile, sidebar on desktop */}
-        <div className="order-2 lg:order-2 lg:col-span-1 grid grid-cols-2 gap-4 lg:grid-cols-1 lg:space-y-6">
-          <QuickStats />
-          <BatteryStatus onHorseSelect={handleHorseSelect} />
+      {/* Main Content Grid - Optimized for mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        {/* Map Section - Full width on mobile, 3 cols on desktop */}
+        <div className="lg:col-span-3 order-1">
+          <div className="h-[300px] sm:h-[400px] lg:h-[500px]">
+            <MapLibreMap 
+              selectedHorse={selectedHorse}
+              onHorseSelect={setSelectedHorse}
+              onResetView={handleResetView}
+            />
+          </div>
         </div>
 
-        {/* Map Section - Below stats on mobile, main content on desktop */}
-        <div className="order-1 lg:order-1 lg:col-span-3 h-[256px] sm:h-[320px] lg:h-[400px]">
-          <MapLibreMap 
-            selectedHorse={selectedHorse}
-            onHorseSelect={setSelectedHorse}
-            onResetView={handleResetView}
-          />
+        {/* Stats Section - Below map on mobile, sidebar on desktop */}
+        <div className="lg:col-span-1 order-2 space-y-3 sm:space-y-4">
+          <QuickStats />
+          <BatteryStatus onHorseSelect={handleHorseSelect} />
         </div>
       </div>
     </div>

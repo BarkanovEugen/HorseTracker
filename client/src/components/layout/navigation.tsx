@@ -4,25 +4,29 @@ import { BarChart3, Rabbit, History, Settings } from "lucide-react";
 
 const navItems = [
   {
-    name: "Панель управления",
+    name: "Главная",
+    nameFull: "Панель управления",
     href: "/",
     icon: BarChart3,
     testId: "nav-dashboard"
   },
   {
     name: "Лошади",
+    nameFull: "Лошади",
     href: "/horses",
     icon: Rabbit,
     testId: "nav-horses"
   },
   {
     name: "История",
+    nameFull: "История",
     href: "/history",
     icon: History,
     testId: "nav-history"
   },
   {
     name: "Настройки",
+    nameFull: "Настройки",
     href: "/settings",
     icon: Settings,
     testId: "nav-settings"
@@ -33,9 +37,9 @@ export default function Navigation() {
   const [location] = useLocation();
 
   return (
-    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-        <div className="flex justify-center sm:justify-start space-x-2 sm:space-x-8 overflow-x-auto scrollbar-hide">
+    <nav className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-around sm:justify-start sm:space-x-1 sm:px-6 lg:px-8">
           {navItems.map((item) => {
             const isActive = location === item.href;
             const Icon = item.icon;
@@ -44,15 +48,28 @@ export default function Navigation() {
               <Link key={item.href} href={item.href}>
                 <button
                   className={cn(
-                    "py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 transition-colors min-w-max",
+                    "relative py-2 px-3 sm:py-3 sm:px-4 font-medium transition-all duration-200",
+                    "flex flex-col sm:flex-row items-center gap-1 sm:gap-2",
+                    "rounded-t-lg sm:rounded-lg",
                     isActive
-                      ? "border-primary text-primary"
-                      : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      ? "bg-white dark:bg-gray-900 text-primary shadow-sm border-b-2 border-primary sm:border-b-0 sm:shadow-md"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50"
                   )}
                   data-testid={item.testId}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="whitespace-nowrap">{item.name}</span>
+                  <Icon className={cn(
+                    "transition-all",
+                    isActive 
+                      ? "w-5 h-5 sm:w-4 sm:h-4" 
+                      : "w-4 h-4"
+                  )} />
+                  <span className="text-[10px] sm:text-sm font-medium">
+                    <span className="sm:hidden">{item.name}</span>
+                    <span className="hidden sm:inline">{item.nameFull}</span>
+                  </span>
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary sm:hidden" />
+                  )}
                 </button>
               </Link>
             );

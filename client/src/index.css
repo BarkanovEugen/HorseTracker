@@ -56,13 +56,22 @@
   
   /* Ensure map containers have proper dimensions on mobile */
   .maplibregl-map {
-    min-height: 256px !important;
-    height: 256px !important;
+    min-height: 250px !important;
   }
   
   /* Force the map canvas to respect container dimensions */
   .maplibregl-canvas-container, .maplibregl-canvas {
-    min-height: 256px !important;
+    min-height: 250px !important;
+  }
+  
+  /* Compact mobile navigation controls */
+  .maplibregl-ctrl-group {
+    margin: 8px !important;
+  }
+  
+  .maplibregl-ctrl button {
+    width: 32px !important;
+    height: 32px !important;
   }
 }
 
