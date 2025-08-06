@@ -42,6 +42,7 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
       age: "",
       deviceId: "",
       imageUrl: "",
+      markerColor: "#22c55e",
       status: "active",
     },
   });
@@ -55,6 +56,7 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
         age: horse.age,
         deviceId: horse.deviceId,
         imageUrl: horse.imageUrl || "",
+        markerColor: horse.markerColor || "#22c55e",
         status: horse.status,
       });
     } else {
@@ -64,6 +66,7 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
         age: "",
         deviceId: "",
         imageUrl: "",
+        markerColor: "#22c55e",
         status: "active",
       });
     }
@@ -205,6 +208,30 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
             )}
             {errors.deviceId && (
               <p className="text-sm text-red-500 mt-1">{errors.deviceId.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="markerColor">Цвет маркера на карте</Label>
+            <div className="flex items-center space-x-3">
+              <input
+                id="markerColor"
+                type="color"
+                {...register("markerColor")}
+                className="w-12 h-10 rounded-md border border-gray-300 cursor-pointer"
+                data-testid="horse-marker-color-input"
+              />
+              <div className="flex-1">
+                <Input
+                  {...register("markerColor")}
+                  placeholder="#22c55e"
+                  className={errors.markerColor ? "border-red-500" : ""}
+                  data-testid="horse-marker-color-text-input"
+                />
+              </div>
+            </div>
+            {errors.markerColor && (
+              <p className="text-sm text-red-500 mt-1">{errors.markerColor.message}</p>
             )}
           </div>
 

@@ -10,6 +10,7 @@ export const horses = pgTable("horses", {
   age: numeric("age").notNull(),
   deviceId: text("device_id").notNull().unique(),
   imageUrl: text("image_url"),
+  markerColor: text("marker_color").default("#22c55e"), // Custom color for map marker
   status: text("status").notNull().default("active"), // active, warning, offline
   createdAt: timestamp("created_at").defaultNow(),
 });

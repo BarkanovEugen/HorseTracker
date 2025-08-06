@@ -70,6 +70,7 @@ export class MemStorage implements IStorage {
       age: "7",
       deviceId: "ESP32-001",
       imageUrl: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400",
+      markerColor: "#22c55e",
       status: "active",
       createdAt: new Date(),
     };
@@ -81,6 +82,7 @@ export class MemStorage implements IStorage {
       age: "5",
       deviceId: "ESP32-002",
       imageUrl: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400",
+      markerColor: "#3b82f6",
       status: "warning",
       createdAt: new Date(),
     };
@@ -92,6 +94,7 @@ export class MemStorage implements IStorage {
       age: "9",
       deviceId: "ESP32-003",
       imageUrl: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400",
+      markerColor: "#8b5cf6",
       status: "active",
       createdAt: new Date(),
     };
@@ -286,7 +289,8 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: new Date(),
       status: horse.status || "active",
-      imageUrl: horse.imageUrl ?? null
+      imageUrl: horse.imageUrl ?? null,
+      markerColor: horse.markerColor ?? "#22c55e"
     };
     this.horses.set(id, newHorse);
     return newHorse;

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { createHorseMarkerElement } from "./horse-marker";
 import { Crosshair, MapIcon, Plus, Save, X, CheckCircle, XCircle } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -224,52 +225,18 @@ export default function MapLibreMap() {
 
     // Add new markers
     horseLocations.forEach(({ horse, lastLocation }) => {
-      const color = horse.status === 'active' ? '#22c55e' : 
-                    horse.status === 'warning' ? '#eab308' : '#ef4444';
+      // Create custom horse marker element
+      const el = createHorseMarkerElement(horse, 32);
       
-      // Create custom HTML marker
-      const el = document.createElement('div');
-      el.style.cssText = `
-        background-color: ${color};
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        cursor: pointer;
-        position: relative;
-      `;
-      el.textContent = '🐎';
-
-      // Add horse name tooltip
-      const tooltip = document.createElement('div');
-      tooltip.style.cssText = `
-        position: absolute;
-        top: -35px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 11px;
-        white-space: nowrap;
-        opacity: 0;
-        transition: opacity 0.2s;
-        pointer-events: none;
-      `;
-      tooltip.textContent = horse.name;
-      el.appendChild(tooltip);
-
-      el.addEventListener('mouseenter', () => {
-        tooltip.style.opacity = '1';
-      });
-      el.addEventListener('mouseleave', () => {
-        tooltip.style.opacity = '0';
+      // Add click handler
+      el.addEventListener('click', () => {
+        toast({
+          title: horse.name,
+          description: `${horse.breed} • Статус: ${
+            horse.status === 'active' ? 'Активен' :
+            horse.status === 'warning' ? 'Предупреждение' : 'Не в сети'
+          }`,
+        });
       });
 
       const marker = new maplibregl.Marker(el)
