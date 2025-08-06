@@ -137,13 +137,13 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md h-[80vh] flex flex-col p-6">
         <DialogHeader>
           <DialogTitle data-testid="horse-form-title">
             {isEditing ? 'Редактировать лошадь' : 'Добавить лошадь'}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 flex flex-col">
           <div>
             <Label htmlFor="name">Имя лошади</Label>
             <Input
@@ -274,7 +274,7 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
             </Select>
           </div>
 
-          <div className="flex space-x-2 pt-4">
+          <div className="flex space-x-2 pt-6 mt-auto border-t border-gray-200 dark:border-gray-700">
             <Button
               type="submit"
               className="flex-1"
