@@ -56,6 +56,9 @@ export interface IStorage {
   getUserByVkId(vkId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserRole(id: string, role: 'admin' | 'viewer'): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
   
   // ESP32 Integration
@@ -982,6 +985,11 @@ export class DatabaseStorage implements IStorage {
 
   async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
     const [updatedUser] = await db.update(users).set(user).where(eq(users.id, id)).returning();
+    return updatedUser || undefined;
+  }
+
+  async updateUserRole(id: string, role: 'admin' | 'viewer'): Promise<User | undefined> {
+    const [updatedUser] = await db.update(users).set({ role }).where(eq(users.id, id)).returning();
     return updatedUser || undefined;
   }
 

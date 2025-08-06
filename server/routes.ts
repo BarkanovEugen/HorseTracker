@@ -7,13 +7,8 @@ import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDevic
 import { z } from "zod";
 import type { User } from "@shared/schema";
 
-// Authentication middleware
-function requireAuth(req: any, res: any, next: any) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ error: "Authentication required" });
-}
+// Import authentication middleware
+import { requireAuth, requireAdmin, requireViewer, getUserPermissions } from "./middleware/auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // VK ID Authentication routes
@@ -140,8 +135,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Horses API
-  app.get("/api/horses", async (req, res) => {
+  // User permissions endpoint
+  app.get("/api/auth/permissions", requireAuth, (req, res) => {
+    const permissions = getUserPermissions(req.user);
+    res.json(permissions);
+  });
+
+  // Admin only: User management
+  app.get("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.put("/api/users/:userId/role", requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { role } = req.body;
+      
+      if (!['admin', 'viewer'].includes(role)) {
+        return res.status(400).json({ error: "Invalid role. Must be 'admin' or 'viewer'" });
+      }
+      
+      const updatedUser = await storage.updateUserRole(userId, role);
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user role" });
+    }
+  });
+
+  // Horses API - View access for all authenticated users
+  app.get("/api/horses", requireViewer, async (req, res) => {
     try {
       const horses = await storage.getHorses();
       res.json(horses);
@@ -150,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/horses/:id", async (req, res) => {
+  app.get("/api/horses/:id", requireViewer, async (req, res) => {
     try {
       const horse = await storage.getHorse(req.params.id);
       if (!horse) {
@@ -162,7 +193,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/horses", async (req, res) => {
+  // Admin only: Horse management
+  app.post("/api/horses", requireAdmin, async (req, res) => {
     try {
       const validatedData = insertHorseSchema.parse(req.body);
       const horse = await storage.createHorse(validatedData);
@@ -175,7 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/horses/:id", async (req, res) => {
+  app.put("/api/horses/:id", requireAdmin, async (req, res) => {
     try {
       const validatedData = insertHorseSchema.partial().parse(req.body);
       const horse = await storage.updateHorse(req.params.id, validatedData);
@@ -191,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/horses/:id", async (req, res) => {
+  app.delete("/api/horses/:id", requireAdmin, async (req, res) => {
     try {
       const success = await storage.deleteHorse(req.params.id);
       if (!success) {
@@ -203,8 +235,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Alerts API
-  app.get("/api/alerts", async (req, res) => {
+  // Alerts API - View access for all authenticated users
+  app.get("/api/alerts", requireViewer, async (req, res) => {
     try {
       // Check and escalate old alerts before returning
       await storage.escalateOldAlerts();
@@ -215,7 +247,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/alerts/:id/dismiss", async (req, res) => {
+  // Admin only: Alert management
+  app.post("/api/alerts/:id/dismiss", requireAdmin, async (req, res) => {
     try {
       const success = await storage.dismissAlert(req.params.id);
       if (!success) {
@@ -227,8 +260,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Locations API
-  app.get("/api/locations", async (req, res) => {
+  // Locations API - View access for all authenticated users
+  app.get("/api/locations", requireViewer, async (req, res) => {
     try {
       const locations = await storage.getRecentLocations(100);
       res.json(locations);
@@ -237,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/horses/:id/locations", async (req, res) => {
+  app.get("/api/horses/:id/locations", requireViewer, async (req, res) => {
     try {
       const locations = await storage.getLocationsByHorse(req.params.id);
       res.json(locations);
@@ -267,8 +300,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Geofences API
-  app.get("/api/geofences", async (req, res) => {
+  // Geofences API - View access for all authenticated users
+  app.get("/api/geofences", requireViewer, async (req, res) => {
     try {
       const geofences = await storage.getGeofences();
       res.json(geofences);
@@ -277,7 +310,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/geofences", async (req, res) => {
+  // Admin only: Geofence management
+  app.post("/api/geofences", requireAdmin, async (req, res) => {
     try {
       const validatedData = insertGeofenceSchema.parse(req.body);
       const geofence = await storage.createGeofence(validatedData);
@@ -290,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/geofences/:id", async (req, res) => {
+  app.delete("/api/geofences/:id", requireAdmin, async (req, res) => {
     try {
       const success = await storage.deleteGeofence(req.params.id);
       if (!success) {
@@ -302,8 +336,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Devices API
-  app.get("/api/devices", async (req, res) => {
+  // Devices API - View access for all authenticated users
+  app.get("/api/devices", requireViewer, async (req, res) => {
     try {
       const devices = await storage.getDevices();
       res.json(devices);
@@ -312,13 +346,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/devices", async (req, res) => {
+  // Admin only: Device management
+  app.post("/api/devices", requireAdmin, async (req, res) => {
     try {
       console.log("POST /api/devices - Request body:", req.body);
       const validatedData = insertDeviceSchema.parse(req.body);
       console.log("POST /api/devices - Validated data:", validatedData);
-      
-
       
       const device = await storage.createDevice(validatedData);
       console.log("POST /api/devices - Created device:", device);
@@ -332,7 +365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/devices/:id", async (req, res) => {
+  app.delete("/api/devices/:id", requireAdmin, async (req, res) => {
     try {
       const success = await storage.deleteDevice(req.params.id);
       if (!success) {
@@ -341,6 +374,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete device" });
+    }
+  });
+
+  // User management API - Admin only
+  app.get("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.put("/api/users/:id/role", requireAdmin, async (req, res) => {
+    try {
+      const { role } = req.body;
+      if (!['admin', 'viewer'].includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      
+      const user = await storage.updateUserRole(req.params.id, role);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  // Permissions endpoint for frontend
+  app.get("/api/auth/permissions", requireViewer, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const permissions = {
+        canEdit: user.role === 'admin',
+        canView: true, // All authenticated users can view
+        canManageUsers: user.role === 'admin',
+        role: user.role || 'viewer'
+      };
+      res.json(permissions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch permissions" });
     }
   });
 

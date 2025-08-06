@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { BarChart3, Rabbit, History, Settings } from "lucide-react";
+import { BarChart3, Rabbit, History, Settings, Shield } from "lucide-react";
+import { useCanManageUsers } from "@/hooks/use-permissions";
 
 const navItems = [
   {
@@ -35,12 +36,25 @@ const navItems = [
 
 export default function Navigation() {
   const [location] = useLocation();
+  const canManageUsers = useCanManageUsers();
+
+  // Add admin item conditionally
+  const dynamicNavItems = [
+    ...navItems,
+    ...(canManageUsers ? [{
+      name: "Админ",
+      nameFull: "Администрирование",
+      href: "/admin",
+      icon: Shield,
+      testId: "nav-admin"
+    }] : [])
+  ];
 
   return (
     <nav className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-around sm:justify-start sm:space-x-1 sm:px-6 lg:px-8">
-          {navItems.map((item) => {
+          {dynamicNavItems.map((item) => {
             const isActive = location === item.href;
             const Icon = item.icon;
             

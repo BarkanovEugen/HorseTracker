@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { insertHorseSchema, type InsertHorse, type Horse, type Device } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useCanEdit } from "@/hooks/use-permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +22,13 @@ interface HorseFormProps {
 export default function HorseForm({ open, horse, onClose, onSuccess }: HorseFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const canEdit = useCanEdit();
   const isEditing = !!horse;
+
+  // Don't render form if user can't edit
+  if (!canEdit) {
+    return null;
+  }
 
   const { data: devices = [] } = useQuery<Device[]>({
     queryKey: ['/api/devices'],

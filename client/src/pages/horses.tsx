@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import HorseCard from "@/components/horses/horse-card";
 import HorseForm from "@/components/horses/horse-form";
+import { useCanEdit } from "@/hooks/use-permissions";
 import { Plus } from "lucide-react";
 
 export default function Horses() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingHorse, setEditingHorse] = useState<Horse | undefined>(undefined);
   const [viewingHorse, setViewingHorse] = useState<Horse | undefined>(undefined);
+  const canEdit = useCanEdit();
 
   const { data: horses = [], isLoading: horsesLoading } = useQuery<Horse[]>({
     queryKey: ['/api/horses'],
