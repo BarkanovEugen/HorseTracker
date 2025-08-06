@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import maplibregl from "maplibre-gl";
-import { GpsLocation, Horse, Geofence, InsertGeofence } from "@shared/schema";
+import { GpsLocation, Horse, Geofence, InsertGeofence, Device } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -147,6 +147,10 @@ export default function MapLibreMap({
     queryKey: ['/api/geofences'],
   });
 
+  const { data: devices = [] } = useQuery<Device[]>({
+    queryKey: ['/api/devices'],
+  });
+
   const createGeofenceMutation = useMutation({
     mutationFn: async (data: InsertGeofence) => {
       const response = await apiRequest('POST', '/api/geofences', data);
@@ -185,8 +189,15 @@ export default function MapLibreMap({
         horse,
         lastLocation,
       };
-    }).filter(item => item.lastLocation); // Only show horses with GPS data
-  }, [horses, locations]);
+    }).filter(item => {
+      // Show horses if they have GPS data OR if they have an active device
+      if (item.lastLocation) return true;
+      
+      // Check if horse has an active device
+      const device = devices.find((d: Device) => d.deviceId === item.horse.deviceId);
+      return device && device.isOnline;
+    });
+  }, [horses, locations, devices]);
 
   // Initialize map immediately, don't wait for data
   useEffect(() => {

@@ -29,6 +29,8 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Real-time Marker Updates**: Fixed issue where marker color changes in settings only applied after page reload - markers now update immediately when horse properties change
 - **Form Select Fix**: Resolved z-index conflict where device selection dropdown wouldn't open in horse edit dialog - increased SelectContent z-index from z-50 to z-[100]
 - **Device Selection Redesign**: Completely reworked device selection in horse edit form - removed manual input option, now only allows selection from existing devices in database with clear free/occupied status
+- **Smart Horse Display Logic**: Enhanced marker display logic to show all horses with active devices on map, even without recent GPS data - ensures connected horses are always visible
+- **Database Relationship Sync**: Fixed updateHorse function to properly synchronize device-horse relationships in both directions when device assignments change
 
 # User Preferences
 
