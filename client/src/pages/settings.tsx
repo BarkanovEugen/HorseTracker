@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import GeofenceCreatorDialog from "@/components/geofences/geofence-creator-dialog";
 import { 
   MapPin, 
@@ -33,6 +36,10 @@ export default function Settings() {
   
   const [isGeofenceDialogOpen, setIsGeofenceDialogOpen] = useState(false);
   const [isDeviceDialogOpen, setIsDeviceDialogOpen] = useState(false);
+  const [deviceFormData, setDeviceFormData] = useState({
+    deviceId: '',
+    horseId: '',
+  });
   
   // Mock notification settings - in a real app, this would come from user preferences API
   const [notifications, setNotifications] = useState<NotificationSettings>({
@@ -70,6 +77,35 @@ export default function Settings() {
     },
   });
 
+  const createDeviceMutation = useMutation({
+    mutationFn: async (data: { deviceId: string; horseId?: string }) => {
+      const response = await apiRequest('POST', '/api/devices', {
+        deviceId: data.deviceId,
+        horseId: data.horseId || null,
+        isOnline: true,
+        batteryLevel: "100",
+        lastSignal: new Date().toISOString(),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/devices'] });
+      setIsDeviceDialogOpen(false);
+      setDeviceFormData({ deviceId: '', horseId: '' });
+      toast({
+        title: "Устройство добавлено",
+        description: "Новое устройство было успешно добавлено",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось добавить устройство",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleNotificationToggle = (key: keyof NotificationSettings) => {
     setNotifications(prev => ({
       ...prev,
@@ -91,6 +127,16 @@ export default function Settings() {
 
   const handleAddGeofence = () => {
     setIsGeofenceDialogOpen(true);
+  };
+
+  const handleSubmitDevice = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deviceFormData.deviceId.trim()) return;
+    
+    createDeviceMutation.mutate({
+      deviceId: deviceFormData.deviceId,
+      horseId: deviceFormData.horseId || undefined,
+    });
   };
 
   const getDeviceStatusColor = (isOnline: boolean) => {
@@ -415,6 +461,60 @@ export default function Settings() {
         open={isGeofenceDialogOpen} 
         onOpenChange={setIsGeofenceDialogOpen} 
       />
+
+      {/* Device Creation Dialog */}
+      <Dialog open={isDeviceDialogOpen} onOpenChange={setIsDeviceDialogOpen}>
+        <DialogContent className="z-[10000]">
+          <DialogHeader>
+            <DialogTitle>Добавить устройство</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmitDevice} className="space-y-4">
+            <div>
+              <Label htmlFor="device-id">ID устройства</Label>
+              <Input
+                id="device-id"
+                value={deviceFormData.deviceId}
+                onChange={(e) => setDeviceFormData(prev => ({ ...prev, deviceId: e.target.value }))}
+                placeholder="Например: ESP32-005"
+                required
+                data-testid="device-id-input"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="horse-id">ID лошади (необязательно)</Label>
+              <Input
+                id="horse-id"
+                value={deviceFormData.horseId}
+                onChange={(e) => setDeviceFormData(prev => ({ ...prev, horseId: e.target.value }))}
+                placeholder="Например: horse-1"
+                data-testid="horse-id-input"
+              />
+            </div>
+            
+            <div className="flex space-x-2 pt-4">
+              <Button
+                type="submit"
+                className="flex-1 bg-primary hover:bg-primary/90"
+                disabled={createDeviceMutation.isPending}
+                data-testid="submit-device-form"
+              >
+                {createDeviceMutation.isPending ? "Добавление..." : "Добавить устройство"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDeviceDialogOpen(false)}
+                disabled={createDeviceMutation.isPending}
+                data-testid="cancel-device-form"
+              >
+                Отмена
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
