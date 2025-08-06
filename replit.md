@@ -2,7 +2,12 @@
 
 A GPS horse tracking application built with React frontend and Express backend. The system provides real-time monitoring of horses through GPS devices, polygon-based geofencing capabilities, intelligent alert management with escalation, and battery status tracking. Features include a dashboard with live OpenStreetMap visualization using Leaflet, horse management, location history, and settings configuration. Users can create custom polygon geozones by clicking points directly on the interactive map.
 
-## Recent Updates (January 2025)
+## Recent Updates (August 2025)
+- **PostgreSQL Database Integration**: Complete migration from in-memory storage to PostgreSQL with Drizzle ORM
+- **ESP32 Device API**: Added `/api/device/data` endpoint for ESP32 devices to send GPS data (POST with id, x, y, battery fields)
+- **Automatic Device Registration**: New ESP32 devices are automatically registered on first signal transmission
+- **Database Schema**: Full schema with horses, devices, GPS locations, geofences, and alerts tables with proper relationships
+- **Real-time Device Processing**: ESP32 data processing with automatic horse assignment and location tracking
 - **Intelligent Alert System**: Completed full implementation of smart alert management with automatic escalation after 2 minutes outside geofences
 - **Visual Escalation**: Escalated alerts display with red styling, custom red border pulse animation, and priority sorting
 - **Auto-Dismissal**: Alerts automatically close when horses return to safe zones using ray-casting polygon detection

@@ -6,6 +6,61 @@ import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDevic
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ESP32 Device Data Endpoint
+  app.post("/api/device/data", async (req, res) => {
+    try {
+      const { id: deviceId, x: longitude, y: latitude, battery } = req.body;
+      
+      // Validate required fields
+      if (!deviceId || longitude === undefined || latitude === undefined || battery === undefined) {
+        return res.status(400).json({ 
+          error: "Missing required fields: id, x (longitude), y (latitude), battery" 
+        });
+      }
+
+      // Validate data types
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      const batteryLevel = parseFloat(battery);
+
+      if (isNaN(lat) || isNaN(lng) || isNaN(batteryLevel)) {
+        return res.status(400).json({ 
+          error: "Invalid data types: coordinates and battery must be numbers" 
+        });
+      }
+
+      // Process device data
+      const result = await storage.processDeviceData(deviceId, lat, lng, batteryLevel);
+      
+      console.log(`📡 ESP32 data received: ${deviceId} at [${lat}, ${lng}] battery: ${batteryLevel}%`);
+
+      // Broadcast real-time update via WebSocket
+      (req as any).wss?.clients.forEach((client: any) => {
+        if (client.readyState === 1) { // WebSocket.OPEN
+          client.send(JSON.stringify({
+            type: 'device_data',
+            data: {
+              deviceId,
+              location: result.location,
+              device: result.device
+            }
+          }));
+        }
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Device data processed",
+        device: result.device,
+        location: result.location
+      });
+
+    } catch (error) {
+      console.error("Error processing device data:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Horses API
   app.get("/api/horses", async (req, res) => {
     try {

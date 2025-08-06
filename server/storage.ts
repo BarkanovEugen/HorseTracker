@@ -10,6 +10,9 @@ import {
   type Device,
   type InsertDevice
 } from "@shared/schema";
+import { db } from "./db";
+import { horses, gpsLocations, alerts, geofences, devices } from "@shared/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -44,6 +47,9 @@ export interface IStorage {
   createDevice(device: InsertDevice): Promise<Device>;
   updateDevice(id: string, device: Partial<InsertDevice>): Promise<Device | undefined>;
   deleteDevice(id: string): Promise<boolean>;
+  
+  // ESP32 Integration
+  processDeviceData(deviceId: string, latitude: number, longitude: number, batteryLevel: number): Promise<{device: Device, location: GpsLocation}>;
 }
 
 export class MemStorage implements IStorage {
@@ -625,6 +631,465 @@ export class MemStorage implements IStorage {
   async deleteDevice(id: string): Promise<boolean> {
     return this.devices.delete(id);
   }
+
+  // ESP32 Integration
+  async processDeviceData(deviceId: string, latitude: number, longitude: number, batteryLevel: number): Promise<{device: Device, location: GpsLocation}> {
+    // Check if device exists, if not create it
+    let device = await this.getDeviceByDeviceId(deviceId);
+    
+    if (!device) {
+      // Auto-register new device
+      device = await this.createDevice({
+        deviceId: deviceId,
+        horseId: null, // Will be assigned later when user creates horse
+        batteryLevel: batteryLevel.toString(),
+        isOnline: true,
+        lastSignal: new Date(),
+        firmwareVersion: "1.0.0",
+      });
+      
+      console.log(`✓ Auto-registered new ESP32 device: ${deviceId}`);
+    } else {
+      // Update existing device status
+      device = await this.updateDevice(device.id, {
+        batteryLevel: batteryLevel.toString(),
+        isOnline: true,
+        lastSignal: new Date(),
+      }) || device;
+    }
+
+    // Create location record
+    const location = await this.createLocation({
+      horseId: device.horseId || `device-${deviceId}`, // Use device ID as horseId if not assigned to horse
+      latitude: latitude.toString(),
+      longitude: longitude.toString(),
+      batteryLevel: batteryLevel.toString(),
+      accuracy: null,
+    });
+
+    return { device, location };
+  }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  // Helper function to check if a point is inside a polygon using ray casting algorithm
+  private isPointInPolygon(latitude: number, longitude: number, polygon: [number, number][]): boolean {
+    let isInside = false;
+    const x = longitude;
+    const y = latitude;
+    
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][1]; // longitude
+      const yi = polygon[i][0]; // latitude
+      const xj = polygon[j][1]; // longitude
+      const yj = polygon[j][0]; // latitude
+      
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        isInside = !isInside;
+      }
+    }
+    
+    return isInside;
+  }
+
+  // Horses
+  async getHorses(): Promise<Horse[]> {
+    return await db.select().from(horses);
+  }
+
+  async getHorse(id: string): Promise<Horse | undefined> {
+    const result = await db.select().from(horses).where(eq(horses.id, id));
+    return result[0] || undefined;
+  }
+
+  async createHorse(horse: InsertHorse): Promise<Horse> {
+    const result = await db.insert(horses).values(horse).returning();
+    return result[0];
+  }
+
+  async updateHorse(id: string, horse: Partial<InsertHorse>): Promise<Horse | undefined> {
+    const result = await db.update(horses).set(horse).where(eq(horses.id, id)).returning();
+    return result[0] || undefined;
+  }
+
+  async deleteHorse(id: string): Promise<boolean> {
+    const result = await db.delete(horses).where(eq(horses.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // GPS Locations
+  async getLocationsByHorse(horseId: string): Promise<GpsLocation[]> {
+    return await db.select().from(gpsLocations).where(eq(gpsLocations.horseId, horseId)).orderBy(desc(gpsLocations.timestamp));
+  }
+
+  async getRecentLocations(limit: number = 50): Promise<GpsLocation[]> {
+    return await db.select().from(gpsLocations).orderBy(desc(gpsLocations.timestamp)).limit(limit);
+  }
+
+  async createLocation(location: InsertGpsLocation): Promise<GpsLocation> {
+    const result = await db.insert(gpsLocations).values(location).returning();
+    const newLocation = result[0];
+    
+    // Check for geofence violations
+    await this.checkGeofenceViolations(
+      location.horseId, 
+      parseFloat(location.latitude), 
+      parseFloat(location.longitude)
+    );
+    
+    return newLocation;
+  }
+
+  async checkGeofenceViolations(horseId: string, latitude: number, longitude: number): Promise<void> {
+    const horse = await this.getHorse(horseId);
+    if (!horse) return;
+
+    const allGeofences = await this.getGeofences();
+    const activeGeofences = allGeofences.filter(g => g.isActive);
+    
+    // Check if horse is inside any safe zone
+    let isInSafeZone = false;
+    
+    for (const geofence of activeGeofences) {
+      try {
+        let coordinates: [number, number][];
+        if (typeof geofence.coordinates === 'string') {
+          coordinates = JSON.parse(geofence.coordinates);
+        } else {
+          coordinates = geofence.coordinates as [number, number][];
+        }
+        
+        if (this.isPointInPolygon(latitude, longitude, coordinates)) {
+          isInSafeZone = true;
+          break;
+        }
+      } catch (error) {
+        console.error('Error parsing geofence coordinates:', error, geofence.coordinates);
+      }
+    }
+
+    // Check existing alerts for this horse
+    const existingAlerts = await db.select().from(alerts).where(
+      and(eq(alerts.horseId, horseId), eq(alerts.isActive, true))
+    );
+
+    const hasGeofenceAlert = existingAlerts.some(alert => alert.type === 'geofence');
+
+    // Create or dismiss alerts based on current status
+    if (!isInSafeZone && !hasGeofenceAlert) {
+      // Horse is outside safe zone and no alert exists - create alert
+      await this.createAlert({
+        horseId: horseId,
+        type: 'geofence',
+        severity: 'warning',
+        title: `${horse.name} покинул безопасную зону`,
+        description: `Только что • За пределами геозон`,
+        isActive: true,
+        geofenceId: null,
+        escalated: false,
+        escalatedAt: null,
+        pushSent: false,
+      });
+    } else if (isInSafeZone && hasGeofenceAlert) {
+      // Horse is back in safe zone and alert exists - dismiss alert
+      for (const alert of existingAlerts) {
+        if (alert.type === 'geofence') {
+          await this.dismissAlert(alert.id);
+        }
+      }
+    }
+  }
+
+  // Alerts
+  async getActiveAlerts(): Promise<Alert[]> {
+    const result = await db.select().from(alerts).where(eq(alerts.isActive, true)).orderBy(desc(alerts.createdAt));
+    
+    // Sort by: escalated alerts first, then by creation time (newest first)
+    return result.sort((a, b) => {
+      if (a.escalated && !b.escalated) return -1;
+      if (!a.escalated && b.escalated) return 1;
+      return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
+    });
+  }
+
+  async getAllAlerts(): Promise<Alert[]> {
+    return await db.select().from(alerts).orderBy(desc(alerts.createdAt));
+  }
+
+  async createAlert(alert: InsertAlert): Promise<Alert> {
+    const result = await db.insert(alerts).values(alert).returning();
+    return result[0];
+  }
+
+  async dismissAlert(id: string): Promise<boolean> {
+    const result = await db.update(alerts).set({ isActive: false }).where(eq(alerts.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Geofences
+  async getGeofences(): Promise<Geofence[]> {
+    return await db.select().from(geofences);
+  }
+
+  async createGeofence(geofence: InsertGeofence): Promise<Geofence> {
+    const result = await db.insert(geofences).values(geofence).returning();
+    return result[0];
+  }
+
+  async updateGeofence(id: string, geofence: Partial<InsertGeofence>): Promise<Geofence | undefined> {
+    const result = await db.update(geofences).set(geofence).where(eq(geofences.id, id)).returning();
+    return result[0] || undefined;
+  }
+
+  async deleteGeofence(id: string): Promise<boolean> {
+    const result = await db.delete(geofences).where(eq(geofences.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Devices
+  async getDevices(): Promise<Device[]> {
+    return await db.select().from(devices);
+  }
+
+  async getDeviceByDeviceId(deviceId: string): Promise<Device | undefined> {
+    const result = await db.select().from(devices).where(eq(devices.deviceId, deviceId));
+    return result[0] || undefined;
+  }
+
+  async createDevice(device: InsertDevice): Promise<Device> {
+    const result = await db.insert(devices).values(device).returning();
+    return result[0];
+  }
+
+  async updateDevice(id: string, device: Partial<InsertDevice>): Promise<Device | undefined> {
+    const result = await db.update(devices).set(device).where(eq(devices.id, id)).returning();
+    return result[0] || undefined;
+  }
+
+  async deleteDevice(id: string): Promise<boolean> {
+    const result = await db.delete(devices).where(eq(devices.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ESP32 Integration
+  async processDeviceData(deviceId: string, latitude: number, longitude: number, batteryLevel: number): Promise<{device: Device, location: GpsLocation}> {
+    // Check if device exists, if not create it
+    let device = await this.getDeviceByDeviceId(deviceId);
+    
+    if (!device) {
+      // Auto-register new device
+      device = await this.createDevice({
+        deviceId: deviceId,
+        horseId: null, // Will be assigned later when user creates horse
+        batteryLevel: batteryLevel.toString(),
+        isOnline: true,
+        lastSignal: new Date(),
+        firmwareVersion: "1.0.0",
+      });
+      
+      console.log(`✓ Auto-registered new ESP32 device: ${deviceId}`);
+    } else {
+      // Update existing device status
+      device = await this.updateDevice(device.id, {
+        batteryLevel: batteryLevel.toString(),
+        isOnline: true,
+        lastSignal: new Date(),
+      }) || device;
+    }
+
+    // Create location record
+    const location = await this.createLocation({
+      horseId: device.horseId, // Use device ID as horseId if not assigned to horse
+      latitude: latitude.toString(),
+      longitude: longitude.toString(),
+      batteryLevel: batteryLevel.toString(),
+      accuracy: null,
+    });
+
+    return { device, location };
+  }
+
+  // New method: Check and escalate alerts that have been active for more than 2 minutes
+  async escalateOldAlerts(): Promise<Alert[]> {
+    const escalatedAlerts: Alert[] = [];
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    
+    const oldAlerts = await db.select().from(alerts).where(
+      and(
+        eq(alerts.isActive, true),
+        eq(alerts.type, 'geofence'),
+        eq(alerts.escalated, false)
+      )
+    );
+
+    for (const alert of oldAlerts) {
+      if (alert.createdAt && alert.createdAt < twoMinutesAgo) {
+        // Escalate the alert
+        const escalatedAlert: Alert = {
+          ...alert,
+          severity: 'urgent',
+          escalated: true,
+          escalatedAt: new Date(),
+          title: `🚨 КРИТИЧНО: ${alert.title.replace('покинул', 'находится вне зоны более 2 минут')}`,
+          description: `Более 2 минут • Требуется немедленное внимание`,
+        };
+        
+        await db.update(alerts).set(escalatedAlert).where(eq(alerts.id, alert.id));
+        escalatedAlerts.push(escalatedAlert);
+        
+        console.log(`🔔 PUSH NOTIFICATION: ${escalatedAlert.title} - ${escalatedAlert.description}`);
+      }
+    }
+    
+    return escalatedAlerts;
+  }
+
+  // New method: Get sorted alerts (escalated ones first) - alias for getActiveAlerts
+  async getSortedActiveAlerts(): Promise<Alert[]> {
+    return this.getActiveAlerts();
+  }
+}
+
+// Initialize database with sample data
+async function initializeDatabase() {
+  try {
+    // Check if data already exists
+    const existingHorses = await db.select().from(horses).limit(1);
+    if (existingHorses.length > 0) {
+      console.log("Database already initialized");
+      return;
+    }
+
+    console.log("Initializing database with sample data...");
+
+    // Create sample horses
+    const sampleHorses = [
+      {
+        name: "Буран",
+        breed: "Орловский рысак", 
+        age: "7",
+        deviceId: "ESP32-001",
+        markerColor: "#22c55e",
+        status: "active"
+      },
+      {
+        name: "Молния",
+        breed: "Арабская",
+        age: "5", 
+        deviceId: "ESP32-002",
+        markerColor: "#3b82f6",
+        status: "warning"
+      },
+      {
+        name: "Звездочка",
+        breed: "Фризская",
+        age: "9",
+        deviceId: "ESP32-003", 
+        markerColor: "#8b5cf6",
+        status: "active"
+      }
+    ];
+
+    const createdHorses = await db.insert(horses).values(sampleHorses).returning();
+    console.log(`✓ Created ${createdHorses.length} horses`);
+
+    // Create sample geofences
+    const sampleGeofences = [
+      {
+        name: "Пастбище Север",
+        description: "Основная зона выпаса",
+        coordinates: JSON.stringify([
+          [55.7568, 37.6186],
+          [55.7548, 37.6206],
+          [55.7538, 37.6166],
+          [55.7558, 37.6146],
+          [55.7568, 37.6186]
+        ]),
+        isActive: true
+      },
+      {
+        name: "Водопой",
+        description: "Зона водных ресурсов",
+        coordinates: JSON.stringify([
+          [55.7538, 37.6166],
+          [55.7518, 37.6176],
+          [55.7518, 37.6136],
+          [55.7538, 37.6146],
+          [55.7538, 37.6166]
+        ]),
+        isActive: true
+      }
+    ];
+
+    const createdGeofences = await db.insert(geofences).values(sampleGeofences).returning();
+    console.log(`✓ Created ${createdGeofences.length} geofences`);
+
+    // Create sample devices
+    const sampleDevices = [
+      {
+        deviceId: "ESP32-001",
+        horseId: createdHorses[0].id,
+        batteryLevel: "80",
+        isOnline: true,
+        firmwareVersion: "1.2.3"
+      },
+      {
+        deviceId: "ESP32-002", 
+        horseId: createdHorses[1].id,
+        batteryLevel: "12",
+        isOnline: true,
+        firmwareVersion: "1.2.3"
+      },
+      {
+        deviceId: "ESP32-003",
+        horseId: createdHorses[2].id,
+        batteryLevel: "65", 
+        isOnline: true,
+        firmwareVersion: "1.2.3"
+      }
+    ];
+
+    const createdDevices = await db.insert(devices).values(sampleDevices).returning();
+    console.log(`✓ Created ${createdDevices.length} devices`);
+
+    // Create sample locations
+    const now = new Date();
+    const sampleLocations = [
+      {
+        horseId: createdHorses[0].id,
+        latitude: "55.7558",
+        longitude: "37.6176",
+        batteryLevel: "80",
+        timestamp: new Date(now.getTime() - 5 * 60 * 1000)
+      },
+      {
+        horseId: createdHorses[1].id,
+        latitude: "55.7528", 
+        longitude: "37.6156",
+        batteryLevel: "12",
+        timestamp: new Date(now.getTime() - 10 * 60 * 1000)
+      },
+      {
+        horseId: createdHorses[2].id,
+        latitude: "55.7578",
+        longitude: "37.6196", 
+        batteryLevel: "65",
+        timestamp: new Date(now.getTime() - 2 * 60 * 1000)
+      }
+    ];
+
+    const createdLocations = await db.insert(gpsLocations).values(sampleLocations).returning();
+    console.log(`✓ Created ${createdLocations.length} locations`);
+
+    console.log("✅ Database initialization completed!");
+
+  } catch (error) {
+    console.error("❌ Error initializing database:", error);
+  }
+}
+
+export const storage = new DatabaseStorage();
+
+// Initialize database on startup
+initializeDatabase();
