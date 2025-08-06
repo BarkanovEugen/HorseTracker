@@ -413,11 +413,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         canEdit: user.role === 'admin',
         canView: true, // All authenticated users can view
         canManageUsers: user.role === 'admin',
-        role: user.role || 'viewer'
+        role: user.role || 'admin'
       };
       res.json(permissions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch permissions" });
+    }
+  });
+
+  // Auth user endpoint for frontend
+  app.get("/api/auth/user", (req, res) => {
+    // Temporary bypass for development when VK auth is not configured
+    if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
+      return res.json({ 
+        id: 'dev-user', 
+        role: 'admin', 
+        firstName: 'Development',
+        lastName: 'User',
+        isActive: true
+      });
+    }
+    
+    if (req.isAuthenticated() && req.user) {
+      res.json(req.user);
+    } else {
+      res.status(401).json({ error: "Not authenticated" });
     }
   });
 

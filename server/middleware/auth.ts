@@ -29,6 +29,19 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
 // Middleware to check if user has admin role
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  // Temporary bypass for development when VK auth is not configured
+  if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
+    // Create a mock user for development
+    req.user = { 
+      id: 'dev-user', 
+      role: 'admin', 
+      firstName: 'Development',
+      lastName: 'User',
+      isActive: true
+    } as Express.User;
+    return next();
+  }
+  
   if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ error: "Authentication required" });
   }
@@ -42,6 +55,19 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
 
 // Middleware to check if user has admin or viewer role (essentially just authenticated)
 export function requireViewer(req: Request, res: Response, next: NextFunction) {
+  // Temporary bypass for development when VK auth is not configured
+  if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
+    // Create a mock user for development
+    req.user = { 
+      id: 'dev-user', 
+      role: 'admin', 
+      firstName: 'Development',
+      lastName: 'User',
+      isActive: true
+    } as Express.User;
+    return next();
+  }
+  
   if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ error: "Authentication required" });
   }

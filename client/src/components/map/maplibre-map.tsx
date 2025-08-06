@@ -405,30 +405,38 @@ export default function MapLibreMap({
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
-    // Clear all existing geofence layers first
-    const existingLayers = map.current.getStyle().layers || [];
-    const existingSources = Object.keys(map.current.getStyle().sources || {});
-    
-    // Remove existing geofence layers and sources
-    existingLayers.forEach(layer => {
-      if (layer.id.startsWith('geofence-')) {
-        try {
-          map.current!.removeLayer(layer.id);
-        } catch (e) {
-          // Layer might not exist, ignore
+    try {
+      // Clear all existing geofence layers first
+      const style = map.current.getStyle();
+      if (!style) return;
+      
+      const existingLayers = style.layers || [];
+      const existingSources = Object.keys(style.sources || {});
+      
+      // Remove existing geofence layers and sources
+      existingLayers.forEach(layer => {
+        if (layer && layer.id && layer.id.startsWith('geofence-')) {
+          try {
+            map.current!.removeLayer(layer.id);
+          } catch (e) {
+            // Layer might not exist, ignore
+          }
         }
-      }
-    });
-    
-    existingSources.forEach(sourceId => {
-      if (sourceId.startsWith('geofence-source-')) {
-        try {
-          map.current!.removeSource(sourceId);
-        } catch (e) {
-          // Source might not exist, ignore
+      });
+      
+      existingSources.forEach(sourceId => {
+        if (sourceId && sourceId.startsWith('geofence-source-')) {
+          try {
+            map.current!.removeSource(sourceId);
+          } catch (e) {
+            // Source might not exist, ignore
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error clearing geofence layers:', error);
+      return;
+    }
 
     // Add new geofence layers if we have geofences
     if (geofences.length > 0) {
