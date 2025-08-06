@@ -8,6 +8,7 @@ import { WebSocketProvider } from "@/contexts/websocket-context";
 import { useRealtimeUpdates } from "@/hooks/use-websocket";
 import Header from "@/components/layout/header";
 import Navigation from "@/components/layout/navigation";
+import BottomNavigation from "@/components/layout/bottom-navigation";
 import Dashboard from "@/pages/dashboard";
 import Horses from "@/pages/horses";
 import History from "@/pages/history";
@@ -28,9 +29,13 @@ function AppContent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 pb-16 sm:pb-0">
       <Header />
-      <Navigation />
+      {/* Desktop Navigation - Hidden on mobile */}
+      <div className="hidden sm:block">
+        <Navigation />
+      </div>
+      
       <main className="w-full">
         <Switch>
           <Route path="/" component={Dashboard} />
@@ -40,6 +45,11 @@ function AppContent() {
           <Route component={NotFound} />
         </Switch>
       </main>
+      
+      {/* Mobile Navigation - Only shown on mobile */}
+      <div className="sm:hidden">
+        <BottomNavigation />
+      </div>
     </div>
   );
 }

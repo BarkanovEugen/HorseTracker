@@ -11,6 +11,9 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Mobile Optimization**: Comprehensive mobile-first responsive design with touch-friendly interfaces and compact navigation
 - **Modern Design Overhaul**: Complete redesign with gradient headers, card-based layouts, improved typography, and no text truncation
 - **Responsive Map**: Fixed black map issue on mobile devices with proper container sizing and MapLibre GL initialization fixes
+- **Bottom Navigation**: Modern bottom navigation bar for mobile devices replacing header navigation
+- **Horse Status Enhancement**: Renamed "Батареи" to "Лошади" with zone status indicators (safe/outside) alongside battery levels
+- **Mobile Layout Optimization**: Reorganized layout with horses section positioned directly under map on mobile devices
 
 # User Preferences
 

@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import ActiveAlerts from "@/components/alerts/active-alerts";
 import MapLibreMap from "@/components/map/maplibre-map";
 import QuickStats from "@/components/stats/quick-stats";
-import BatteryStatus from "@/components/stats/battery-status";
+import HorseStatus from "@/components/stats/battery-status";
 import { Horse } from "@shared/schema";
 
 export default function Dashboard() {
@@ -21,9 +21,9 @@ export default function Dashboard() {
       {/* Active Alerts - Prominent position at top */}
       <ActiveAlerts />
 
-      {/* Main Content Grid - Optimized for mobile */}
+      {/* Main Content Grid - Mobile first order */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        {/* Map Section - Full width on mobile, 3 cols on desktop */}
+        {/* Map Section - First on mobile and desktop */}
         <div className="lg:col-span-3 order-1">
           <div className="h-[300px] sm:h-[400px] lg:h-[500px]">
             <MapLibreMap 
@@ -34,10 +34,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Section - Below map on mobile, sidebar on desktop */}
-        <div className="lg:col-span-1 order-2 space-y-3 sm:space-y-4">
+        {/* Stats Section - Sidebar on desktop */}
+        <div className="lg:col-span-1 order-3 lg:order-2 space-y-3 sm:space-y-4">
           <QuickStats />
-          <BatteryStatus onHorseSelect={handleHorseSelect} />
+        </div>
+
+        {/* Horse Status - Directly under map on mobile, below stats on desktop */}
+        <div className="lg:col-span-1 order-2 lg:order-3">
+          <HorseStatus onHorseSelect={handleHorseSelect} />
         </div>
       </div>
     </div>

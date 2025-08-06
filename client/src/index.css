@@ -75,6 +75,11 @@
   }
 }
 
+/* Safe area support for iOS devices */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
