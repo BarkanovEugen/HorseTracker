@@ -135,8 +135,10 @@ export class MemStorage implements IStorage {
     this.devices.set(device2.id, device2);
     this.devices.set(device3.id, device3);
 
-    // Initialize sample locations
+    // Initialize sample locations with historical data
+    const now = new Date();
     const locations = [
+      // Current locations
       {
         id: "loc-1",
         horseId: "horse-1",
@@ -144,25 +146,63 @@ export class MemStorage implements IStorage {
         longitude: "37.6176",
         accuracy: "5",
         batteryLevel: "80",
-        timestamp: new Date(),
+        timestamp: new Date(now.getTime() - 5 * 60 * 1000), // 5 minutes ago
       },
       {
-        id: "loc-2",
+        id: "loc-2", 
         horseId: "horse-2",
         latitude: "55.7528",
         longitude: "37.6156",
         accuracy: "3",
         batteryLevel: "12",
-        timestamp: new Date(),
+        timestamp: new Date(now.getTime() - 10 * 60 * 1000), // 10 minutes ago
       },
       {
         id: "loc-3",
-        horseId: "horse-3",
+        horseId: "horse-3", 
         latitude: "55.7578",
         longitude: "37.6196",
         accuracy: "4",
         batteryLevel: "65",
-        timestamp: new Date(),
+        timestamp: new Date(now.getTime() - 2 * 60 * 1000), // 2 minutes ago
+      },
+      // Historical locations - yesterday
+      {
+        id: "loc-4",
+        horseId: "horse-1",
+        latitude: "55.7548",
+        longitude: "37.6166",
+        accuracy: "4",
+        batteryLevel: "85",
+        timestamp: new Date(now.getTime() - 24 * 60 * 60 * 1000), // 1 day ago
+      },
+      {
+        id: "loc-5",
+        horseId: "horse-1",
+        latitude: "55.7538",
+        longitude: "37.6156",
+        accuracy: "3",
+        batteryLevel: "82",
+        timestamp: new Date(now.getTime() - 24 * 60 * 60 * 1000 - 60 * 60 * 1000), // 1 day 1 hour ago
+      },
+      {
+        id: "loc-6",
+        horseId: "horse-2",
+        latitude: "55.7518",
+        longitude: "37.6146",
+        accuracy: "5",
+        batteryLevel: "25",
+        timestamp: new Date(now.getTime() - 24 * 60 * 60 * 1000), // 1 day ago
+      },
+      // More historical locations - 2 days ago
+      {
+        id: "loc-7",
+        horseId: "horse-3",
+        latitude: "55.7588",
+        longitude: "37.6206", 
+        accuracy: "3",
+        batteryLevel: "70",
+        timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
       },
     ];
 

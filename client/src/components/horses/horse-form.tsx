@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,17 +32,11 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<InsertHorse>({
     resolver: zodResolver(insertHorseSchema),
-    defaultValues: horse ? {
-      name: horse.name,
-      breed: horse.breed,
-      age: horse.age,
-      deviceId: horse.deviceId,
-      imageUrl: horse.imageUrl || "",
-      status: horse.status,
-    } : {
+    defaultValues: {
       name: "",
       breed: "",
       age: "",
@@ -50,6 +45,29 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
       status: "active",
     },
   });
+
+  // Reset form when horse prop changes
+  useEffect(() => {
+    if (horse) {
+      reset({
+        name: horse.name,
+        breed: horse.breed,
+        age: horse.age,
+        deviceId: horse.deviceId,
+        imageUrl: horse.imageUrl || "",
+        status: horse.status,
+      });
+    } else {
+      reset({
+        name: "",
+        breed: "",
+        age: "",
+        deviceId: "",
+        imageUrl: "",
+        status: "active",
+      });
+    }
+  }, [horse, reset]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertHorse) => {

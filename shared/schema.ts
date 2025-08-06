@@ -63,6 +63,7 @@ export const insertHorseSchema = createInsertSchema(horses).omit({
 
 export const insertGpsLocationSchema = createInsertSchema(gpsLocations).omit({
   id: true,
+}).partial({
   timestamp: true,
 });
 

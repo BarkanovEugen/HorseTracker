@@ -25,9 +25,12 @@ export default function History() {
 
   // Filter and group locations by horse and date
   const filteredLocations = locations.filter(location => {
+    // Ensure location has timestamp
+    if (!location.timestamp) return false;
+    
     if (selectedHorse && location.horseId !== selectedHorse) return false;
-    if (fromDate && new Date(location.timestamp!) < new Date(fromDate)) return false;
-    if (toDate && new Date(location.timestamp!) > new Date(toDate)) return false;
+    if (fromDate && new Date(location.timestamp) < new Date(fromDate)) return false;
+    if (toDate && new Date(location.timestamp) > new Date(toDate)) return false;
     return true;
   });
 

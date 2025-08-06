@@ -258,6 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             longitude: (parseFloat(lastLocation.longitude) + (Math.random() - 0.5) * 0.001).toString(),
             accuracy: "5",
             batteryLevel: lastLocation.batteryLevel,
+            timestamp: new Date(),
           });
 
           broadcast(JSON.stringify({
