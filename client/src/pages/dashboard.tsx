@@ -9,7 +9,12 @@ export default function Dashboard() {
   const [selectedHorse, setSelectedHorse] = useState<Horse | null>(null);
 
   const handleHorseSelect = (horse: Horse) => {
-    setSelectedHorse(horse);
+    // If clicking on the same horse that's already selected, reset view
+    if (selectedHorse && selectedHorse.id === horse.id) {
+      setSelectedHorse(null);
+    } else {
+      setSelectedHorse(horse);
+    }
   };
 
   const handleResetView = () => {
@@ -30,7 +35,7 @@ export default function Dashboard() {
             <div className="h-[300px] sm:h-[400px]">
               <MapLibreMap 
                 selectedHorse={selectedHorse}
-                onHorseSelect={setSelectedHorse}
+                onHorseSelect={handleHorseSelect}
                 onResetView={handleResetView}
               />
             </div>
@@ -72,7 +77,7 @@ export default function Dashboard() {
               <div className="absolute inset-0">
                 <MapLibreMap 
                   selectedHorse={selectedHorse}
-                  onHorseSelect={setSelectedHorse}
+                  onHorseSelect={handleHorseSelect}
                   onResetView={handleResetView}
                 />
               </div>
