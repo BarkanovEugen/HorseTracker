@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -67,16 +68,26 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
   useEffect(() => {
     if (!isOpen || !mapContainer.current || map.current) return;
 
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-      center: [37.6173, 55.7558], // Moscow center
-      zoom: 12,
-    });
+    try {
+      map.current = new maplibregl.Map({
+        container: mapContainer.current,
+        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        center: [37.6173, 55.7558], // Moscow center
+        zoom: 12,
+        attributionControl: false,
+      });
 
-    map.current.on('load', () => {
-      console.log('Trail map loaded');
-    });
+      map.current.on('load', () => {
+        console.log('Trail map loaded successfully');
+      });
+
+      map.current.on('error', (e) => {
+        console.error('MapLibre error in trail viewer:', e);
+      });
+
+    } catch (error) {
+      console.error('Failed to initialize trail map:', error);
+    }
 
     return () => {
       if (map.current) {
@@ -88,7 +99,7 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
 
   // Update trail on map when locations change
   useEffect(() => {
-    if (!map.current || !filteredLocations.length) return;
+    if (!map.current || !map.current.isStyleLoaded() || !filteredLocations.length) return;
 
     // Remove existing trail layers and sources
     if (map.current.getLayer('trail-line')) {
@@ -241,17 +252,22 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
       });
     }
 
-    // Fit map to trail bounds
+    // Fit map to trail bounds with delay to ensure map is ready
     if (coordinates.length > 0) {
-      const bounds = new maplibregl.LngLatBounds();
-      coordinates.forEach(coord => bounds.extend(coord));
-      
-      if (!bounds.isEmpty()) {
-        map.current.fitBounds(bounds, {
-          padding: 50,
-          maxZoom: 16
-        });
-      }
+      setTimeout(() => {
+        if (!map.current) return;
+        
+        const bounds = new maplibregl.LngLatBounds();
+        coordinates.forEach(coord => bounds.extend(coord));
+        
+        if (!bounds.isEmpty()) {
+          map.current.fitBounds(bounds, {
+            padding: 50,
+            maxZoom: 16,
+            duration: 1000
+          });
+        }
+      }, 100);
     }
 
     // Add click handlers for trail points
@@ -381,8 +397,8 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
           </div>
 
           {/* Map */}
-          <div className="flex-1 relative bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
-            <div ref={mapContainer} className="w-full h-full" />
+          <div className="flex-1 relative bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden" style={{ minHeight: '400px' }}>
+            <div ref={mapContainer} className="w-full h-full" style={{ minHeight: '400px' }} />
             
             {filteredLocations.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
