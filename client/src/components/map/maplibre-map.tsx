@@ -205,7 +205,7 @@ export default function MapLibreMap() {
         e.preventDefault();
         const newPoint: [number, number] = [e.lngLat.lat, e.lngLat.lng];
         setDrawingPoints(prev => [...prev, newPoint]);
-        console.log('Adding point:', newPoint, 'Total points:', drawingPoints.length + 1);
+
       }
     };
 
@@ -223,40 +223,61 @@ export default function MapLibreMap() {
   useEffect(() => {
     if (!map.current) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current.clear();
-
-    // Add new markers
+    // Update or create markers for each horse
     horseLocations.forEach(({ horse, lastLocation }) => {
-      console.log('Creating marker for horse:', horse.name, 'with color:', horse.markerColor);
-      
-      // Create custom horse marker element
-      const el = createHorseMarkerElement(horse, 40);
-      
-      // Add click handler
-      el.addEventListener('click', () => {
-        toast({
-          title: horse.name,
-          description: `${horse.breed} • Статус: ${
-            horse.status === 'active' ? 'Активен' :
-            horse.status === 'warning' ? 'Предупреждение' : 'Не в сети'
-          }`,
+      const existingMarker = markersRef.current.get(horse.id);
+      const newPosition: [number, number] = [parseFloat(lastLocation.longitude), parseFloat(lastLocation.latitude)];
+
+      if (existingMarker) {
+        // Update existing marker position
+        existingMarker.setLngLat(newPosition);
+      } else {
+        // Create new marker
+
+        
+        const el = createHorseMarkerElement(horse, 40);
+        
+        // Add click handler
+        el.addEventListener('click', () => {
+          toast({
+            title: horse.name,
+            description: `${horse.breed} • Статус: ${
+              horse.status === 'active' ? 'Активен' :
+              horse.status === 'warning' ? 'Предупреждение' : 'Не в сети'
+            }`,
+          });
         });
-      });
 
-      const marker = new maplibregl.Marker({
-        element: el,
-        anchor: 'center'
-      })
-        .setLngLat([parseFloat(lastLocation.longitude), parseFloat(lastLocation.latitude)])
-        .addTo(map.current!);
+        const marker = new maplibregl.Marker({
+          element: el,
+          anchor: 'center'
+        })
+          .setLngLat(newPosition)
+          .addTo(map.current!);
 
-      markersRef.current.set(horse.id, marker);
+        markersRef.current.set(horse.id, marker);
+      }
     });
 
-    // Fit bounds to show all horses
-    if (horseLocations.length > 0) {
+    // Remove markers for horses that no longer exist
+    const currentHorseIds = new Set(horseLocations.map(hl => hl.horse.id));
+    markersRef.current.forEach((marker, horseId) => {
+      if (!currentHorseIds.has(horseId)) {
+        marker.remove();
+        markersRef.current.delete(horseId);
+      }
+    });
+
+  }, [horseLocations]);
+
+  // Auto-fit bounds only on initial load, not on every update
+  useEffect(() => {
+    if (!map.current || horseLocations.length === 0) return;
+
+    // Only fit bounds if this is the first time we're seeing horses
+    const isFirstLoad = markersRef.current.size === 0;
+    
+    if (isFirstLoad) {
       const bounds = new maplibregl.LngLatBounds();
       horseLocations.forEach(hl => {
         bounds.extend([
@@ -266,10 +287,10 @@ export default function MapLibreMap() {
       });
       
       if (!bounds.isEmpty()) {
-        map.current.fitBounds(bounds, { padding: 50 });
+        map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
       }
     }
-  }, [horseLocations]);
+  }, [horseLocations.length > 0]);
 
   // Update geofences
   useEffect(() => {
