@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom pulse animation for critical alerts - only border color changes */
+@keyframes pulse-red-border {
+  0%, 100% {
+    border-color: rgb(220 38 38); /* red-600 */
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  50% {
+    border-color: rgb(239 68 68); /* red-500 */
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.3);
+  }
+}
+
+.pulse-red-border {
+  animation: pulse-red-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

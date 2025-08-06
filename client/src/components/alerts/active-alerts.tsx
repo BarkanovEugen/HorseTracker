@@ -148,8 +148,8 @@ export default function ActiveAlerts() {
             <div
               key={alert.id}
               className={`p-4 border-l-4 ${getSeverityColor(alert)} ${
-                alert.escalated ? 'animate-pulse' : alert.severity === 'urgent' ? 'animate-pulse' : ''
-              } ${alert.escalated ? 'ring-2 ring-red-200 dark:ring-red-800' : ''}`}
+                alert.escalated ? 'pulse-red-border' : ''
+              }`}
               data-testid={`alert-${alert.id}`}
             >
               <div className="flex items-start justify-between">

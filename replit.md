@@ -1,6 +1,13 @@
 # Overview
 
-A GPS horse tracking application built with React frontend and Express backend. The system provides real-time monitoring of horses through GPS devices, polygon-based geofencing capabilities, alert management, and battery status tracking. Features include a dashboard with live OpenStreetMap visualization using Leaflet, horse management, location history, and settings configuration. Users can create custom polygon geozones by clicking points directly on the interactive map.
+A GPS horse tracking application built with React frontend and Express backend. The system provides real-time monitoring of horses through GPS devices, polygon-based geofencing capabilities, intelligent alert management with escalation, and battery status tracking. Features include a dashboard with live OpenStreetMap visualization using Leaflet, horse management, location history, and settings configuration. Users can create custom polygon geozones by clicking points directly on the interactive map.
+
+## Recent Updates (January 2025)
+- **Intelligent Alert System**: Completed full implementation of smart alert management with automatic escalation after 2 minutes outside geofences
+- **Visual Escalation**: Escalated alerts display with red styling, custom red border pulse animation, and priority sorting
+- **Auto-Dismissal**: Alerts automatically close when horses return to safe zones using ray-casting polygon detection
+- **Push Notifications**: Browser push notifications with permission requests for critical escalated alerts
+- **Real-time Updates**: Enhanced WebSocket communication for alert escalation and dismissal events
 
 # User Preferences
 
@@ -32,10 +39,18 @@ Preferred communication style: Simple, everyday language.
 - **Migrations**: Drizzle Kit for schema migrations and database management
 
 ## Real-time Communication
-- **WebSocket Server**: Built into Express server for live location updates
-- **Message Types**: location_update, alert_created, connected, error
+- **WebSocket Server**: Built into Express server for live location updates and alert management
+- **Message Types**: location_update, alert_created, alert_dismissed, alert_escalated, push_notification, connected, error
 - **Auto-reconnection**: Client-side reconnection logic with 3-second retry intervals
 - **Query Invalidation**: Automatic cache invalidation based on WebSocket messages
+- **Push Notifications**: Browser notifications for escalated alerts with permission handling
+
+## Alert Management System
+- **Intelligent Escalation**: Automatic escalation to critical status after 2 minutes outside geofences
+- **Visual Indicators**: Red border pulse animation for escalated alerts without size changes
+- **Auto-Dismissal**: Ray-casting algorithm detects when horses return to safe zones
+- **Priority Sorting**: Escalated alerts appear first in dashboard with timestamp indicators
+- **Real-time Updates**: WebSocket broadcasts for all alert state changes
 
 ## Component Organization
 - **Layout Components**: Header with connection status, navigation bar, responsive design
