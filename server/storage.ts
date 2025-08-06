@@ -862,16 +862,24 @@ export class DatabaseStorage implements IStorage {
 
   async createAlert(alert: InsertAlert): Promise<Alert> {
     const result = await db.insert(alerts).values(alert).returning();
-    return result[0];
+    const createdAlert = result[0];
+    
+    // Notify WebSocket clients about new alert
+    console.log(`📤 WebSocket: Alert created - ${createdAlert.id} (${createdAlert.title})`);
+    (process as any).emit('alertCreated', createdAlert);
+    
+    return createdAlert;
   }
 
   async dismissAlert(id: string): Promise<boolean> {
+    const [alert] = await db.select().from(alerts).where(eq(alerts.id, id));
     const result = await db.update(alerts).set({ isActive: false }).where(eq(alerts.id, id));
     const success = (result.rowCount ?? 0) > 0;
     
-    if (success) {
+    if (success && alert) {
       // Notify WebSocket clients about alert dismissal
       console.log(`📤 WebSocket: Alert dismissed - ${id}`);
+      (process as any).emit('alertDismissed', { ...alert, isActive: false });
     }
     
     return success;
