@@ -84,7 +84,6 @@ export default function Settings() {
         horseId: data.horseId || null,
         isOnline: true,
         batteryLevel: "100",
-        lastSignal: new Date().toISOString(),
       });
       return response.json();
     },

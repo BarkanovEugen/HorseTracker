@@ -181,6 +181,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("POST /api/devices - Request body:", req.body);
       const validatedData = insertDeviceSchema.parse(req.body);
       console.log("POST /api/devices - Validated data:", validatedData);
+      
+
+      
       const device = await storage.createDevice(validatedData);
       console.log("POST /api/devices - Created device:", device);
       res.status(201).json(device);
