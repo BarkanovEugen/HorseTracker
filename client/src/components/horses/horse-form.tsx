@@ -111,10 +111,19 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate all related queries to ensure UI updates immediately
-      queryClient.invalidateQueries({ queryKey: ['/api/horses'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/locations'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/devices'] });
+      // Force invalidate all related queries to ensure UI updates immediately
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/horses'], 
+        refetchType: 'all' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/locations'], 
+        refetchType: 'all' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/devices'], 
+        refetchType: 'all' 
+      });
       toast({
         title: "Лошадь обновлена",
         description: "Информация о лошади была успешно обновлена",

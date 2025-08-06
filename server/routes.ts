@@ -200,13 +200,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/horses/:id", requireAdmin, async (req, res) => {
     try {
+      console.log(`Updating horse ${req.params.id} with data:`, req.body);
       const validatedData = insertHorseSchema.partial().parse(req.body);
+      console.log(`Validated data:`, validatedData);
       const horse = await storage.updateHorse(req.params.id, validatedData);
       if (!horse) {
         return res.status(404).json({ message: "Horse not found" });
       }
+      console.log(`Updated horse result:`, horse);
       res.json(horse);
     } catch (error) {
+      console.error(`Error updating horse ${req.params.id}:`, error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid horse data", errors: error.errors });
       }
