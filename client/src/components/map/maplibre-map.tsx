@@ -103,6 +103,7 @@ export default function MapLibreMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingPoints, setDrawingPoints] = useState<[number, number][]>([]);
@@ -165,7 +166,7 @@ export default function MapLibreMap() {
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current || map.current || isLoading) return;
 
     // Calculate initial bounds
     let center: [number, number] = [37.6176, 55.7558]; // Moscow
@@ -196,20 +197,26 @@ export default function MapLibreMap() {
       zoom: zoom,
     });
 
-    // Add navigation control
-    map.current.addControl(new maplibregl.NavigationControl());
+    // Wait for style to load before adding controls and handlers
+    map.current.on('styledata', () => {
+      if (!map.current!.isStyleLoaded()) return;
+      
+      setMapLoaded(true);
+      
+      // Add navigation control
+      map.current!.addControl(new maplibregl.NavigationControl());
 
-    // Handle drawing mode clicks
-    const handleMapClick = (e: maplibregl.MapMouseEvent) => {
-      if (isDrawingMode) {
-        e.preventDefault();
-        const newPoint: [number, number] = [e.lngLat.lat, e.lngLat.lng];
-        setDrawingPoints(prev => [...prev, newPoint]);
+      // Handle drawing mode clicks
+      const handleMapClick = (e: maplibregl.MapMouseEvent) => {
+        if (isDrawingMode) {
+          e.preventDefault();
+          const newPoint: [number, number] = [e.lngLat.lat, e.lngLat.lng];
+          setDrawingPoints(prev => [...prev, newPoint]);
+        }
+      };
 
-      }
-    };
-
-    map.current.on('click', handleMapClick);
+      map.current!.on('click', handleMapClick);
+    });
 
     return () => {
       if (map.current) {
@@ -217,7 +224,7 @@ export default function MapLibreMap() {
         map.current = null;
       }
     };
-  }, [isDrawingMode]);
+  }, [isLoading]);
 
   // Update horse markers
   useEffect(() => {
@@ -336,8 +343,8 @@ export default function MapLibreMap() {
             type: 'fill',
             source: sourceId,
             paint: {
-              'fill-color': '#22c55e',
-              'fill-opacity': 0.2,
+              'fill-color': '#10b981',
+              'fill-opacity': 0.25,
             },
           });
 
@@ -347,8 +354,9 @@ export default function MapLibreMap() {
             type: 'line',
             source: sourceId,
             paint: {
-              'line-color': '#22c55e',
-              'line-width': 2,
+              'line-color': '#059669',
+              'line-width': 3,
+              'line-opacity': 0.8,
             },
           });
         }
@@ -368,7 +376,7 @@ export default function MapLibreMap() {
     const pointsLayerId = 'drawing-points-layer';
 
     // Remove existing drawing layers
-    [drawingLayerId, pointsLayerId].forEach(layerId => {
+    [drawingLayerId, `${drawingLayerId}-border`, pointsLayerId].forEach(layerId => {
       if (map.current!.getLayer(layerId)) {
         map.current!.removeLayer(layerId);
       }
@@ -405,9 +413,9 @@ export default function MapLibreMap() {
         type: 'circle',
         source: pointsSourceId,
         paint: {
-          'circle-color': '#22c55e',
-          'circle-radius': 6,
-          'circle-stroke-width': 2,
+          'circle-color': '#10b981',
+          'circle-radius': 7,
+          'circle-stroke-width': 3,
           'circle-stroke-color': '#ffffff',
         },
       });
@@ -433,8 +441,20 @@ export default function MapLibreMap() {
           type: 'fill',
           source: drawingSourceId,
           paint: {
-            'fill-color': '#22c55e',
-            'fill-opacity': 0.3,
+            'fill-color': '#10b981',
+            'fill-opacity': 0.35,
+          },
+        });
+
+        // Add border for drawing polygon
+        map.current.addLayer({
+          id: `${drawingLayerId}-border`,
+          type: 'line',
+          source: drawingSourceId,
+          paint: {
+            'line-color': '#059669',
+            'line-width': 3,
+            'line-dasharray': [2, 2],
           },
         });
       }
@@ -510,6 +530,15 @@ export default function MapLibreMap() {
             data-testid="maplibre-map-container"
           >
             <div ref={mapContainer} className="w-full h-full" />
+            
+            {!mapLoaded && (
+              <div className="absolute inset-0 bg-muted rounded-md flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm text-muted-foreground">Загрузка карты...</p>
+                </div>
+              </div>
+            )}
             
             <MapControls 
               isDrawing={isDrawingMode}
