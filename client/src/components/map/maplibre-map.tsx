@@ -185,9 +185,9 @@ export default function MapLibreMap({
     };
   }).filter(item => item.lastLocation); // Only show horses with GPS data
 
-  // Initialize map
+  // Initialize map immediately, don't wait for data
   useEffect(() => {
-    if (!mapContainer.current || map.current || isLoading) return;
+    if (!mapContainer.current || map.current) return;
 
     // Ensure container has proper height before initializing
     const container = mapContainer.current;
@@ -223,7 +223,22 @@ export default function MapLibreMap({
     try {
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: MAP_STYLE, // Use direct reference instead of deep clone
+        style: {
+          version: 8,
+          sources: {
+            'osm': {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '© OpenStreetMap contributors'
+            }
+          },
+          layers: [{
+            id: 'osm',
+            type: 'raster',
+            source: 'osm'
+          }]
+        }, // Simplified inline style for faster loading
         center: center,
         zoom: zoom,
         attributionControl: false,
@@ -232,20 +247,23 @@ export default function MapLibreMap({
         minZoom: 8,
 
         fadeDuration: 0, // Disable fade animations for faster loading
+        hash: false, // Disable URL hash for better performance
+        dragRotate: false, // Disable rotation for simplicity
+        pitchWithRotate: false, // Disable pitch for better performance
       });
 
-      // Wait for style to load before marking as loaded
+      // Mark as loaded immediately when style loads
       map.current.on('load', () => {
         console.log('MapLibre: Map loaded successfully');
         setMapLoaded(true);
-        
-        // Force resize after loading to fix mobile display issues
-        setTimeout(() => {
-          if (map.current) {
-            map.current.resize();
-          }
-        }, 100);
       });
+
+      // Also mark as loaded on first render to reduce wait time
+      setTimeout(() => {
+        if (!map.current?.loaded()) {
+          setMapLoaded(true);
+        }
+      }, 1000); // Fallback timeout
 
       // Add error handling - suppress tile loading errors
       map.current.on('error', (e) => {
@@ -271,7 +289,7 @@ export default function MapLibreMap({
         map.current = null;
       }
     };
-  }, [isLoading]);
+  }, []); // Initialize immediately without waiting for data
 
   // Handle map click events for drawing
   useEffect(() => {
@@ -660,20 +678,7 @@ export default function MapLibreMap({
     createGeofenceMutation.mutate(geofenceData);
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>GPS Карта в Реальном Времени</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse flex items-center justify-center">
-            <div className="text-gray-500">Загрузка карты...</div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+
 
   return (
     <>
@@ -705,10 +710,10 @@ export default function MapLibreMap({
             <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
             
             {!mapLoaded && (
-              <div className="absolute inset-0 bg-muted rounded-md flex items-center justify-center">
+              <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm text-muted-foreground">Загрузка карты...</p>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Карта</p>
                 </div>
               </div>
             )}
