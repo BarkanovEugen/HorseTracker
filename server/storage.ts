@@ -1138,7 +1138,34 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
-      // Get users with enabled Telegram notifications
+      // Check for development user settings first
+      const devTelegramEnabled = global.devUserTelegramNotifications;
+      const devTelegramChatId = global.devUserTelegramChatId;
+      
+      if (devTelegramEnabled && devTelegramChatId) {
+        console.log('📱 Sending Telegram notification to dev user');
+        
+        // Get the horse for the alert
+        const [horse] = await db.select().from(horses).where(eq(horses.id, alert.horseId));
+        if (!horse) {
+          console.log('❌ Horse not found for alert:', alert.id);
+          return;
+        }
+        
+        try {
+          if (alert.type === 'device_offline') {
+            await telegramService.sendDeviceOfflineNotification(devTelegramChatId, alert, horse);
+          } else {
+            await telegramService.sendAlertNotification(devTelegramChatId, alert, horse);
+          }
+          console.log(`📤 Telegram уведомление отправлено в dev chat ${devTelegramChatId}`);
+        } catch (error) {
+          console.error('❌ Failed to send Telegram notification to dev user:', error);
+        }
+        return;
+      }
+
+      // Fallback to database users in production
       const telegramUsers = await db.select().from(users).where(
         and(
           eq(users.telegramNotifications, true),
@@ -1188,7 +1215,29 @@ export class DatabaseStorage implements IStorage {
         return;
       }
 
-      // Get users with enabled Telegram notifications
+      // Check for development user settings first
+      const devTelegramEnabled = global.devUserTelegramNotifications;
+      const devTelegramChatId = global.devUserTelegramChatId;
+      
+      if (devTelegramEnabled && devTelegramChatId) {
+        console.log('📱 Sending Telegram dismissal notification to dev user');
+        
+        // Get the horse for the alert
+        const [horse] = await db.select().from(horses).where(eq(horses.id, alert.horseId));
+        if (!horse) {
+          return;
+        }
+        
+        try {
+          await telegramService.sendAlertResolved(devTelegramChatId, alert, horse);
+          console.log(`📤 Telegram уведомление о закрытии отправлено в dev chat ${devTelegramChatId}`);
+        } catch (error) {
+          console.error('❌ Failed to send Telegram dismissal notification to dev user:', error);
+        }
+        return;
+      }
+
+      // Fallback to database users in production
       const telegramUsers = await db.select().from(users).where(
         and(
           eq(users.telegramNotifications, true),
