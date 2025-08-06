@@ -167,14 +167,7 @@ export default function HorseStatus({ onHorseSelect, selectedHorse }: HorseStatu
                     : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
               }`}
               data-testid={`horse-${horse.id}`}
-              onClick={() => {
-                // Toggle logic: if same horse is clicked, deselect it
-                if (selectedHorse?.id === horse.id) {
-                  onHorseSelect?.(horse); // This will trigger the toggle logic in dashboard
-                } else {
-                  onHorseSelect?.(horse);
-                }
-              }}
+              onClick={() => onHorseSelect?.(horse)}
             >
               {/* Edit button */}
               {canEdit && (
