@@ -200,13 +200,16 @@ export default function MapLibreMap() {
     map.current.addControl(new maplibregl.NavigationControl());
 
     // Handle drawing mode clicks
-    map.current.on('click', (e) => {
+    const handleMapClick = (e: maplibregl.MapMouseEvent) => {
       if (isDrawingMode) {
+        e.preventDefault();
         const newPoint: [number, number] = [e.lngLat.lat, e.lngLat.lng];
         setDrawingPoints(prev => [...prev, newPoint]);
         console.log('Adding point:', newPoint, 'Total points:', drawingPoints.length + 1);
       }
-    });
+    };
+
+    map.current.on('click', handleMapClick);
 
     return () => {
       if (map.current) {
@@ -214,7 +217,7 @@ export default function MapLibreMap() {
         map.current = null;
       }
     };
-  }, []);
+  }, [isDrawingMode]);
 
   // Update horse markers
   useEffect(() => {
@@ -244,7 +247,7 @@ export default function MapLibreMap() {
 
       const marker = new maplibregl.Marker({
         element: el,
-        anchor: 'bottom'
+        anchor: 'center'
       })
         .setLngLat([parseFloat(lastLocation.longitude), parseFloat(lastLocation.latitude)])
         .addTo(map.current!);
@@ -340,40 +343,80 @@ export default function MapLibreMap() {
 
     const drawingSourceId = 'drawing-polygon';
     const drawingLayerId = 'drawing-polygon-layer';
+    const pointsSourceId = 'drawing-points';
+    const pointsLayerId = 'drawing-points-layer';
 
-    // Remove existing drawing layer
-    if (map.current.getLayer(drawingLayerId)) {
-      map.current.removeLayer(drawingLayerId);
-    }
-    if (map.current.getSource(drawingSourceId)) {
-      map.current.removeSource(drawingSourceId);
-    }
+    // Remove existing drawing layers
+    [drawingLayerId, pointsLayerId].forEach(layerId => {
+      if (map.current!.getLayer(layerId)) {
+        map.current!.removeLayer(layerId);
+      }
+    });
+    [drawingSourceId, pointsSourceId].forEach(sourceId => {
+      if (map.current!.getSource(sourceId)) {
+        map.current!.removeSource(sourceId);
+      }
+    });
 
-    if (isDrawingMode && drawingPoints.length >= 3) {
-      // Convert lat,lng to lng,lat for GeoJSON
-      const geoJsonCoords = [...drawingPoints.map(point => [point[1], point[0]]), [drawingPoints[0][1], drawingPoints[0][0]]];
+    if (isDrawingMode && drawingPoints.length > 0) {
+      // Show individual points
+      const pointFeatures = drawingPoints.map((point, index) => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [point[1], point[0]], // lng, lat
+        },
+        properties: {
+          index: index
+        }
+      }));
 
-      map.current.addSource(drawingSourceId, {
+      map.current.addSource(pointsSourceId, {
         type: 'geojson',
         data: {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [geoJsonCoords],
-          },
-          properties: {},
+          type: 'FeatureCollection',
+          features: pointFeatures,
         },
       });
 
       map.current.addLayer({
-        id: drawingLayerId,
-        type: 'fill',
-        source: drawingSourceId,
+        id: pointsLayerId,
+        type: 'circle',
+        source: pointsSourceId,
         paint: {
-          'fill-color': '#22c55e',
-          'fill-opacity': 0.3,
+          'circle-color': '#22c55e',
+          'circle-radius': 6,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
         },
       });
+
+      // Show polygon if we have enough points
+      if (drawingPoints.length >= 3) {
+        const geoJsonCoords = [...drawingPoints.map(point => [point[1], point[0]]), [drawingPoints[0][1], drawingPoints[0][0]]];
+
+        map.current.addSource(drawingSourceId, {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [geoJsonCoords],
+            },
+            properties: {},
+          },
+        });
+
+        map.current.addLayer({
+          id: drawingLayerId,
+          type: 'fill',
+          source: drawingSourceId,
+          paint: {
+            'fill-color': '#22c55e',
+            'fill-opacity': 0.3,
+          },
+        });
+      }
     }
   }, [drawingPoints, isDrawingMode]);
 
@@ -434,7 +477,8 @@ export default function MapLibreMap() {
           <CardTitle>GPS Карта в Реальном Времени</CardTitle>
           {isDrawingMode && (
             <p className="text-sm text-muted-foreground">
-              Кликните на карте, чтобы добавить точки многоугольника. Минимум 3 точки для создания зоны.
+              Кликните на карте, чтобы добавить точки многоугольника. Добавлено точек: {drawingPoints.length}
+              {drawingPoints.length < 3 ? ` (минимум 3 точки)` : ` (готово к созданию)`}
             </p>
           )}
         </CardHeader>

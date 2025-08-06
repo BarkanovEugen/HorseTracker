@@ -80,8 +80,11 @@ export function createHorseMarkerElement(horse: Horse, size: number = 32): HTMLE
     height: ${size}px;
     position: relative;
     cursor: pointer;
-    transform-origin: center bottom;
+    transform-origin: center center;
     transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
 
   // Create circular background
