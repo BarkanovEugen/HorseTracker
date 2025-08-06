@@ -195,28 +195,26 @@ export default function MapLibreMap() {
       style: MAP_STYLE,
       center: center,
       zoom: zoom,
+      attributionControl: false, // Disable attribution for faster loading
+      logoPosition: 'bottom-right',
     });
 
-    // Wait for style to load before adding controls and handlers
-    map.current.on('styledata', () => {
-      if (!map.current!.isStyleLoaded()) return;
-      
-      setMapLoaded(true);
-      
-      // Add navigation control
-      map.current!.addControl(new maplibregl.NavigationControl());
+    // Set map as loaded immediately and add controls
+    setMapLoaded(true);
+    
+    // Add navigation control
+    map.current.addControl(new maplibregl.NavigationControl());
 
-      // Handle drawing mode clicks
-      const handleMapClick = (e: maplibregl.MapMouseEvent) => {
-        if (isDrawingMode) {
-          e.preventDefault();
-          const newPoint: [number, number] = [e.lngLat.lat, e.lngLat.lng];
-          setDrawingPoints(prev => [...prev, newPoint]);
-        }
-      };
+    // Handle drawing mode clicks
+    const handleMapClick = (e: maplibregl.MapMouseEvent) => {
+      if (isDrawingMode) {
+        e.preventDefault();
+        const newPoint: [number, number] = [e.lngLat.lat, e.lngLat.lng];
+        setDrawingPoints(prev => [...prev, newPoint]);
+      }
+    };
 
-      map.current!.on('click', handleMapClick);
-    });
+    map.current.on('click', handleMapClick);
 
     return () => {
       if (map.current) {
@@ -301,7 +299,7 @@ export default function MapLibreMap() {
 
   // Update geofences
   useEffect(() => {
-    if (!map.current || !map.current.isStyleLoaded()) return;
+    if (!map.current) return;
 
     // Remove existing geofence layers
     geofences.forEach((_, index) => {
@@ -364,7 +362,7 @@ export default function MapLibreMap() {
         console.error('Error parsing geofence coordinates:', error);
       }
     });
-  }, [geofences, map.current?.isStyleLoaded()]);
+  }, [geofences]);
 
   // Drawing polygon visualization
   useEffect(() => {
