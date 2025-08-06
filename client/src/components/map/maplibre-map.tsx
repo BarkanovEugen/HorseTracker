@@ -425,7 +425,8 @@ export default function MapLibreMap({
     if (selectedHorse) {
       // Find the location of the selected horse
       const selectedLocation = horseLocations.find(hl => hl.horse.id === selectedHorse.id);
-      if (selectedLocation) {
+      if (selectedLocation && selectedLocation.lastLocation && 
+          selectedLocation.lastLocation.longitude && selectedLocation.lastLocation.latitude) {
         const position: [number, number] = [
           parseFloat(selectedLocation.lastLocation.longitude), 
           parseFloat(selectedLocation.lastLocation.latitude)
@@ -442,10 +443,13 @@ export default function MapLibreMap({
       // Fit all horses in view with padding
       const bounds = new maplibregl.LngLatBounds();
       horseLocations.forEach((hl: { horse: Horse; lastLocation: GpsLocation }) => {
-        bounds.extend([
-          parseFloat(hl.lastLocation.longitude), 
-          parseFloat(hl.lastLocation.latitude)
-        ]);
+        // Only extend bounds if location data exists
+        if (hl.lastLocation && hl.lastLocation.longitude && hl.lastLocation.latitude) {
+          bounds.extend([
+            parseFloat(hl.lastLocation.longitude), 
+            parseFloat(hl.lastLocation.latitude)
+          ]);
+        }
       });
       
       if (!bounds.isEmpty()) {
@@ -472,10 +476,12 @@ export default function MapLibreMap({
 
     // Add trail if there's a trail and enough points
     if (horseTrail && horseTrail.locations.length >= 2) {
-      const coordinates = horseTrail.locations.map(loc => [
-        parseFloat(loc.longitude), 
-        parseFloat(loc.latitude)
-      ]);
+      const coordinates = horseTrail.locations
+        .filter(loc => loc && loc.longitude && loc.latitude) // Filter out invalid locations
+        .map(loc => [
+          parseFloat(loc.longitude), 
+          parseFloat(loc.latitude)
+        ]);
 
       map.current.addSource('horse-trail', {
         type: 'geojson',
