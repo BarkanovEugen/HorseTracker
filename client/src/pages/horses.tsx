@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Horse, Device } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogOverlay, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import HorseCard from "@/components/horses/horse-card";
 import HorseForm from "@/components/horses/horse-form";
 import { useCanEdit } from "@/hooks/use-permissions";
@@ -139,13 +139,10 @@ export default function Horses() {
         <DialogContent>
           {viewingHorse && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Детали лошади</h3>
-                <Button variant="ghost" size="icon" onClick={handleCloseView}>
-                  <span className="sr-only">Закрыть</span>
-                  ×
-                </Button>
-              </div>
+              <DialogTitle className="text-lg font-semibold">Детали лошади</DialogTitle>
+              <DialogDescription className="sr-only">
+                Подробная информация о лошади {viewingHorse.name}
+              </DialogDescription>
               
               {viewingHorse.imageUrl && (
                 <img 
