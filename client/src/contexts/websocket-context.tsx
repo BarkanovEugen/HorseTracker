@@ -22,7 +22,16 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const host = window.location.host;
+    
+    // Validate host to prevent invalid URLs
+    if (!host || host.includes('undefined')) {
+      console.error('Invalid host for WebSocket connection:', host);
+      return;
+    }
+    
+    const wsUrl = `${protocol}//${host}/ws`;
+    console.log('Connecting to WebSocket:', wsUrl);
     
     const connect = () => {
       try {
