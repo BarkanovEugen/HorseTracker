@@ -204,6 +204,7 @@ export default function MapLibreMap() {
       if (isDrawingMode) {
         const newPoint: [number, number] = [e.lngLat.lat, e.lngLat.lng];
         setDrawingPoints(prev => [...prev, newPoint]);
+        console.log('Adding point:', newPoint, 'Total points:', drawingPoints.length + 1);
       }
     });
 
@@ -225,8 +226,10 @@ export default function MapLibreMap() {
 
     // Add new markers
     horseLocations.forEach(({ horse, lastLocation }) => {
+      console.log('Creating marker for horse:', horse.name, 'with color:', horse.markerColor);
+      
       // Create custom horse marker element
-      const el = createHorseMarkerElement(horse, 32);
+      const el = createHorseMarkerElement(horse, 40);
       
       // Add click handler
       el.addEventListener('click', () => {
@@ -239,7 +242,10 @@ export default function MapLibreMap() {
         });
       });
 
-      const marker = new maplibregl.Marker(el)
+      const marker = new maplibregl.Marker({
+        element: el,
+        anchor: 'bottom'
+      })
         .setLngLat([parseFloat(lastLocation.longitude), parseFloat(lastLocation.latitude)])
         .addTo(map.current!);
 
