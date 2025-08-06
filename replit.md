@@ -1,6 +1,6 @@
 # Overview
 
-A GPS horse tracking application built with React frontend and Express backend. The system provides real-time monitoring of horses through GPS devices, geofencing capabilities, alert management, and battery status tracking. Features include a dashboard with live map visualization, horse management, location history, and settings configuration.
+A GPS horse tracking application built with React frontend and Express backend. The system provides real-time monitoring of horses through GPS devices, polygon-based geofencing capabilities, alert management, and battery status tracking. Features include a dashboard with live OpenStreetMap visualization using Leaflet, horse management, location history, and settings configuration. Users can create custom polygon geozones by clicking points directly on the interactive map.
 
 # User Preferences
 
@@ -27,6 +27,7 @@ Preferred communication style: Simple, everyday language.
 ## Database Design
 - **Schema**: Drizzle ORM with PostgreSQL dialect configuration
 - **Tables**: horses, gps_locations, alerts, geofences, devices
+- **Geofences**: Polygon-based zones stored as JSON coordinate arrays
 - **Relationships**: Foreign key constraints between horses and locations/alerts
 - **Migrations**: Drizzle Kit for schema migrations and database management
 

@@ -194,25 +194,34 @@ export class MemStorage implements IStorage {
 
     alerts.forEach(alert => this.alerts.set(alert.id, alert));
 
-    // Initialize sample geofences
+    // Initialize sample geofences with polygon coordinates
     const geofences = [
       {
         id: "geo-1",
         name: "Пастбище Север",
-        description: "Основная зона выпаса • Радиус: 500м",
-        centerLat: "55.7558",
-        centerLng: "37.6176",
-        radius: "500",
+        description: "Основная зона выпаса",
+        // Polygon coordinates as JSON array of [lat, lng] pairs
+        coordinates: JSON.stringify([
+          [55.7568, 37.6186],
+          [55.7548, 37.6206],
+          [55.7538, 37.6166],
+          [55.7558, 37.6146],
+          [55.7568, 37.6186], // Close the polygon
+        ]),
         isActive: true,
         createdAt: new Date(),
       },
       {
         id: "geo-2",
         name: "Водопой",
-        description: "Зона водных ресурсов • Радиус: 200м",
-        centerLat: "55.7528",
-        centerLng: "37.6156",
-        radius: "200",
+        description: "Зона водных ресурсов",
+        coordinates: JSON.stringify([
+          [55.7538, 37.6166],
+          [55.7518, 37.6176],
+          [55.7518, 37.6136],
+          [55.7538, 37.6146],
+          [55.7538, 37.6166], // Close the polygon
+        ]),
         isActive: true,
         createdAt: new Date(),
       },

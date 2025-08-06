@@ -39,9 +39,8 @@ export const geofences = pgTable("geofences", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
-  centerLat: numeric("center_lat").notNull(),
-  centerLng: numeric("center_lng").notNull(),
-  radius: numeric("radius").notNull(), // in meters
+  // Polygon coordinates stored as JSON array of [lat, lng] pairs
+  coordinates: text("coordinates").notNull(), // JSON string of [[lat, lng], [lat, lng], ...]
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
