@@ -1,0 +1,148 @@
+@radix-ui_react-select.js?v=592b02e7:873 Uncaught Error: A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
+    at @radix-ui_react-select.js?v=592b02e7:873:13
+    at renderWithHooks (chunk-RPCDYKBN.js?v=592b02e7:11548:26)
+    at updateForwardRef (chunk-RPCDYKBN.js?v=592b02e7:14325:28)
+    at beginWork (chunk-RPCDYKBN.js?v=592b02e7:15946:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=592b02e7:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=592b02e7:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=592b02e7:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=592b02e7:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=592b02e7:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=592b02e7:19137:13)
+(anonymous) @ @radix-ui_react-select.js?v=592b02e7:873
+renderWithHooks @ chunk-RPCDYKBN.js?v=592b02e7:11548
+updateForwardRef @ chunk-RPCDYKBN.js?v=592b02e7:14325
+beginWork @ chunk-RPCDYKBN.js?v=592b02e7:15946
+callCallback2 @ chunk-RPCDYKBN.js?v=592b02e7:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=592b02e7:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=592b02e7:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=592b02e7:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=592b02e7:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=592b02e7:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=592b02e7:19116
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=592b02e7:18874
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=592b02e7:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=592b02e7:18627
+@radix-ui_react-select.js?v=592b02e7:873 Uncaught Error: A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
+    at @radix-ui_react-select.js?v=592b02e7:873:13
+    at renderWithHooks (chunk-RPCDYKBN.js?v=592b02e7:11548:26)
+    at updateForwardRef (chunk-RPCDYKBN.js?v=592b02e7:14325:28)
+    at beginWork (chunk-RPCDYKBN.js?v=592b02e7:15946:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=592b02e7:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=592b02e7:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=592b02e7:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=592b02e7:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=592b02e7:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=592b02e7:19137:13)
+(anonymous) @ @radix-ui_react-select.js?v=592b02e7:873
+renderWithHooks @ chunk-RPCDYKBN.js?v=592b02e7:11548
+updateForwardRef @ chunk-RPCDYKBN.js?v=592b02e7:14325
+beginWork @ chunk-RPCDYKBN.js?v=592b02e7:15946
+callCallback2 @ chunk-RPCDYKBN.js?v=592b02e7:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=592b02e7:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=592b02e7:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=592b02e7:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=592b02e7:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=592b02e7:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=592b02e7:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=592b02e7:18736
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=592b02e7:18879
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=592b02e7:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=592b02e7:18627
+chunk-RPCDYKBN.js?v=592b02e7:14032 The above error occurred in the <SelectItem> component:
+
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=592b02e7:846:7
+    at _c11 (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/ui/select.tsx?t=1754497358517:208:13)
+    at div
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=592b02e7:42:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:79:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:56:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-I6MJRFJY.js?v=592b02e7:39:15
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=592b02e7:757:13
+    at div
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:79:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:56:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-I6MJRFJY.js?v=592b02e7:39:15
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=592b02e7:38:15)
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=592b02e7:300:58
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:79:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:56:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=592b02e7:42:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SD42OOGP.js?v=592b02e7:260:22
+    at SelectPortal
+    at _c7 (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/ui/select.tsx?t=1754497358517:123:12)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=592b02e7:38:15)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=592b02e7:38:15)
+    at CollectionProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-I6MJRFJY.js?v=592b02e7:29:13)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=592b02e7:38:15)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=592b02e7:38:15)
+    at Popper (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-ZL4O2VWE.js?v=592b02e7:1919:11)
+    at Select (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=592b02e7:88:5)
+    at div
+    at form
+    at div
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=592b02e7:42:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SD42OOGP.js?v=592b02e7:61:7
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:79:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:56:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=592b02e7:42:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-T6UD2AIQ.js?v=592b02e7:57:5
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=592b02e7:235:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=592b02e7:158:58
+    at Presence (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WIIJQEXM.js?v=592b02e7:24:11)
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=592b02e7:149:64
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:79:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=592b02e7:56:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=592b02e7:42:13
+    at https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SD42OOGP.js?v=592b02e7:260:22
+    at Presence (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WIIJQEXM.js?v=592b02e7:24:11)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=592b02e7:38:15)
+    at DialogPortal (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=592b02e7:111:11)
+    at _c3 (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/ui/dialog.tsx:52:12)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=592b02e7:38:15)
+    at Dialog (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=592b02e7:52:5)
+    at HorseForm (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/horses/horse-form.tsx?t=1754497541724:31:37)
+    at HorseStatus (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/stats/battery-status.tsx?t=1754497541724:36:39)
+    at div
+    at div
+    at div
+    at div
+    at Dashboard (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/pages/dashboard.tsx?t=1754497541724:25:45)
+    at Route (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=592b02e7:323:16)
+    at Switch (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=592b02e7:379:17)
+    at main
+    at div
+    at AppContent (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/App.tsx?t=1754497541724&v=ri-aJn93CusftzGpf1tsR:39:3)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=592b02e7:38:15)
+    at TooltipProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=592b02e7:61:5)
+    at WebSocketProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/contexts/websocket-context.tsx:20:37)
+    at ThemeProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/contexts/theme-context.tsx:20:33)
+    at QueryClientProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=592b02e7:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js?v=592b02e7:14032
+update.callback @ chunk-RPCDYKBN.js?v=592b02e7:14052
+callCallback @ chunk-RPCDYKBN.js?v=592b02e7:11248
+commitUpdateQueue @ chunk-RPCDYKBN.js?v=592b02e7:11265
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js?v=592b02e7:17093
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js?v=592b02e7:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js?v=592b02e7:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js?v=592b02e7:17920
+commitRootImpl @ chunk-RPCDYKBN.js?v=592b02e7:19353
+commitRoot @ chunk-RPCDYKBN.js?v=592b02e7:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=592b02e7:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=592b02e7:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=592b02e7:18627
+chunk-RPCDYKBN.js?v=592b02e7:9129 Uncaught Error: A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
+    at @radix-ui_react-select.js?v=592b02e7:873:13
+    at renderWithHooks (chunk-RPCDYKBN.js?v=592b02e7:11548:26)
+    at updateForwardRef (chunk-RPCDYKBN.js?v=592b02e7:14325:28)
+    at beginWork (chunk-RPCDYKBN.js?v=592b02e7:15946:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=592b02e7:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=592b02e7:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=592b02e7:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js?v=592b02e7:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js?v=592b02e7:18736:28)
+    at performSyncWorkOnRoot (chunk-RPCDYKBN.js?v=592b02e7:18879:28)

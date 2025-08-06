@@ -212,9 +212,6 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
                 <SelectValue placeholder="Выберите устройство из списка" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="" disabled>
-                  Выберите устройство
-                </SelectItem>
                 {devices
                   .filter(device => !device.horseId || device.horseId === horse?.id)
                   .map((device) => (
@@ -229,6 +226,11 @@ export default function HorseForm({ open, horse, onClose, onSuccess }: HorseForm
                       {device.deviceId} (занято)
                     </SelectItem>
                   ))}
+                {devices.length === 0 && (
+                  <SelectItem value="no-devices" disabled>
+                    Нет доступных устройств
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
             {errors.deviceId && (
