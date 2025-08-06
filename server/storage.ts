@@ -722,8 +722,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateHorse(id: string, horse: Partial<InsertHorse>): Promise<Horse | undefined> {
+    // Get the current horse to check if deviceId is changing
+    const currentHorse = await db.select().from(horses).where(eq(horses.id, id)).limit(1);
+    if (currentHorse.length === 0) return undefined;
+    
+    const oldDeviceId = currentHorse[0].deviceId;
+    const newDeviceId = horse.deviceId;
+    
+    // Update the horse record
     const result = await db.update(horses).set(horse).where(eq(horses.id, id)).returning();
-    return result[0] || undefined;
+    if (!result[0]) return undefined;
+    
+    // Handle device relationship changes
+    if (oldDeviceId !== newDeviceId) {
+      // Clear the old device's horse link if it exists
+      if (oldDeviceId) {
+        await db.update(devices)
+          .set({ horseId: null })
+          .where(eq(devices.deviceId, oldDeviceId));
+      }
+      
+      // Set the new device's horse link if a new device is assigned
+      if (newDeviceId) {
+        await db.update(devices)
+          .set({ horseId: id })
+          .where(eq(devices.deviceId, newDeviceId));
+      }
+    }
+    
+    return result[0];
   }
 
   async deleteHorse(id: string): Promise<boolean> {
