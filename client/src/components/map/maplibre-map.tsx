@@ -256,7 +256,9 @@ export default function MapLibreMap() {
         const marker = new maplibregl.Marker({
           element: el,
           anchor: 'center',
-          offset: [0, 0]
+          offset: [0, 0],
+          pitchAlignment: 'map',
+          rotationAlignment: 'map'
         })
           .setLngLat(newPosition)
           .addTo(map.current!);
