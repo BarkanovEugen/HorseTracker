@@ -118,6 +118,11 @@
   50% { opacity: 0.7; }
 }
 
+/* Leaflet map styles */
+.leaflet-container {
+  font-family: 'Roboto', 'Arial', system-ui, sans-serif;
+}
+
 /* Leaflet map dark theme styles */
 .dark .leaflet-container {
   background: hsl(240, 10%, 3.9%);
@@ -140,4 +145,36 @@
 
 .dark .leaflet-popup-tip {
   background: hsl(240, 10%, 3.9%);
+}
+
+/* Custom horse marker styles */
+.horse-marker {
+  z-index: 1000;
+}
+
+.horse-marker:hover {
+  z-index: 1001;
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* Geofence drawing cursor */
+.leaflet-container.drawing-mode {
+  cursor: crosshair !important;
+}
+
+/* Map control buttons */
+.leaflet-control-custom {
+  background: white;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-radius: 4px;
+  padding: 8px;
+  margin: 4px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+}
+
+.dark .leaflet-control-custom {
+  background: hsl(240, 10%, 3.9%);
+  border-color: hsl(240, 3.7%, 15.9%);
+  color: hsl(0, 0%, 98%);
 }

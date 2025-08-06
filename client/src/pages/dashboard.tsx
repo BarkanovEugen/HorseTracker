@@ -1,5 +1,5 @@
 import ActiveAlerts from "@/components/alerts/active-alerts";
-import GpsMap from "@/components/map/gps-map";
+import LeafletMap from "@/components/map/leaflet-map";
 import QuickStats from "@/components/stats/quick-stats";
 import BatteryStatus from "@/components/stats/battery-status";
 
@@ -13,7 +13,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Map Section - Takes up 3/4 of the width on large screens */}
         <div className="lg:col-span-3">
-          <GpsMap />
+          <LeafletMap />
         </div>
         
         {/* Stats Sidebar - Takes up 1/4 of the width on large screens */}
