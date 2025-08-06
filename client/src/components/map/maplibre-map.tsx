@@ -537,10 +537,13 @@ export default function MapLibreMap({
     if (isFirstLoad) {
       const bounds = new maplibregl.LngLatBounds();
       horseLocations.forEach((hl: { horse: Horse; lastLocation: GpsLocation }) => {
-        bounds.extend([
-          parseFloat(hl.lastLocation.longitude), 
-          parseFloat(hl.lastLocation.latitude)
-        ]);
+        // Only extend bounds if location data exists
+        if (hl.lastLocation && hl.lastLocation.longitude && hl.lastLocation.latitude) {
+          bounds.extend([
+            parseFloat(hl.lastLocation.longitude), 
+            parseFloat(hl.lastLocation.latitude)
+          ]);
+        }
       });
       
       if (!bounds.isEmpty()) {
