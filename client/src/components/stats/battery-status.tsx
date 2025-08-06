@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Horse, Device, GpsLocation, Geofence } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Shield, ShieldAlert } from "lucide-react";
+import { Shield, ShieldAlert, Plus, Edit } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useCanEdit } from "@/hooks/use-permissions";
+import HorseForm from "@/components/horses/horse-form";
 
 interface HorseStatusProps {
   onHorseSelect?: (horse: Horse) => void;
@@ -26,6 +30,9 @@ function isPointInPolygon(point: [number, number], polygon: [number, number][]):
 }
 
 export default function HorseStatus({ onHorseSelect }: HorseStatusProps) {
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingHorse, setEditingHorse] = useState<Horse | null>(null);
+  const canEdit = useCanEdit();
   const { data: horses = [], isLoading: horsesLoading } = useQuery<Horse[]>({
     queryKey: ['/api/horses'],
   });
@@ -118,65 +125,123 @@ export default function HorseStatus({ onHorseSelect }: HorseStatusProps) {
     );
   }
 
+  const handleEdit = (horse: Horse, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setEditingHorse(horse);
+  };
+
   return (
-    <div className="space-y-3">
-      {horsesData.map((horse) => (
-        <div 
-          key={horse.id} 
-          className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
-            horse.isInSafeZone 
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-          }`}
-          data-testid={`horse-${horse.id}`}
-          onClick={() => onHorseSelect?.(horse)}
-        >
-          <div className="space-y-3">
-            {/* Horse name and zone status */}
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                  {horse.name}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Уровень батареи
-                </p>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {horse.hasLocation && (
-                  horse.isInSafeZone ? (
-                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                      <Shield className="w-4 h-4" />
-                      <span className="text-sm font-medium">В зоне</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                      <ShieldAlert className="w-4 h-4" />
-                      <span className="text-sm font-medium">Вне зоны</span>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-            
-            {/* Battery level with visual bar */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Батарея:</span>
-                <span className={`font-bold text-lg ${getBatteryTextColor(horse.batteryLevel)}`}>
-                  {horse.batteryLevel}%
-                </span>
-              </div>
-              <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-500 ${getBatteryColor(horse.batteryLevel)}`}
-                  style={{ width: `${horse.batteryLevel}%` }}
-                />
-              </div>
-            </div>
+    <>
+      <div className="space-y-4">
+        {/* Header with add button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-blue-600" />
+            <span className="font-semibold text-gray-900 dark:text-white">Статус лошадей</span>
           </div>
+          {canEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddDialog(true)}
+              className="h-8"
+              data-testid="add-horse-button"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Добавить
+            </Button>
+          )}
         </div>
-      ))}
-    </div>
+
+        {/* Horses list */}
+        <div className="space-y-3">
+          {horsesData.map((horse) => (
+            <div 
+              key={horse.id} 
+              className={`relative p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
+                horse.isInSafeZone 
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              }`}
+              data-testid={`horse-${horse.id}`}
+              onClick={() => onHorseSelect?.(horse)}
+            >
+              {/* Edit button */}
+              {canEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 h-8 w-8 p-0 opacity-70 hover:opacity-100"
+                  onClick={(e) => handleEdit(horse, e)}
+                  data-testid={`edit-horse-${horse.id}`}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
+
+              <div className="space-y-3">
+                {/* Horse name and zone status */}
+                <div className="flex items-start justify-between pr-10">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                      {horse.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {horse.breed} • {horse.age} лет
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {horse.hasLocation && (
+                      horse.isInSafeZone ? (
+                        <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                          <Shield className="w-4 h-4" />
+                          <span className="text-sm font-medium">В зоне</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
+                          <ShieldAlert className="w-4 h-4" />
+                          <span className="text-sm font-medium">Вне зоны</span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+                
+                {/* Battery level with visual bar */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Батарея:</span>
+                    <span className={`font-bold text-lg ${getBatteryTextColor(horse.batteryLevel)}`}>
+                      {horse.batteryLevel}%
+                    </span>
+                  </div>
+                  <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-500 ${getBatteryColor(horse.batteryLevel)}`}
+                      style={{ width: `${horse.batteryLevel}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Add Horse Dialog */}
+      <HorseForm
+        open={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onSuccess={() => setShowAddDialog(false)}
+      />
+
+      {/* Edit Horse Dialog */}
+      <HorseForm
+        open={!!editingHorse}
+        horse={editingHorse || undefined}
+        onClose={() => setEditingHorse(null)}
+        onSuccess={() => setEditingHorse(null)}
+      />
+    </>
   );
 }

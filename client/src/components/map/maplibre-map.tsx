@@ -183,7 +183,7 @@ export default function MapLibreMap({
       horse,
       lastLocation,
     };
-  }).filter(item => item.lastLocation);
+  }).filter(item => item.lastLocation); // Only show horses with GPS data
 
   // Initialize map
   useEffect(() => {
@@ -223,11 +223,15 @@ export default function MapLibreMap({
     try {
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: JSON.parse(JSON.stringify(MAP_STYLE)), // Deep clone the style
+        style: MAP_STYLE, // Use direct reference instead of deep clone
         center: center,
         zoom: zoom,
-        attributionControl: false, // Disable attribution for faster loading
+        attributionControl: false,
         logoPosition: 'bottom-right',
+        maxZoom: 18,
+        minZoom: 8,
+
+        fadeDuration: 0, // Disable fade animations for faster loading
       });
 
       // Wait for style to load before marking as loaded
