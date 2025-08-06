@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import maplibregl from "maplibre-gl";
 import { GpsLocation, Horse, Geofence, InsertGeofence } from "@shared/schema";
@@ -174,17 +174,19 @@ export default function MapLibreMap({
   const isLoading = locationsLoading || horsesLoading || geofencesLoading;
 
   // Group locations by horse to get latest position
-  const horseLocations = horses.map(horse => {
-    const horseLocationData = locations.filter(loc => loc.horseId === horse.id);
-    const lastLocation = horseLocationData.sort((a, b) => 
-      new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime()
-    )[0];
-    
-    return {
-      horse,
-      lastLocation,
-    };
-  }).filter(item => item.lastLocation); // Only show horses with GPS data
+  const horseLocations = useMemo(() => {
+    return horses.map(horse => {
+      const horseLocationData = locations.filter(loc => loc.horseId === horse.id);
+      const lastLocation = horseLocationData.sort((a, b) => 
+        new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime()
+      )[0];
+      
+      return {
+        horse,
+        lastLocation,
+      };
+    }).filter(item => item.lastLocation); // Only show horses with GPS data
+  }, [horses, locations]);
 
   // Initialize map immediately, don't wait for data
   useEffect(() => {
@@ -205,7 +207,7 @@ export default function MapLibreMap({
 
     if (horseLocations.length > 0) {
       const bounds = new maplibregl.LngLatBounds();
-      horseLocations.forEach(hl => {
+      horseLocations.forEach((hl: { horse: Horse; lastLocation: GpsLocation }) => {
         bounds.extend([
           parseFloat(hl.lastLocation.longitude), 
           parseFloat(hl.lastLocation.latitude)
@@ -321,8 +323,10 @@ export default function MapLibreMap({
   useEffect(() => {
     if (!map.current) return;
 
+    console.log('MapLibre: Updating horse markers, total horses:', horseLocations.length);
+
     // Update or create markers for each horse
-    horseLocations.forEach(({ horse, lastLocation }) => {
+    horseLocations.forEach(({ horse, lastLocation }: { horse: Horse; lastLocation: GpsLocation }) => {
       const existingMarker = markersRef.current.get(horse.id);
       const newPosition: [number, number] = [parseFloat(lastLocation.longitude), parseFloat(lastLocation.latitude)];
       const currentProps = { markerColor: horse.markerColor || '#22c55e', status: horse.status };
@@ -333,12 +337,20 @@ export default function MapLibreMap({
         savedProps.markerColor !== currentProps.markerColor || 
         savedProps.status !== currentProps.status;
 
+      console.log(`Horse ${horse.name}: props changed=${propsChanged}`, {
+        currentProps,
+        savedProps,
+        existingMarker: !!existingMarker
+      });
+
       if (existingMarker && !propsChanged) {
         // Update existing marker position only if properties haven't changed
         existingMarker.setLngLat(newPosition);
+        console.log(`Updated position for ${horse.name}`);
       } else {
         // Remove existing marker if it exists (for recreation)
         if (existingMarker) {
+          console.log(`Recreating marker for ${horse.name} due to property changes`);
           existingMarker.remove();
           markersRef.current.delete(horse.id);
         }
@@ -370,6 +382,7 @@ export default function MapLibreMap({
         
         // Save current properties for next comparison
         horsePropsRef.current.set(horse.id, currentProps);
+        console.log(`Created new marker for ${horse.name} with color ${currentProps.markerColor}`);
       }
     });
 
@@ -383,7 +396,7 @@ export default function MapLibreMap({
       }
     });
 
-  }, [horseLocations]);
+  }, [horseLocations, horses]); // Also depend on horses array to catch data changes
 
   // Center map on selected horse or fit all horses
   useEffect(() => {
@@ -408,7 +421,7 @@ export default function MapLibreMap({
     } else if (horseLocations.length > 0) {
       // Fit all horses in view with padding
       const bounds = new maplibregl.LngLatBounds();
-      horseLocations.forEach(hl => {
+      horseLocations.forEach((hl: { horse: Horse; lastLocation: GpsLocation }) => {
         bounds.extend([
           parseFloat(hl.lastLocation.longitude), 
           parseFloat(hl.lastLocation.latitude)
@@ -497,7 +510,7 @@ export default function MapLibreMap({
     
     if (isFirstLoad) {
       const bounds = new maplibregl.LngLatBounds();
-      horseLocations.forEach(hl => {
+      horseLocations.forEach((hl: { horse: Horse; lastLocation: GpsLocation }) => {
         bounds.extend([
           parseFloat(hl.lastLocation.longitude), 
           parseFloat(hl.lastLocation.latitude)
