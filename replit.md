@@ -113,3 +113,11 @@ Preferred communication style: Simple, everyday language.
 - **VK_REDIRECT_URI**: OAuth callback URL (defaults to /auth/vk/callback)
 - **SESSION_SECRET**: Session encryption key for secure cookie management
 - **DATABASE_URL**: PostgreSQL connection string
+
+## Production Deployment
+When deploying to production:
+1. Add VK_CLIENT_ID and VK_CLIENT_SECRET to environment variables
+2. Set VK_REDIRECT_URI to your production domain callback URL
+3. Authentication bypass will automatically disable when VK keys are present
+4. All users will need to authenticate through VK ID before accessing the system
+5. Default admin user will need to be assigned admin role after first VK login
