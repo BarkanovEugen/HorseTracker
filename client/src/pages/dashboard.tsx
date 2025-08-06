@@ -30,7 +30,7 @@ export default function Dashboard() {
         </div>
 
         {/* Map Section - Below stats on mobile, main content on desktop */}
-        <div className="order-1 lg:order-1 lg:col-span-3 h-64 sm:h-80 lg:h-auto">
+        <div className="order-1 lg:order-1 lg:col-span-3 h-[256px] sm:h-[320px] lg:h-[400px]">
           <MapLibreMap 
             selectedHorse={selectedHorse}
             onHorseSelect={setSelectedHorse}

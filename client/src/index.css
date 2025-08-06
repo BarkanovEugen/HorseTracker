@@ -28,6 +28,22 @@
   display: none;
 }
 
+/* MapLibre GL mobile fixes */
+.maplibregl-map {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.maplibregl-canvas-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.maplibregl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* Mobile-first responsive utilities */
 @media (max-width: 640px) {
   .mobile-stack {
@@ -36,6 +52,17 @@
   
   .mobile-full {
     width: 100%;
+  }
+  
+  /* Ensure map containers have proper dimensions on mobile */
+  .maplibregl-map {
+    min-height: 256px !important;
+    height: 256px !important;
+  }
+  
+  /* Force the map canvas to respect container dimensions */
+  .maplibregl-canvas-container, .maplibregl-canvas {
+    min-height: 256px !important;
   }
 }
 

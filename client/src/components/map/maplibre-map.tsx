@@ -189,6 +189,15 @@ export default function MapLibreMap({
   useEffect(() => {
     if (!mapContainer.current || map.current || isLoading) return;
 
+    // Ensure container has proper height before initializing
+    const container = mapContainer.current;
+    const containerRect = container.getBoundingClientRect();
+    
+    // Force container to have height if it doesn't
+    if (containerRect.height === 0) {
+      container.style.height = '300px';
+    }
+
     // Calculate initial bounds
     let center: [number, number] = [37.6176, 55.7558]; // Moscow
     let zoom = 13;
@@ -220,8 +229,24 @@ export default function MapLibreMap({
       logoPosition: 'bottom-right',
     });
 
-    // Set map as loaded immediately and add controls
-    setMapLoaded(true);
+    // Wait for style to load before marking as loaded
+    map.current.on('load', () => {
+      console.log('MapLibre: Map loaded successfully');
+      setMapLoaded(true);
+      
+      // Force resize after loading to fix mobile display issues
+      setTimeout(() => {
+        if (map.current) {
+          map.current.resize();
+        }
+      }, 100);
+    });
+
+    // Add error handling
+    map.current.on('error', (e) => {
+      console.error('MapLibre: Map error', e.error);
+      setMapLoaded(true); // Still show the map container
+    });
     
     // Add navigation control
     map.current.addControl(new maplibregl.NavigationControl());
@@ -618,7 +643,7 @@ export default function MapLibreMap({
         
         <CardContent className="pt-0">
           <div 
-            className="h-full min-h-64 sm:min-h-80 lg:h-96 relative rounded-lg overflow-hidden"
+            className="h-[256px] sm:h-[320px] lg:h-[384px] w-full relative rounded-lg overflow-hidden"
             data-testid="maplibre-map-container"
           >
             <div ref={mapContainer} className="w-full h-full" />
