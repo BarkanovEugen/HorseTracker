@@ -18,6 +18,27 @@
   animation: pulse-red-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Hide scrollbar for mobile navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  .mobile-stack {
+    flex-direction: column;
+  }
+  
+  .mobile-full {
+    width: 100%;
+  }
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

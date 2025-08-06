@@ -8,6 +8,7 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Auto-Dismissal**: Alerts automatically close when horses return to safe zones using ray-casting polygon detection
 - **Push Notifications**: Browser push notifications with permission requests for critical escalated alerts
 - **Real-time Updates**: Enhanced WebSocket communication for alert escalation and dismissal events
+- **Mobile Optimization**: Comprehensive mobile-first responsive design with touch-friendly interfaces and compact navigation
 
 # User Preferences
 
@@ -53,10 +54,11 @@ Preferred communication style: Simple, everyday language.
 - **Real-time Updates**: WebSocket broadcasts for all alert state changes
 
 ## Component Organization
-- **Layout Components**: Header with connection status, navigation bar, responsive design
-- **Feature Components**: GPS map with horse markers, alert management, battery monitoring
-- **UI Components**: Reusable Shadcn/ui components with consistent theming
+- **Layout Components**: Mobile-optimized header with compact connection status, responsive navigation with icons, touch-friendly design
+- **Feature Components**: GPS map with mobile-friendly controls, compact alert management, optimized battery monitoring
+- **UI Components**: Reusable Shadcn/ui components with mobile-responsive sizing and touch targets
 - **Context Providers**: Theme, WebSocket, and query client contexts
+- **Mobile Features**: Icon-based navigation, stacked layouts on small screens, optimized text sizes, touch-friendly buttons
 
 # External Dependencies
 

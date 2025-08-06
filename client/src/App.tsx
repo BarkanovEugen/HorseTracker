@@ -31,7 +31,7 @@ function AppContent() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <Header />
       <Navigation />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-6">
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/horses" component={Horses} />

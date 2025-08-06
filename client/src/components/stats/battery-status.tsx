@@ -42,18 +42,18 @@ export default function BatteryStatus({ onHorseSelect }: BatteryStatusProps) {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Состояние Батарей</CardTitle>
+      <Card className="h-full">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg">Батареи</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3 animate-pulse">
+        <CardContent className="pt-0">
+          <div className="space-y-2 sm:space-y-3 animate-pulse">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-center justify-between">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-12 h-2 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-8"></div>
+                <div className="h-3 sm:h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 sm:w-20"></div>
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <div className="w-8 sm:w-12 h-1.5 sm:h-2 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                  <div className="h-3 sm:h-4 bg-gray-200 dark:bg-gray-700 rounded w-6 sm:w-8"></div>
                 </div>
               </div>
             ))}
@@ -64,29 +64,29 @@ export default function BatteryStatus({ onHorseSelect }: BatteryStatusProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Состояние Батарей</CardTitle>
+    <Card className="h-full">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base sm:text-lg">Батареи</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="pt-0">
+        <div className="space-y-2 sm:space-y-3">
           {horsesBatteryData.map((horse) => (
             <div 
               key={horse.id} 
-              className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+              className="flex items-center justify-between p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors"
               data-testid={`battery-${horse.id}`}
               onClick={() => onHorseSelect?.(horse)}
             >
-              <span className="text-sm font-medium">{horse.name}</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-12 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <span className="text-xs sm:text-sm font-medium truncate mr-2">{horse.name}</span>
+              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                <div className="w-8 sm:w-12 h-1.5 sm:h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div 
                     className={`h-full transition-all duration-300 ${getBatteryColor(horse.batteryLevel)}`}
                     style={{ width: `${horse.batteryLevel}%` }}
                   ></div>
                 </div>
                 <span 
-                  className={`text-xs font-semibold ${getBatteryTextColor(horse.batteryLevel)}`}
+                  className={`text-xs font-semibold ${getBatteryTextColor(horse.batteryLevel)} min-w-max`}
                   data-testid={`battery-percentage-${horse.id}`}
                 >
                   {horse.batteryLevel}%

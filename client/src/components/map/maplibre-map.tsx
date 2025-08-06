@@ -55,44 +55,47 @@ function MapControls({
   canComplete: boolean;
 }) {
   return (
-    <div className="absolute top-4 right-4 z-10 flex flex-col space-y-2">
+    <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-col space-y-1 sm:space-y-2">
       {!isDrawing && (
         <Button
           size="sm"
-          className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+          className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg text-xs sm:text-sm"
           onClick={() => {
             console.log('Toggling drawing mode to true');
             onToggleDrawing();
           }}
           data-testid="add-geofence-button"
         >
-          <Plus className="w-4 h-4 mr-1" />
-          Добавить зону
+          <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+          <span className="hidden sm:inline">Добавить зону</span>
+          <span className="sm:hidden">Зона</span>
         </Button>
       )}
       
       {isDrawing && (
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-1 sm:space-y-2">
           <Button
             size="sm"
             variant="default"
-            className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
+            className="bg-green-600 hover:bg-green-700 text-white shadow-lg text-xs sm:text-sm"
             onClick={onCompletePolygon}
             disabled={!canComplete}
             data-testid="complete-polygon-button"
           >
-            <CheckCircle className="w-4 h-4 mr-1" />
-            Завершить (мин. 3 точки)
+            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+            <span className="hidden sm:inline">Завершить (мин. 3 точки)</span>
+            <span className="sm:hidden">Готово</span>
           </Button>
           <Button
             size="sm"
             variant="destructive"
-            className="shadow-lg"
+            className="shadow-lg text-xs sm:text-sm"
             onClick={onCancelDrawing}
             data-testid="cancel-drawing-button"
           >
-            <XCircle className="w-4 h-4 mr-1" />
-            Отмена
+            <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+            <span className="hidden sm:inline">Отмена</span>
+            <span className="sm:hidden">×</span>
           </Button>
         </div>
       )}
@@ -600,20 +603,22 @@ export default function MapLibreMap({
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>GPS Карта в Реальном Времени</CardTitle>
+      <Card className="h-full">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg">GPS Карта</CardTitle>
           {isDrawingMode && (
-            <p className="text-sm text-muted-foreground">
-              Кликните на карте, чтобы добавить точки многоугольника. Добавлено точек: {drawingPoints.length}
-              {drawingPoints.length < 3 ? ` (минимум 3 точки)` : ` (готово к созданию)`}
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              <span className="hidden sm:inline">Кликните на карте, чтобы добавить точки многоугольника. </span>
+              <span className="sm:hidden">Кликните для добавления точек. </span>
+              Точек: {drawingPoints.length}
+              {drawingPoints.length < 3 ? ` (мин. 3)` : ` (готово)`}
             </p>
           )}
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="pt-0">
           <div 
-            className="h-96 relative rounded-lg overflow-hidden"
+            className="h-full min-h-64 sm:min-h-80 lg:h-96 relative rounded-lg overflow-hidden"
             data-testid="maplibre-map-container"
           >
             <div ref={mapContainer} className="w-full h-full" />
@@ -629,16 +634,17 @@ export default function MapLibreMap({
             
             {/* Reset View Button */}
             {selectedHorse && onResetView && (
-              <div className="absolute top-4 left-4 z-20">
+              <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-20">
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="bg-white/95 hover:bg-white text-gray-700 shadow-lg border"
+                  className="bg-white/95 hover:bg-white text-gray-700 shadow-lg border text-xs sm:text-sm"
                   onClick={onResetView}
                   data-testid="reset-view-button"
                 >
-                  <Maximize2 className="w-4 h-4 mr-1" />
-                  Показать всех
+                  <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Показать всех</span>
+                  <span className="sm:hidden">Все</span>
                 </Button>
               </div>
             )}

@@ -42,33 +42,33 @@ export default function QuickStats() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Статус Сейчас</CardTitle>
+    <Card className="h-full">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base sm:text-lg">Статус Сейчас</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="pt-0">
+        <div className="space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Всего лошадей</span>
-            <span className="font-semibold" data-testid="total-horses">
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Всего лошадей</span>
+            <span className="font-semibold text-sm sm:text-base" data-testid="total-horses">
               {stats.totalHorses}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Активные</span>
-            <span className="font-semibold text-green-600" data-testid="active-horses">
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Активные</span>
+            <span className="font-semibold text-green-600 text-sm sm:text-base" data-testid="active-horses">
               {stats.activeHorses}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Предупреждения</span>
-            <span className="font-semibold text-yellow-600" data-testid="warning-horses">
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Предупреждения</span>
+            <span className="font-semibold text-yellow-600 text-sm sm:text-base" data-testid="warning-horses">
               {stats.warningHorses}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Офлайн</span>
-            <span className="font-semibold text-gray-400" data-testid="offline-horses">
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Офлайн</span>
+            <span className="font-semibold text-gray-400 text-sm sm:text-base" data-testid="offline-horses">
               {stats.offlineHorses}
             </span>
           </div>

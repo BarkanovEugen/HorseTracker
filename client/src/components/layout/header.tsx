@@ -24,9 +24,10 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Connection Status */}
-          <div className="hidden md:flex items-center space-x-4">
-            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full ${
+          {/* Connection Status & Controls */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Connection Status - Show icon only on mobile, full on desktop */}
+            <div className={`flex items-center px-2 py-1 rounded-full ${
               isConnected 
                 ? 'bg-green-100 dark:bg-green-900' 
                 : 'bg-red-100 dark:bg-red-900'
@@ -34,39 +35,35 @@ export default function Header() {
               {isConnected ? (
                 <>
                   <Wifi className="w-4 h-4 text-green-600 dark:text-green-400" />
-                  <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                  <span className="hidden sm:inline text-sm font-medium text-green-800 dark:text-green-200 ml-2">
                     Подключено
                   </span>
                 </>
               ) : (
                 <>
                   <WifiOff className="w-4 h-4 text-red-600 dark:text-red-400" />
-                  <span className="text-sm font-medium text-red-800 dark:text-red-200">
+                  <span className="hidden sm:inline text-sm font-medium text-red-800 dark:text-red-200 ml-2">
                     Отключено
                   </span>
                 </>
               )}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300" data-testid="device-count">
-              <span className="mr-1">📡</span>
-              5 устройств
-            </div>
-          </div>
 
-          {/* Theme Toggle */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleTheme}
-            className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
-            data-testid="theme-toggle"
-          >
-            {theme === "light" ? (
-              <Moon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-            ) : (
-              <Sun className="h-4 w-4 text-yellow-400" />
-            )}
-          </Button>
+            {/* Theme Toggle */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleTheme}
+              className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+              data-testid="theme-toggle"
+            >
+              {theme === "light" ? (
+                <Moon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+              ) : (
+                <Sun className="h-4 w-4 text-yellow-400" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </header>
