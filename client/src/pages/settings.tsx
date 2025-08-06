@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Geofence, Device, Horse } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -24,6 +24,7 @@ import {
   Wifi, 
   WifiOff,
   Battery,
+  MessageSquare,
   Settings as SettingsIcon 
 } from "lucide-react";
 
@@ -58,7 +59,11 @@ export default function Settings() {
     powerSavingMode: false,
   });
   
-  // Mock notification settings - in a real app, this would come from user preferences API
+  // Telegram notification settings
+  const [telegramChatId, setTelegramChatId] = useState('');
+  const [telegramNotifications, setTelegramNotifications] = useState(false);
+  
+  // Mock notification settings - in a real app, this would come from user preferences API  
   const [notifications, setNotifications] = useState<NotificationSettings>({
     geofenceExit: true,
     lowBattery: true,
@@ -77,6 +82,31 @@ export default function Settings() {
   const { data: horses = [] } = useQuery<Horse[]>({
     queryKey: ['/api/horses'],
   });
+
+  // Get current user data with Telegram settings
+  const { data: currentUser } = useQuery<{
+    id: string;
+    telegramChatId?: string;
+    telegramNotifications?: boolean;
+  }>({
+    queryKey: ['/api/auth/user'],
+  });
+
+  // Get Telegram service status
+  const { data: telegramStatus } = useQuery<{
+    enabled: boolean;
+    configured: boolean;
+  }>({
+    queryKey: ['/api/telegram/status'],
+  });
+
+  // Update local state when user data loads
+  useEffect(() => {
+    if (currentUser) {
+      setTelegramChatId(currentUser.telegramChatId || '');
+      setTelegramNotifications(currentUser.telegramNotifications || false);
+    }
+  }, [currentUser]);
 
   const deleteGeofenceMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -154,6 +184,28 @@ export default function Settings() {
     },
   });
 
+  // Telegram settings mutation
+  const updateTelegramMutation = useMutation({
+    mutationFn: async (data: { telegramChatId?: string; telegramNotifications?: boolean }) => {
+      const response = await apiRequest('PATCH', '/api/user/telegram', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "Настройки Telegram обновлены",
+        description: "Изменения сохранены успешно",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить настройки Telegram",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleNotificationToggle = (key: keyof NotificationSettings) => {
     setNotifications(prev => ({
       ...prev,
@@ -165,6 +217,18 @@ export default function Settings() {
       title: "Настройки обновлены",
       description: "Настройки уведомлений были сохранены",
     });
+  };
+
+  const handleTelegramToggle = () => {
+    const newValue = !telegramNotifications;
+    setTelegramNotifications(newValue);
+    updateTelegramMutation.mutate({ telegramNotifications: newValue });
+  };
+
+  const handleTelegramChatIdSave = () => {
+    if (telegramChatId.trim()) {
+      updateTelegramMutation.mutate({ telegramChatId: telegramChatId.trim() });
+    }
   };
 
   const handleDeleteGeofence = (id: string) => {
@@ -403,79 +467,84 @@ export default function Settings() {
           </CardContent>
         </Card>
         
-        {/* Notification Settings */}
+        {/* Telegram Notifications */}
         <Card>
           <CardHeader className="pb-3 sm:pb-6">
             <CardTitle className="flex items-center text-base sm:text-lg">
-              <Bell className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" />
-              Уведомления
+              <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" />
+              Telegram Уведомления
             </CardTitle>
           </CardHeader>
           
           <CardContent className="space-y-4 sm:space-y-6 pt-0">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm sm:text-base">Покидание геозоны</p>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  <span className="hidden sm:inline">Уведомления при выходе из безопасной зоны</span>
-                  <span className="sm:hidden">Выход из зоны</span>
+            {!telegramStatus?.configured ? (
+              <div className="text-center py-4 sm:py-6 text-gray-600 dark:text-gray-400">
+                <MessageSquare className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 text-gray-400" />
+                <p className="text-sm sm:text-base">
+                  Telegram Bot не настроен
                 </p>
               </div>
-              <Switch
-                checked={notifications.geofenceExit}
-                onCheckedChange={() => handleNotificationToggle('geofenceExit')}
-                data-testid="notification-geofence-toggle"
-                className="flex-shrink-0"
-              />
-            </div>
-            
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm sm:text-base">Низкий заряд батареи</p>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  <span className="hidden sm:inline">Предупреждения при заряде менее 20%</span>
-                  <span className="sm:hidden">Заряд меньше 20%</span>
-                </p>
-              </div>
-              <Switch
-                checked={notifications.lowBattery}
-                onCheckedChange={() => handleNotificationToggle('lowBattery')}
-                data-testid="notification-battery-toggle"
-                className="flex-shrink-0"
-              />
-            </div>
-            
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm sm:text-base">Потеря сигнала</p>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  <span className="hidden sm:inline">Уведомления при отключении устройства</span>
-                  <span className="sm:hidden">Отключение устройства</span>
-                </p>
-              </div>
-              <Switch
-                checked={notifications.deviceOffline}
-                onCheckedChange={() => handleNotificationToggle('deviceOffline')}
-                data-testid="notification-offline-toggle"
-                className="flex-shrink-0"
-              />
-            </div>
-            
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm sm:text-base">Ежедневные отчеты</p>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  <span className="hidden sm:inline">Сводка активности лошадей</span>
-                  <span className="sm:hidden">Сводка активности</span>
-                </p>
-              </div>
-              <Switch
-                checked={notifications.dailyReports}
-                onCheckedChange={() => handleNotificationToggle('dailyReports')}
-                data-testid="notification-reports-toggle"
-                className="flex-shrink-0"
-              />
-            </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm sm:text-base">Мобильные уведомления</p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <span className="hidden sm:inline">Получать критические алерты в Telegram</span>
+                      <span className="sm:hidden">Алерты в Telegram</span>
+                    </p>
+                  </div>
+                  <Switch
+                    checked={telegramNotifications}
+                    onCheckedChange={handleTelegramToggle}
+                    disabled={updateTelegramMutation.isPending}
+                    data-testid="telegram-notifications-toggle"
+                    className="flex-shrink-0"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="telegram-chat-id" className="text-sm font-medium">
+                    Telegram Chat ID
+                  </Label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      id="telegram-chat-id"
+                      type="text"
+                      placeholder="Ваш Chat ID в Telegram"
+                      value={telegramChatId}
+                      onChange={(e) => setTelegramChatId(e.target.value)}
+                      disabled={updateTelegramMutation.isPending}
+                      data-testid="telegram-chat-id-input"
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={handleTelegramChatIdSave}
+                      disabled={!telegramChatId.trim() || updateTelegramMutation.isPending}
+                      data-testid="save-telegram-chat-id"
+                      className="w-full sm:w-auto"
+                      size="sm"
+                    >
+                      Сохранить
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Для получения Chat ID напишите @userinfobot в Telegram
+                  </p>
+                </div>
+
+                {telegramNotifications && telegramChatId && (
+                  <div className="bg-green-50 dark:bg-green-900/20 p-3 sm:p-4 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-green-600" />
+                      <p className="text-sm text-green-800 dark:text-green-200">
+                        Telegram уведомления активны
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
