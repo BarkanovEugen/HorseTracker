@@ -27,6 +27,7 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Dashboard Trail Display**: 10-minute horse trail display when clicking on horse markers on main map with automatic trail switching between horses
 - **Marker Color Fix**: Fixed critical issue where custom horse marker colors were overridden by status colors - now always uses user-selected colors with status indication via border color
 - **Real-time Marker Updates**: Fixed issue where marker color changes in settings only applied after page reload - markers now update immediately when horse properties change
+- **Form Select Fix**: Resolved z-index conflict where device selection dropdown wouldn't open in horse edit dialog - increased SelectContent z-index from z-50 to z-[100]
 
 # User Preferences
 
