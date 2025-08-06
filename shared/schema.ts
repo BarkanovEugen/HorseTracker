@@ -60,6 +60,21 @@ export const devices = pgTable("devices", {
   firmwareVersion: text("firmware_version"),
 });
 
+// Users table for VK authentication
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vkId: text("vk_id").notNull().unique(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  username: text("username"),
+  photoUrl: text("photo_url"),
+  email: text("email"),
+  role: text("role").notNull().default("user"), // admin, user
+  isActive: boolean("is_active").notNull().default(true),
+  lastLogin: timestamp("last_login"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertHorseSchema = createInsertSchema(horses).omit({
   id: true,
@@ -86,6 +101,11 @@ export const insertDeviceSchema = createInsertSchema(devices).omit({
   id: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type Horse = typeof horses.$inferSelect;
 export type InsertHorse = z.infer<typeof insertHorseSchema>;
@@ -101,3 +121,6 @@ export type InsertGeofence = z.infer<typeof insertGeofenceSchema>;
 
 export type Device = typeof devices.$inferSelect;
 export type InsertDevice = z.infer<typeof insertDeviceSchema>;
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;

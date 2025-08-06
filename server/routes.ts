@@ -1,11 +1,47 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import passport from "./auth";
 import { storage } from "./storage";
 import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDeviceSchema, insertGpsLocationSchema } from "@shared/schema";
 import { z } from "zod";
+import type { User } from "@shared/schema";
+
+// Authentication middleware
+function requireAuth(req: any, res: any, next: any) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ error: "Authentication required" });
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication routes
+  app.get('/auth/vkontakte', passport.authenticate('vkontakte'));
+  
+  app.get('/auth/vkontakte/callback',
+    passport.authenticate('vkontakte', { failureRedirect: '/login' }),
+    (req, res) => {
+      // Successful authentication, redirect home
+      res.redirect('/dashboard');
+    }
+  );
+
+  app.get('/auth/logout', (req, res) => {
+    req.logout((err: any) => {
+      if (err) { console.error('Logout error:', err); }
+      res.redirect('/');
+    });
+  });
+
+  app.get('/api/auth/user', (req, res) => {
+    if (req.isAuthenticated()) {
+      res.json(req.user);
+    } else {
+      res.status(401).json({ error: "Not authenticated" });
+    }
+  });
+
   // ESP32 Device Data Endpoint
   app.post("/api/device/data", async (req, res) => {
     try {

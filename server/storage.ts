@@ -8,10 +8,12 @@ import {
   type Geofence,
   type InsertGeofence,
   type Device,
-  type InsertDevice
+  type InsertDevice,
+  type User,
+  type InsertUser
 } from "@shared/schema";
 import { db } from "./db";
-import { horses, gpsLocations, alerts, geofences, devices } from "@shared/schema";
+import { horses, gpsLocations, alerts, geofences, devices, users } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
@@ -47,12 +49,20 @@ export interface IStorage {
   createDevice(device: InsertDevice): Promise<Device>;
   updateDevice(id: string, device: Partial<InsertDevice>): Promise<Device | undefined>;
   deleteDevice(id: string): Promise<boolean>;
+
+  // Users
+  getUsers(): Promise<User[]>;
+  getUserById(id: string): Promise<User | undefined>;
+  getUserByVkId(vkId: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
   
   // ESP32 Integration
   processDeviceData(deviceId: string, latitude: number, longitude: number, batteryLevel: number): Promise<{device: Device, location: GpsLocation}>;
 }
 
-export class MemStorage implements IStorage {
+export class MemStorage {
   private horses: Map<string, Horse>;
   private locations: Map<string, GpsLocation>;
   private alerts: Map<string, Alert>;
@@ -900,7 +910,7 @@ export class DatabaseStorage implements IStorage {
 
     // Create location record
     const location = await this.createLocation({
-      horseId: device.horseId, // Use device ID as horseId if not assigned to horse
+      horseId: device.horseId!, // Use device ID as horseId if not assigned to horse
       latitude: latitude.toString(),
       longitude: longitude.toString(),
       batteryLevel: batteryLevel.toString(),
@@ -948,6 +958,36 @@ export class DatabaseStorage implements IStorage {
   // New method: Get sorted alerts (escalated ones first) - alias for getActiveAlerts
   async getSortedActiveAlerts(): Promise<Alert[]> {
     return this.getActiveAlerts();
+  }
+
+  // Users
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByVkId(vkId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.vkId, vkId));
+    return user || undefined;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [createdUser] = await db.insert(users).values(user).returning();
+    return createdUser;
+  }
+
+  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
+    const [updatedUser] = await db.update(users).set(user).where(eq(users.id, id)).returning();
+    return updatedUser || undefined;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 }
 
