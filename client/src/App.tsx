@@ -13,6 +13,7 @@ import Dashboard from "@/pages/dashboard";
 import Horses from "@/pages/horses";
 import History from "@/pages/history";
 import Settings from "@/pages/settings";
+import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 import { useEffect } from "react";
 
@@ -42,6 +43,7 @@ function AppContent() {
           <Route path="/horses" component={Horses} />
           <Route path="/history" component={History} />
           <Route path="/settings" component={Settings} />
+          <Route path="/login" component={Login} />
           <Route component={NotFound} />
         </Switch>
       </main>

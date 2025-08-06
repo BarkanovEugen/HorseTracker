@@ -19,6 +19,7 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Bottom Navigation**: Modern bottom navigation bar for mobile devices replacing header navigation
 - **Horse Status Enhancement**: Renamed "Батареи" to "Лошади" with zone status indicators (safe/outside) alongside battery levels
 - **Mobile Layout Optimization**: Reorganized layout with horses section positioned directly under map on mobile devices
+- **VK ID Authentication**: Modern VK ID integration with OAuth2 flow, user profile management, and session handling
 
 # User Preferences
 
@@ -94,7 +95,18 @@ Preferred communication style: Simple, everyday language.
 - **@replit/vite-plugin-runtime-error-modal**: Development error overlay
 - **@replit/vite-plugin-cartographer**: Replit-specific development tooling
 
-## Planned Integrations
-- **PostgreSQL Database**: Currently using in-memory storage, ready for PostgreSQL migration
-- **Session Management**: connect-pg-simple for PostgreSQL session storage
-- **Form Handling**: React Hook Form with Zod resolvers for validation
+## Authentication System
+- **VK ID Integration**: Modern VK ID OAuth2 authentication with @vkid/sdk package
+- **Backend Routes**: `/auth/vk`, `/auth/vk/callback`, `/auth/logout`, `/api/auth/user`, `/api/auth/vk-config`
+- **Frontend Components**: Login page with VK ID button, user profile dropdown in header
+- **Session Management**: Passport.js with PostgreSQL session storage using connect-pg-simple
+- **User Management**: Automatic user creation/update with VK profile data
+- **Authentication Hooks**: `useAuth`, `useAuthGuard`, `useLoginRedirect` for state management
+- **Security**: OAuth2 flow with state parameter, secure session management, proper error handling
+
+## Environment Variables
+- **VK_CLIENT_ID**: VK application client ID (required for VK authentication)
+- **VK_CLIENT_SECRET**: VK application client secret (required for VK authentication)  
+- **VK_REDIRECT_URI**: OAuth callback URL (defaults to /auth/vk/callback)
+- **SESSION_SECRET**: Session encryption key for secure cookie management
+- **DATABASE_URL**: PostgreSQL connection string

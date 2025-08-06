@@ -1,11 +1,16 @@
 import { useWebSocket } from "@/contexts/websocket-context";
 import { useTheme } from "@/contexts/theme-context";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Wifi, WifiOff } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Moon, Sun, Wifi, WifiOff, LogIn, LogOut, User } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
   const { isConnected } = useWebSocket();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-md border-b border-gray-200 dark:border-gray-800">
@@ -50,6 +55,52 @@ export default function Header() {
                 </>
               )}
             </div>
+
+            {/* Authentication Controls */}
+            {!isLoading && (
+              <>
+                {isAuthenticated && user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 sm:w-auto sm:h-9 sm:px-3 rounded-full" data-testid="user-menu">
+                        <Avatar className="h-6 w-6 sm:h-7 sm:w-7">
+                          <AvatarImage src={user.photoUrl || undefined} alt={user.firstName} />
+                          <AvatarFallback className="text-xs">
+                            {user.firstName.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="hidden sm:inline ml-2 text-sm font-medium">
+                          {user.firstName}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <div className="px-3 py-2">
+                        <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
+                        <p className="text-xs text-gray-500">{user.email || user.username}</p>
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={logout} data-testid="logout-button">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Выход
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Link href="/login">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs sm:text-sm"
+                      data-testid="login-button"
+                    >
+                      <LogIn className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Вход</span>
+                    </Button>
+                  </Link>
+                )}
+              </>
+            )}
 
             {/* Theme Toggle - Smaller on mobile */}
             <Button

@@ -16,16 +16,51 @@ function requireAuth(req: any, res: any, next: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication routes
-  app.get('/auth/vkontakte', passport.authenticate('vkontakte'));
-  
-  app.get('/auth/vkontakte/callback',
-    passport.authenticate('vkontakte', { failureRedirect: '/login' }),
-    (req, res) => {
-      // Successful authentication, redirect home
-      res.redirect('/dashboard');
+  // VK ID Authentication routes
+  app.get('/auth/vk', (req, res) => {
+    const { getVKAuthURL, isVKIDConfigured } = require('./auth');
+    
+    if (!isVKIDConfigured()) {
+      return res.status(400).json({ error: "VK ID not configured" });
     }
-  );
+    
+    const authUrl = getVKAuthURL();
+    res.redirect(authUrl);
+  });
+  
+  app.get('/auth/vk/callback', async (req, res) => {
+    try {
+      const { handleVKCallback } = require('./auth');
+      const { code, error } = req.query;
+      
+      if (error) {
+        console.error('VK ID callback error:', error);
+        return res.redirect('/login?error=vk_error');
+      }
+      
+      if (!code) {
+        return res.redirect('/login?error=no_code');
+      }
+      
+      // Handle VK ID callback and get user
+      const user = await handleVKCallback(code as string);
+      
+      // Log user in through passport session
+      req.login(user, (err) => {
+        if (err) {
+          console.error('Session login error:', err);
+          return res.redirect('/login?error=session_error');
+        }
+        
+        // Successful authentication, redirect to dashboard
+        res.redirect('/dashboard');
+      });
+      
+    } catch (error) {
+      console.error('VK ID authentication error:', error);
+      res.redirect('/login?error=auth_failed');
+    }
+  });
 
   app.get('/auth/logout', (req, res) => {
     req.logout((err: any) => {
@@ -40,6 +75,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } else {
       res.status(401).json({ error: "Not authenticated" });
     }
+  });
+
+  app.get('/api/auth/vk-config', (req, res) => {
+    const { isVKIDConfigured } = require('./auth');
+    res.json({ 
+      configured: isVKIDConfigured(),
+      available: true 
+    });
   });
 
   // ESP32 Device Data Endpoint
