@@ -80,6 +80,8 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Mobile navigation spacing - removed as we use padding on container */
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

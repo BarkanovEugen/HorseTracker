@@ -33,8 +33,9 @@ export default function BottomNavigation() {
   const [location] = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50 safe-area-pb">
-      <div className="flex justify-around items-center py-2 px-1">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg" style={{ zIndex: 1000 }}>
+      <div className="flex justify-around items-center py-2 px-1 pb-safe"
+           style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
         {navItems.map((item) => {
           const isActive = location === item.href;
           const Icon = item.icon;

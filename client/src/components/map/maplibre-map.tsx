@@ -397,30 +397,40 @@ export default function MapLibreMap({
 
   // Update geofences with delay to ensure map is ready
   useEffect(() => {
-    if (!map.current || !geofences.length) return;
+    if (!map.current || !mapLoaded) return;
 
-    // Small delay to ensure map is fully loaded
-    const timer = setTimeout(() => {
-      // Remove existing geofence layers
-      geofences.forEach((_, index) => {
-        const layerId = `geofence-${index}`;
-        const borderLayerId = `geofence-${index}-border`;
-        const sourceId = `geofence-source-${index}`;
-        
-        if (map.current!.getLayer(borderLayerId)) {
-          map.current!.removeLayer(borderLayerId);
+    // Clear all existing geofence layers first
+    const existingLayers = map.current.getStyle().layers || [];
+    const existingSources = Object.keys(map.current.getStyle().sources || {});
+    
+    // Remove existing geofence layers and sources
+    existingLayers.forEach(layer => {
+      if (layer.id.startsWith('geofence-')) {
+        try {
+          map.current!.removeLayer(layer.id);
+        } catch (e) {
+          // Layer might not exist, ignore
         }
-        if (map.current!.getLayer(layerId)) {
-          map.current!.removeLayer(layerId);
-        }
-        if (map.current!.getSource(sourceId)) {
+      }
+    });
+    
+    existingSources.forEach(sourceId => {
+      if (sourceId.startsWith('geofence-source-')) {
+        try {
           map.current!.removeSource(sourceId);
+        } catch (e) {
+          // Source might not exist, ignore
         }
-      });
+      }
+    });
 
-      // Add new geofence layers
+    // Add new geofence layers if we have geofences
+    if (geofences.length > 0) {
+      console.log(`Adding ${geofences.length} geofences to map...`);
+      
       geofences.forEach((geofence, index) => {
         try {
+          console.log(`Processing geofence ${index}:`, geofence);
           let coordinates;
           if (typeof geofence.coordinates === 'string') {
             coordinates = JSON.parse(geofence.coordinates);
@@ -428,13 +438,22 @@ export default function MapLibreMap({
             coordinates = geofence.coordinates;
           }
           
+          console.log(`Parsed coordinates for geofence ${index}:`, coordinates);
+          
           if (Array.isArray(coordinates) && coordinates.length >= 3) {
-            // Convert lat,lng to lng,lat for GeoJSON
-            const geoJsonCoords = [...coordinates.map((coord: [number, number]) => [coord[1], coord[0]]), [coordinates[0][1], coordinates[0][0]]];
+            // Convert lat,lng to lng,lat for GeoJSON and close the polygon
+            const geoJsonCoords = [
+              ...coordinates.map((coord: [number, number]) => [coord[1], coord[0]]),
+              [coordinates[0][1], coordinates[0][0]] // Close the polygon
+            ];
+            
+            console.log(`GeoJSON coordinates for geofence ${index}:`, geoJsonCoords);
             
             const sourceId = `geofence-source-${index}`;
             const layerId = `geofence-${index}`;
+            const borderLayerId = `geofence-${index}-border`;
 
+            // Add source
             map.current!.addSource(sourceId, {
               type: 'geojson',
               data: {
@@ -443,40 +462,48 @@ export default function MapLibreMap({
                   type: 'Polygon',
                   coordinates: [geoJsonCoords],
                 },
-                properties: {},
+                properties: {
+                  name: geofence.name,
+                  description: geofence.description
+                },
               },
             });
 
+            // Add fill layer
             map.current!.addLayer({
               id: layerId,
               type: 'fill',
               source: sourceId,
               paint: {
                 'fill-color': '#10b981',
-                'fill-opacity': 0.25,
+                'fill-opacity': 0.3,
               },
             });
 
-            // Add border
+            // Add border layer
             map.current!.addLayer({
-              id: `${layerId}-border`,
+              id: borderLayerId,
               type: 'line',
               source: sourceId,
               paint: {
                 'line-color': '#059669',
                 'line-width': 3,
-                'line-opacity': 0.8,
+                'line-opacity': 1.0,
               },
             });
+
+            console.log(`✓ Successfully added geofence layer ${layerId}`);
+          } else {
+            console.warn(`Invalid coordinates for geofence ${index}:`, coordinates);
           }
         } catch (error) {
-          console.error('Error parsing geofence coordinates:', error, geofence.coordinates);
+          console.error('Error adding geofence:', error, geofence);
         }
       });
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [geofences]);
+    } else {
+      console.log('No geofences to display');
+    }
+  }, [geofences, mapLoaded]);
 
   // Drawing polygon visualization
   useEffect(() => {
