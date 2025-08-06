@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GpsLocation, Horse } from '@shared/schema';
-import { Clock, MapPin, TrendingUp, Maximize2 } from 'lucide-react';
+import { Clock, MapPin, TrendingUp, Maximize2, X } from 'lucide-react';
 
 interface TrailViewerModalProps {
   isOpen: boolean;
@@ -73,26 +73,38 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
       if (!mapContainer.current || map.current) return;
 
       try {
-        console.log('Initializing trail map...');
+        const containerWidth = mapContainer.current.offsetWidth;
+        const containerHeight = mapContainer.current.offsetHeight;
+        
+        console.log('Initializing trail map...', containerWidth, 'x', containerHeight);
+        
+        if (containerWidth === 0 || containerHeight === 0) {
+          console.log('Container has no size, retrying...');
+          setTimeout(() => {
+            if (mapContainer.current && !map.current) {
+              const newWidth = mapContainer.current.offsetWidth;
+              const newHeight = mapContainer.current.offsetHeight;
+              console.log('Retry with size:', newWidth, 'x', newHeight);
+              
+              map.current = new maplibregl.Map({
+                container: mapContainer.current,
+                style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+                center: [37.6173, 55.7558],
+                zoom: 12,
+                attributionControl: false,
+              });
+              
+              map.current.on('load', () => {
+                console.log('Trail map loaded successfully on retry');
+              });
+            }
+          }, 500);
+          return;
+        }
         
         map.current = new maplibregl.Map({
           container: mapContainer.current,
-          style: {
-            version: 8,
-            sources: {
-              'osm': {
-                type: 'raster',
-                tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                tileSize: 256,
-                attribution: '© OpenStreetMap contributors'
-              }
-            },
-            layers: [{
-              id: 'osm',
-              type: 'raster',
-              source: 'osm'
-            }]
-          },
+          style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
           center: [37.6173, 55.7558], // Moscow center
           zoom: 12,
           attributionControl: false,
@@ -106,14 +118,10 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
           console.error('MapLibre error in trail viewer:', e);
         });
 
-        map.current.on('styledata', () => {
-          console.log('Trail map style loaded');
-        });
-
       } catch (error) {
         console.error('Failed to initialize trail map:', error);
       }
-    }, 100);
+    }, 500);
 
     return () => {
       if (map.current) {
@@ -385,37 +393,42 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            Маршрут лошади: {horse.name}
-          </DialogTitle>
-          <DialogDescription>
-            Интерактивная карта с детальным маршрутом перемещения лошади
-          </DialogDescription>
-        </DialogHeader>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-4xl h-[80vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <div>
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Маршрут лошади: {horse.name}
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Интерактивная карта с детальным маршрутом перемещения лошади
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
 
-        <div className="flex flex-col flex-1 gap-4">
+        <div className="flex flex-col flex-1 gap-4 p-6">
           {/* Controls */}
           <div className="flex flex-wrap items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span className="text-sm font-medium">Период:</span>
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1h">Последний час</SelectItem>
-                  <SelectItem value="2h">Последние 2 часа</SelectItem>
-                  <SelectItem value="6h">Последние 6 часов</SelectItem>
-                  <SelectItem value="12h">Последние 12 часов</SelectItem>
-                  <SelectItem value="24h">Последние 24 часа</SelectItem>
-                  <SelectItem value="all">Вся история</SelectItem>
-                </SelectContent>
-              </Select>
+              <select 
+                value={timeRange} 
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-sm"
+              >
+                <option value="1h">Последний час</option>
+                <option value="2h">Последние 2 часа</option>
+                <option value="6h">Последние 6 часов</option>
+                <option value="12h">Последние 12 часов</option>
+                <option value="24h">Последние 24 часа</option>
+                <option value="all">Вся история</option>
+              </select>
             </div>
 
             <div className="flex items-center gap-4 text-sm">
@@ -435,11 +448,15 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
           </div>
 
           {/* Map */}
-          <div className="flex-1 relative bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden" style={{ minHeight: '400px' }}>
-            <div ref={mapContainer} className="w-full h-full" style={{ minHeight: '400px' }} />
+          <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-lg relative" style={{ minHeight: '400px' }}>
+            <div 
+              ref={mapContainer} 
+              className="w-full h-full rounded-lg"
+              style={{ minHeight: '400px' }}
+            />
             
             {filteredLocations.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
                 <div className="text-center">
                   <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Нет данных о маршруте</h3>
@@ -471,7 +488,7 @@ export default function TrailViewerModal({ isOpen, onClose, horse, initialLocati
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
