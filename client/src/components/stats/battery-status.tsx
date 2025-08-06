@@ -102,75 +102,81 @@ export default function HorseStatus({ onHorseSelect }: HorseStatusProps) {
 
   if (isLoading) {
     return (
-      <Card className="h-full">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base sm:text-lg">Лошади</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-2 sm:space-y-3 animate-pulse">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="h-3 sm:h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 sm:w-20"></div>
-                <div className="flex items-center space-x-1 sm:space-x-2">
-                  <div className="w-8 sm:w-12 h-1.5 sm:h-2 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                  <div className="h-3 sm:h-4 bg-gray-200 dark:bg-gray-700 rounded w-6 sm:w-8"></div>
-                </div>
+      <div className="space-y-3 animate-pulse">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="p-4 rounded-lg bg-gray-200 dark:bg-gray-700">
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
               </div>
-            ))}
+              <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
     );
   }
 
   return (
-    <Card className="h-full shadow-md hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-2 sm:pb-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800">
-        <CardTitle className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 dark:text-white">
-          🐎 Лошади
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-3 sm:pt-4">
-        <div className="space-y-2 sm:space-y-2.5">
-          {horsesData.map((horse) => (
-            <div 
-              key={horse.id} 
-              className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all group"
-              data-testid={`horse-${horse.id}`}
-              onClick={() => onHorseSelect?.(horse)}
-            >
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 truncate group-hover:text-primary transition-colors">
+    <div className="space-y-3">
+      {horsesData.map((horse) => (
+        <div 
+          key={horse.id} 
+          className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
+            horse.isInSafeZone 
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+          }`}
+          data-testid={`horse-${horse.id}`}
+          onClick={() => onHorseSelect?.(horse)}
+        >
+          <div className="space-y-3">
+            {/* Horse name and zone status */}
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                   {horse.name}
-                </span>
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Уровень батареи
+                </p>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
                 {horse.hasLocation && (
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {horse.isInSafeZone ? (
-                      <Shield className="w-3 h-3 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <ShieldAlert className="w-3 h-3 text-red-600 dark:text-red-400" />
-                    )}
-                  </div>
+                  horse.isInSafeZone ? (
+                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                      <Shield className="w-4 h-4" />
+                      <span className="text-sm font-medium">В зоне</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
+                      <ShieldAlert className="w-4 h-4" />
+                      <span className="text-sm font-medium">Вне зоны</span>
+                    </div>
+                  )
                 )}
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <div className="w-12 sm:w-16 h-2 sm:h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
-                  <div 
-                    className={`h-full transition-all duration-500 ${getBatteryColor(horse.batteryLevel)} shadow-sm`}
-                    style={{ width: `${horse.batteryLevel}%` }}
-                  />
-                </div>
-                <span 
-                  className={`text-[10px] sm:text-xs font-bold ${getBatteryTextColor(horse.batteryLevel)} min-w-[28px] sm:min-w-[32px] text-right`}
-                  data-testid={`battery-percentage-${horse.id}`}
-                >
+            </div>
+            
+            {/* Battery level with visual bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Батарея:</span>
+                <span className={`font-bold text-lg ${getBatteryTextColor(horse.batteryLevel)}`}>
                   {horse.batteryLevel}%
                 </span>
               </div>
+              <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-500 ${getBatteryColor(horse.batteryLevel)}`}
+                  style={{ width: `${horse.batteryLevel}%` }}
+                />
+              </div>
             </div>
-          ))}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      ))}
+    </div>
   );
 }
