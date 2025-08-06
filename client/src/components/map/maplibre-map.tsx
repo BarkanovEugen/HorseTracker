@@ -103,6 +103,7 @@ export default function MapLibreMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  const layerPrefix = 'horses-' + Date.now(); // Unique prefix to avoid conflicts
   const [mapLoaded, setMapLoaded] = useState(false);
 
   const [isDrawingMode, setIsDrawingMode] = useState(false);
@@ -255,10 +256,7 @@ export default function MapLibreMap() {
 
         const marker = new maplibregl.Marker({
           element: el,
-          anchor: 'center',
-          offset: [0, 0],
-          pitchAlignment: 'map',
-          rotationAlignment: 'map'
+          anchor: 'center'
         })
           .setLngLat(newPosition)
           .addTo(map.current!);

@@ -78,13 +78,15 @@ export function createHorseMarkerElement(horse: Horse, size: number = 32): HTMLE
   container.style.cssText = `
     width: ${size}px;
     height: ${size}px;
-    position: relative;
+    position: absolute;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     pointer-events: auto;
     z-index: 1000;
+    transform-origin: center center;
+    transform: translate(-50%, -50%);
   `;
 
   // Create circular background
@@ -100,6 +102,7 @@ export function createHorseMarkerElement(horse: Horse, size: number = 32): HTMLE
     align-items: center;
     justify-content: center;
     position: relative;
+    z-index: 2;
   `;
 
   // Create horse icon
