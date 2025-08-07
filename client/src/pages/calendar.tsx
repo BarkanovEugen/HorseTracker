@@ -562,26 +562,28 @@ export default function CalendarPage() {
                 return (
                   <div key={lesson.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{lesson.clientName}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {format(new Date(lesson.lessonDate), "d MMM", { locale: ru })}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {format(new Date(lesson.lessonDate), "HH:mm", { locale: ru })}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {lesson.duration} мин
-                        </Badge>
-                        {lesson.status === 'completed' && (
-                          <Badge 
-                            variant={lesson.paid ? "default" : "destructive"} 
-                            className="text-xs"
-                          >
-                            {lesson.paid ? "Оплачено" : "Долг"}
+                      <div className="mb-1">
+                        <div className="font-medium mb-1">{lesson.clientName}</div>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Badge variant="outline" className="text-xs">
+                            {format(new Date(lesson.lessonDate), "d MMM", { locale: ru })}
                           </Badge>
-                        )}
-                        {getStatusBadge(lesson.status)}
+                          <Badge variant="secondary" className="text-xs">
+                            {format(new Date(lesson.lessonDate), "HH:mm", { locale: ru })}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {lesson.duration} мин
+                          </Badge>
+                          {lesson.status === 'completed' && (
+                            <Badge 
+                              variant={lesson.paid ? "default" : "destructive"} 
+                              className="text-xs"
+                            >
+                              {lesson.paid ? "Оплачено" : "Долг"}
+                            </Badge>
+                          )}
+                          {getStatusBadge(lesson.status)}
+                        </div>
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         {getLessonTypeLabel(lesson.lessonType)}
