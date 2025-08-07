@@ -20,6 +20,7 @@ import { format, startOfDay, endOfDay, isSameDay, isAfter, startOfToday, startOf
 import { ru } from "date-fns/locale";
 import { z } from "zod";
 import { ClientAutocomplete } from "@/components/client-autocomplete";
+import { DateTimePicker } from "@/components/date-time-picker";
 
 const lessonTypes = [
   { value: "прогулка", label: "Прогулка" },
@@ -1045,11 +1046,10 @@ export default function CalendarPage() {
                     <FormItem>
                       <FormLabel>Дата и время *</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="datetime-local" 
-                          step="1800"
-                          {...field} 
-                          data-testid="lesson-date" 
+                        <DateTimePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Выберите дату и время"
                         />
                       </FormControl>
                       <FormMessage />
