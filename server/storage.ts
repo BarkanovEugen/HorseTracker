@@ -1445,7 +1445,17 @@ export class DatabaseStorage implements IStorage {
 
   async createLesson(lesson: InsertLesson): Promise<Lesson> {
     try {
-      const result = await db.insert(lessons).values(lesson).returning();
+      // Get instructor name if instructorId is provided
+      let instructorName = null;
+      if (lesson.instructorId) {
+        const instructor = await this.getInstructor(lesson.instructorId);
+        instructorName = instructor?.name || null;
+      }
+      
+      const result = await db.insert(lessons).values({
+        ...lesson,
+        instructorName
+      }).returning();
       return result[0];
     } catch (error) {
       console.error('❌ Error creating lesson:', error);
@@ -1455,8 +1465,24 @@ export class DatabaseStorage implements IStorage {
 
   async updateLesson(id: string, lesson: Partial<InsertLesson>): Promise<Lesson | undefined> {
     try {
+      // Get instructor name if instructorId is being updated
+      let instructorName = undefined;
+      if (lesson.instructorId !== undefined) {
+        if (lesson.instructorId) {
+          const instructor = await this.getInstructor(lesson.instructorId);
+          instructorName = instructor?.name || null;
+        } else {
+          instructorName = null;
+        }
+      }
+      
+      const updateData = { ...lesson, updatedAt: new Date() };
+      if (instructorName !== undefined) {
+        updateData.instructorName = instructorName;
+      }
+      
       const result = await db.update(lessons)
-        .set({ ...lesson, updatedAt: new Date() })
+        .set(updateData)
         .where(eq(lessons.id, id))
         .returning();
       return result[0];
@@ -1543,19 +1569,16 @@ export class DatabaseStorage implements IStorage {
 
   async deleteInstructor(id: string): Promise<boolean> {
     try {
-      // Check if instructor has any lessons
-      const instructorLessons = await db.select().from(lessons).where(eq(lessons.instructorId, id));
-      
-      if (instructorLessons.length > 0) {
-        console.error(`❌ Cannot delete instructor ${id}: has ${instructorLessons.length} associated lessons`);
-        throw new Error(`Нельзя удалить инструктора: за ним закреплено ${instructorLessons.length} занятий. Сначала переназначьте или удалите занятия.`);
-      }
+      // Update lessons to clear instructorId but keep instructorName for history
+      await db.update(lessons)
+        .set({ instructorId: null })
+        .where(eq(lessons.instructorId, id));
       
       const result = await db.delete(instructors).where(eq(instructors.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error(`❌ Error deleting instructor ${id}:`, error);
-      throw error; // Rethrow the error so it can be properly handled in the route
+      throw error;
     }
   }
 

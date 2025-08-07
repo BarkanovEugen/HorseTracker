@@ -325,6 +325,16 @@ export default function CalendarPage() {
     return lessonTypes.find(t => t.value === type)?.label || type;
   };
 
+  const getInstructorDisplayName = (lesson: Lesson) => {
+    // First try to get active instructor by ID
+    const instructor = instructors.find(i => i.id === lesson.instructorId);
+    if (instructor) {
+      return instructor.name;
+    }
+    // Fall back to stored instructor name (for deleted instructors)
+    return lesson.instructorName || null;
+  };
+
   if (lessonsLoading || horsesLoading) {
     return (
       <div className="p-6 space-y-6">
@@ -430,9 +440,9 @@ export default function CalendarPage() {
                               Лошадь: {horse.name}
                             </p>
                           )}
-                          {instructor && (
+                          {getInstructorDisplayName(lesson) && (
                             <p className="text-xs text-green-600 dark:text-green-400">
-                              Инструктор: {instructor.name}
+                              Инструктор: {getInstructorDisplayName(lesson)}
                             </p>
                           )}
                         </div>
@@ -577,7 +587,7 @@ export default function CalendarPage() {
                         {getLessonTypeLabel(lesson.lessonType)}
                         {canViewFinancialData && <span> • {lesson.price}₽</span>}
                         {horse && <span> • {horse.name}</span>}
-                        {instructor && <span className="text-green-600 dark:text-green-400"> • {instructor.name}</span>}
+                        {getInstructorDisplayName(lesson) && <span className="text-green-600 dark:text-green-400"> • {getInstructorDisplayName(lesson)}</span>}
                       </div>
                     </div>
                     {canEditLessons && (
@@ -795,9 +805,9 @@ export default function CalendarPage() {
                           <span className="text-sm text-gray-600">
                             • {horse?.name || "Лошадь не найдена"}
                           </span>
-                          {instructor && (
+                          {getInstructorDisplayName(lesson) && (
                             <span className="text-sm text-green-600 dark:text-green-400">
-                              • {instructor.name}
+                              • {getInstructorDisplayName(lesson)}
                             </span>
                           )}
                         </div>

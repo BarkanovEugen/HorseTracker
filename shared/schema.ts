@@ -107,6 +107,7 @@ export const lessons = pgTable("lessons", {
   lessonType: text("lesson_type").notNull(), // прогулка, иппотерапия, верховая езда новичок, верховая езда опытный
   horseId: varchar("horse_id").notNull().references(() => horses.id),
   instructorId: varchar("instructor_id").references(() => instructors.id),
+  instructorName: text("instructor_name"), // Store instructor name for history preservation
   lessonDate: timestamp("lesson_date").notNull(), // Date and time of the lesson
   duration: numeric("duration").notNull().default("60"), // Duration in minutes
   price: numeric("price").notNull(), // Price in rubles
