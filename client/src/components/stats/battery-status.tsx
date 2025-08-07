@@ -155,11 +155,11 @@ export default function HorseStatus({ onHorseSelect, selectedHorse }: HorseStatu
         </div>
 
         {/* Horses list */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {horsesData.map((horse) => (
             <div 
               key={horse.id} 
-              className={`relative p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
+              className={`relative p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-sm hover:scale-[1.01] ${
                 selectedHorse?.id === horse.id 
                   ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600 shadow-lg ring-2 ring-blue-400 dark:ring-blue-600'
                   : horse.isInSafeZone 
@@ -174,22 +174,22 @@ export default function HorseStatus({ onHorseSelect, selectedHorse }: HorseStatu
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute top-2 right-2 h-8 w-8 p-0 opacity-70 hover:opacity-100"
+                  className="absolute top-1.5 right-1.5 h-7 w-7 p-0 opacity-60 hover:opacity-100"
                   onClick={(e) => handleEdit(horse, e)}
                   data-testid={`edit-horse-${horse.id}`}
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-3.5 h-3.5" />
                 </Button>
               )}
 
-              <div className="space-y-3">
-                {/* Horse name and zone status */}
-                <div className="flex items-start justify-between pr-10">
+              <div className="space-y-2">
+                {/* Horse name and info - compact single line */}
+                <div className="flex items-center justify-between pr-8">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">
                       {horse.name}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-500 truncate">
                       {horse.breed} • {horse.age} лет
                     </p>
                   </div>
@@ -197,32 +197,32 @@ export default function HorseStatus({ onHorseSelect, selectedHorse }: HorseStatu
                     {horse.hasLocation && (
                       horse.isInSafeZone ? (
                         <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                          <Shield className="w-4 h-4" />
-                          <span className="text-sm font-medium">В зоне</span>
+                          <Shield className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">В зоне</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                          <ShieldAlert className="w-4 h-4" />
-                          <span className="text-sm font-medium">Вне зоны</span>
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">Вне зоны</span>
                         </div>
                       )
                     )}
                   </div>
                 </div>
                 
-                {/* Battery level with visual bar */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Батарея:</span>
-                    <span className={`font-bold text-lg ${getBatteryTextColor(horse.batteryLevel)}`}>
+                {/* Battery level - compact */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Батарея:</span>
+                  <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-500 ${getBatteryColor(horse.batteryLevel)}`}
+                        style={{ width: `${horse.batteryLevel}%` }}
+                      />
+                    </div>
+                    <span className={`font-semibold text-xs ${getBatteryTextColor(horse.batteryLevel)} min-w-[30px] text-right`}>
                       {horse.batteryLevel}%
                     </span>
-                  </div>
-                  <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-500 ${getBatteryColor(horse.batteryLevel)}`}
-                      style={{ width: `${horse.batteryLevel}%` }}
-                    />
                   </div>
                 </div>
               </div>
