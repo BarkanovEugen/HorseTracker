@@ -42,6 +42,8 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Lesson Booking Calendar**: Complete lesson management system with calendar interface for scheduling riding lessons (прогулка, иппотерапия, верховая езда новичок/опытный), client tracking, horse assignment, pricing, and status management
 - **Calendar Database Schema**: Full lessons table with client information, lesson types, horse assignments, pricing, duration, and status tracking for comprehensive reporting
 - **Calendar API Endpoints**: Complete CRUD operations for lessons with date range queries, horse-specific filtering, and proper authentication/authorization
+- **Instructor Management System**: Complete instructor management with CRUD operations, statistics tracking, and instructor assignment to lessons
+- **Calendar Statistics with Period Filters**: Enhanced statistics section with flexible period selection (week, month, quarter, year, custom) for detailed lesson and revenue analytics
 
 # User Preferences
 

@@ -15,7 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertLessonSchema, type Lesson, type Horse, type Instructor } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useCanEdit } from "@/hooks/use-permissions";
-import { format, startOfDay, endOfDay, isSameDay, isAfter, startOfToday } from "date-fns";
+import { format, startOfDay, endOfDay, isSameDay, isAfter, startOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { ru } from "date-fns/locale";
 import { z } from "zod";
 
@@ -45,11 +45,24 @@ interface LessonWithHorse extends Lesson {
   horse?: Horse;
 }
 
+type StatsPeriod = 'week' | 'month' | 'quarter' | 'year' | 'custom';
+
+interface CustomPeriod {
+  startDate: Date;
+  endDate: Date;
+}
+
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showDialog, setShowDialog] = useState(false);
   const [showDayDialog, setShowDayDialog] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [statsPeriod, setStatsPeriod] = useState<StatsPeriod>('month');
+  const [customPeriod, setCustomPeriod] = useState<CustomPeriod>({
+    startDate: startOfMonth(new Date()),
+    endDate: endOfMonth(new Date())
+  });
+  const [showCustomDates, setShowCustomDates] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -177,11 +190,37 @@ export default function CalendarPage() {
   // Все занятия отсортированные по дате
   const allLessons = lessons.sort((a, b) => new Date(b.lessonDate).getTime() - new Date(a.lessonDate).getTime());
 
-  // Статистика
-  const totalLessons = lessons.length;
-  const completedLessons = lessons.filter(l => l.status === 'completed').length;
-  const scheduledLessons = lessons.filter(l => l.status === 'scheduled').length;
-  const totalRevenue = lessons.filter(l => l.status === 'completed').reduce((sum, l) => sum + parseInt(l.price), 0);
+  // Функция для получения диапазона дат для статистики
+  const getStatsDateRange = (): { start: Date; end: Date } => {
+    const now = new Date();
+    switch (statsPeriod) {
+      case 'week':
+        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+      case 'month':
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case 'quarter':
+        return { start: startOfQuarter(now), end: endOfQuarter(now) };
+      case 'year':
+        return { start: startOfYear(now), end: endOfYear(now) };
+      case 'custom':
+        return { start: customPeriod.startDate, end: customPeriod.endDate };
+      default:
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+    }
+  };
+
+  const { start: statsStart, end: statsEnd } = getStatsDateRange();
+  
+  // Фильтрованные занятия по выбранному периоду
+  const filteredLessons = lessons.filter(lesson => 
+    isWithinInterval(new Date(lesson.lessonDate), { start: statsStart, end: statsEnd })
+  );
+
+  // Статистика за выбранный период
+  const totalLessons = filteredLessons.length;
+  const completedLessons = filteredLessons.filter(l => l.status === 'completed').length;
+  const scheduledLessons = filteredLessons.filter(l => l.status === 'scheduled').length;
+  const totalRevenue = filteredLessons.filter(l => l.status === 'completed').reduce((sum, l) => sum + parseInt(l.price), 0);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -218,7 +257,7 @@ export default function CalendarPage() {
       duration: lesson.duration,
       price: lesson.price,
       status: lesson.status,
-      notes: lesson.notes || ""
+      notes: lesson.notes ?? ""
     });
     setEditingLesson(lesson);
     setShowDialog(true);
@@ -437,6 +476,60 @@ export default function CalendarPage() {
               <BarChart3 className="w-5 h-5" />
               Статистика
             </CardTitle>
+            <div className="space-y-3">
+              <Select value={statsPeriod} onValueChange={(value: StatsPeriod) => {
+                setStatsPeriod(value);
+                if (value === 'custom') {
+                  setShowCustomDates(true);
+                } else {
+                  setShowCustomDates(false);
+                }
+              }}>
+                <SelectTrigger className="w-full" data-testid="stats-period-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Текущая неделя</SelectItem>
+                  <SelectItem value="month">Текущий месяц</SelectItem>
+                  <SelectItem value="quarter">Текущий квартал</SelectItem>
+                  <SelectItem value="year">Текущий год</SelectItem>
+                  <SelectItem value="custom">Свой период</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {showCustomDates && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-600 dark:text-gray-400">От</label>
+                    <Input
+                      type="date"
+                      value={format(customPeriod.startDate, 'yyyy-MM-dd')}
+                      onChange={(e) => setCustomPeriod(prev => ({
+                        ...prev,
+                        startDate: new Date(e.target.value)
+                      }))}
+                      data-testid="custom-start-date"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 dark:text-gray-400">До</label>
+                    <Input
+                      type="date"
+                      value={format(customPeriod.endDate, 'yyyy-MM-dd')}
+                      onChange={(e) => setCustomPeriod(prev => ({
+                        ...prev,
+                        endDate: new Date(e.target.value)
+                      }))}
+                      data-testid="custom-end-date"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                Период: {format(statsStart, 'd MMM', { locale: ru })} - {format(statsEnd, 'd MMM yyyy', { locale: ru })}
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
@@ -615,7 +708,7 @@ export default function CalendarPage() {
                     <FormItem>
                       <FormLabel>Телефон</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} data-testid="lesson-client-phone" />
+                        <Input {...field} value={field.value ?? ""} data-testid="lesson-client-phone" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -776,7 +869,7 @@ export default function CalendarPage() {
                   <FormItem>
                     <FormLabel>Примечания</FormLabel>
                     <FormControl>
-                      <Textarea {...field} value={field.value || ""} data-testid="lesson-notes" />
+                      <Textarea {...field} value={field.value ?? ""} data-testid="lesson-notes" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
