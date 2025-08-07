@@ -93,7 +93,7 @@ export default function DevRoleSwitcher() {
     return null;
   }
 
-  const currentRoleIcon = roleIcons[roleInfo.currentRole];
+  const CurrentRoleIcon = roleIcons[roleInfo.currentRole];
 
   return (
     <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
@@ -114,7 +114,7 @@ export default function DevRoleSwitcher() {
             Текущая роль:
           </span>
           <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-            <currentRoleIcon className="w-3 h-3 mr-1" />
+            <CurrentRoleIcon className="w-3 h-3 mr-1" />
             {roleLabels[roleInfo.currentRole]}
           </Badge>
         </div>

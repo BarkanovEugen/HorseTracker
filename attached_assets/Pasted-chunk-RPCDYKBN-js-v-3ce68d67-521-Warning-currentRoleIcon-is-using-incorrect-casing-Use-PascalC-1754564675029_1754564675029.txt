@@ -1,0 +1,24 @@
+chunk-RPCDYKBN.js?v=3ce68d67:521 Warning: <currentRoleIcon /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+    at currentRoleIcon
+    at div
+    at Badge (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/ui/badge.tsx:35:18)
+    at div
+    at div
+    at _c9 (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at DevRoleSwitcher (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/components/dev-role-switcher.tsx:43:35)
+    at div
+    at div
+    at Settings (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/pages/settings.tsx:48:21)
+    at Route (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3ce68d67:323:16)
+    at Switch (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3ce68d67:379:17)
+    at main
+    at div
+    at AppContent (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/App.tsx?v=_nWay4N3KXW6Fq0NmdjfX:41:3)
+    at Provider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=3ce68d67:38:15)
+    at TooltipProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=3ce68d67:61:5)
+    at WebSocketProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/contexts/websocket-context.tsx:20:37)
+    at ThemeProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/src/contexts/theme-context.tsx:20:33)
+    at QueryClientProvider (https://e36f434f-d496-4d9e-a056-64e50e173dfc-00-k4sum0ml6i4i.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=3ce68d67:2805:3)
+    at App
