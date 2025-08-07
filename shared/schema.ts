@@ -145,6 +145,19 @@ export const insertLessonSchema = createInsertSchema(lessons).omit({
   updatedAt: true,
 });
 
+// API-specific schema that accepts string dates
+export const apiLessonSchema = z.object({
+  clientName: z.string().min(1, "Client name is required"),
+  clientPhone: z.string().optional(),
+  lessonType: z.string().min(1, "Lesson type is required"), 
+  horseId: z.string().min(1, "Horse ID is required"),
+  lessonDate: z.string().transform((str) => new Date(str)),
+  duration: z.string().min(1, "Duration is required"),
+  price: z.string().min(1, "Price is required"),
+  status: z.string().default("scheduled"),
+  notes: z.string().optional(),
+});
+
 // Types
 export type Horse = typeof horses.$inferSelect;
 export type InsertHorse = z.infer<typeof insertHorseSchema>;

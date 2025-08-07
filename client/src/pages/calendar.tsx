@@ -82,7 +82,7 @@ export default function CalendarPage() {
     mutationFn: async (data: LessonFormData) => {
       const lessonData = {
         ...data,
-        lessonDate: new Date(data.lessonDate).toISOString(),
+        lessonDate: data.lessonDate,
         price: data.price,
         duration: data.duration
       };
@@ -92,7 +92,10 @@ export default function CalendarPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(lessonData)
       });
-      if (!response.ok) throw new Error('Failed to create lesson');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create lesson');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -111,7 +114,7 @@ export default function CalendarPage() {
     mutationFn: async ({ id, data }: { id: string, data: LessonFormData }) => {
       const lessonData = {
         ...data,
-        lessonDate: new Date(data.lessonDate).toISOString(),
+        lessonDate: data.lessonDate,
         price: data.price,
         duration: data.duration
       };
@@ -121,7 +124,10 @@ export default function CalendarPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(lessonData)
       });
-      if (!response.ok) throw new Error('Failed to update lesson');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update lesson');
+      }
       return response.json();
     },
     onSuccess: () => {

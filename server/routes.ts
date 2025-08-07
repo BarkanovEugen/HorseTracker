@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import passport from "./auth";
 import { storage } from "./storage";
-import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDeviceSchema, insertGpsLocationSchema, insertLessonSchema } from "@shared/schema";
+import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDeviceSchema, insertGpsLocationSchema, insertLessonSchema, apiLessonSchema } from "@shared/schema";
 import { z } from "zod";
 import type { User } from "@shared/schema";
 
@@ -444,7 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/lessons", requireAdmin, async (req, res) => {
     try {
-      const validation = insertLessonSchema.safeParse(req.body);
+      const validation = apiLessonSchema.safeParse(req.body);
       if (!validation.success) {
         return res.status(400).json({ 
           message: "Invalid lesson data",
@@ -461,7 +461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/lessons/:id", requireAdmin, async (req, res) => {
     try {
-      const validation = insertLessonSchema.partial().safeParse(req.body);
+      const validation = apiLessonSchema.partial().safeParse(req.body);
       if (!validation.success) {
         return res.status(400).json({ 
           message: "Invalid lesson data",
