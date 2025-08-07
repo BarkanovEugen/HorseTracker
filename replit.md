@@ -23,6 +23,7 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Role-Based Access Control**: Complete permissions system with admin/viewer roles, protected API endpoints, conditional UI rendering
 - **MapLibre Stability**: Fixed critical map crashes with proper error handling and null checks, suppressed tile loading warnings
 - **Development Authentication**: Temporary auth bypass for testing when VK keys not provided, all users have admin access for development
+- **Role Switcher on Dashboard**: DevRoleSwitcher component moved from settings to main dashboard for universal access across all user roles in development mode
 - **Trail Visualization**: Interactive trail viewer modal with MapLibre map showing horse routes with time range selection (1h-24h), distance calculation, and GPS point details
 - **Dashboard Trail Display**: 10-minute horse trail display when clicking on horse markers on main map with automatic trail switching between horses
 - **Marker Color Fix**: Fixed critical issue where custom horse marker colors were overridden by status colors - now always uses user-selected colors with status indication via border color

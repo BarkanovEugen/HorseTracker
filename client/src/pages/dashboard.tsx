@@ -3,6 +3,7 @@ import ActiveAlerts from "@/components/alerts/active-alerts";
 import MapLibreMap from "@/components/map/maplibre-map";
 import QuickStats from "@/components/stats/quick-stats";
 import HorseStatus from "@/components/stats/battery-status";
+import DevRoleSwitcher from "@/components/dev-role-switcher";
 import { Horse } from "@shared/schema";
 
 export default function Dashboard() {
@@ -25,6 +26,9 @@ export default function Dashboard() {
     <>
       {/* Mobile Layout - Original design */}
       <div className="lg:hidden p-3 sm:p-4 space-y-3 sm:space-y-4 bg-gray-50 dark:bg-gray-900 min-h-screen">
+        {/* Development Role Switcher - Only visible in dev mode */}
+        <DevRoleSwitcher />
+        
         {/* Active Alerts - Prominent position at top */}
         <ActiveAlerts />
 
@@ -86,6 +90,11 @@ export default function Dashboard() {
             {/* Bottom Panel - Alerts */}
             <div className="flex-1 min-h-[300px] xl:min-h-[350px] bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
               <div className="p-6 h-full flex flex-col">
+                {/* Development Role Switcher - Only visible in dev mode */}
+                <div className="mb-4">
+                  <DevRoleSwitcher />
+                </div>
+                
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Уведомления</h3>
                 <div className="flex-1 overflow-y-auto">
                   <ActiveAlerts />

@@ -30,7 +30,7 @@ import {
   Save
 } from "lucide-react";
 
-import DevRoleSwitcher from "@/components/dev-role-switcher";
+
 
 interface NotificationSettings {
   geofenceExit: boolean;
@@ -984,11 +984,6 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Development Role Switcher (only visible in dev mode) */}
-      <div className="mt-4 sm:mt-6">
-        <DevRoleSwitcher />
-      </div>
 
       {/* Geofence Creator Dialog */}
       <Dialog open={isGeofenceDialogOpen} onOpenChange={setIsGeofenceDialogOpen}>
