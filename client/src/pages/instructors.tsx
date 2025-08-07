@@ -351,7 +351,7 @@ function InstructorCard({
       {stats && (
         <div className="pt-4 border-t space-y-2">
           <h4 className="font-medium text-sm">Статистика</h4>
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-2 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-blue-600">{stats.totalLessons}</div>
               <div className="text-xs text-muted-foreground">Всего занятий</div>
@@ -359,10 +359,6 @@ function InstructorCard({
             <div>
               <div className="text-2xl font-bold text-green-600">{stats.completedLessons}</div>
               <div className="text-xs text-muted-foreground">Проведено</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-purple-600">{stats.totalRevenue.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground">Доход ₽</div>
             </div>
           </div>
         </div>
