@@ -14,10 +14,12 @@ import {
   type Settings,
   type InsertSettings,
   type Lesson,
-  type InsertLesson
+  type InsertLesson,
+  type Instructor,
+  type InsertInstructor
 } from "@shared/schema";
 import { db } from "./db";
-import { horses, gpsLocations, alerts, geofences, devices, users, settings, lessons } from "@shared/schema";
+import { horses, gpsLocations, alerts, geofences, devices, users, settings, lessons, instructors } from "@shared/schema";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { telegramService } from "./telegram-bot";
@@ -91,6 +93,19 @@ export interface IStorage {
   deleteLesson(id: string): Promise<boolean>;
   getLessonsByDateRange(startDate: Date, endDate: Date): Promise<Lesson[]>;
   getLessonsByHorse(horseId: string): Promise<Lesson[]>;
+
+  // Instructors
+  getInstructors(): Promise<Instructor[]>;
+  getInstructor(id: string): Promise<Instructor | undefined>;
+  createInstructor(instructor: InsertInstructor): Promise<Instructor>;
+  updateInstructor(id: string, instructor: Partial<InsertInstructor>): Promise<Instructor | undefined>;
+  deleteInstructor(id: string): Promise<boolean>;
+  getInstructorStats(instructorId: string): Promise<{
+    totalLessons: number;
+    completedLessons: number;
+    totalRevenue: number;
+    averageRating?: number;
+  }>;
 }
 
 export class MemStorage {
@@ -1480,6 +1495,92 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error(`❌ Error getting lessons for horse ${horseId}:`, error);
       return [];
+    }
+  }
+
+  // Instructors
+  async getInstructors(): Promise<Instructor[]> {
+    try {
+      return await db.select().from(instructors).orderBy(instructors.name);
+    } catch (error) {
+      console.error('❌ Error getting instructors:', error);
+      return [];
+    }
+  }
+
+  async getInstructor(id: string): Promise<Instructor | undefined> {
+    try {
+      const result = await db.select().from(instructors).where(eq(instructors.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error(`❌ Error getting instructor ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async createInstructor(instructor: InsertInstructor): Promise<Instructor> {
+    try {
+      const result = await db.insert(instructors).values(instructor).returning();
+      return result[0];
+    } catch (error) {
+      console.error('❌ Error creating instructor:', error);
+      throw error;
+    }
+  }
+
+  async updateInstructor(id: string, instructor: Partial<InsertInstructor>): Promise<Instructor | undefined> {
+    try {
+      const result = await db.update(instructors)
+        .set(instructor)
+        .where(eq(instructors.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error(`❌ Error updating instructor ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteInstructor(id: string): Promise<boolean> {
+    try {
+      const result = await db.delete(instructors).where(eq(instructors.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error(`❌ Error deleting instructor ${id}:`, error);
+      return false;
+    }
+  }
+
+  async getInstructorStats(instructorId: string): Promise<{
+    totalLessons: number;
+    completedLessons: number;
+    totalRevenue: number;
+    averageRating?: number;
+  }> {
+    try {
+      // Get all lessons for this instructor
+      const instructorLessons = await db.select().from(lessons)
+        .where(eq(lessons.instructorId, instructorId));
+
+      const totalLessons = instructorLessons.length;
+      const completedLessons = instructorLessons.filter(lesson => lesson.status === 'completed').length;
+      const totalRevenue = instructorLessons
+        .filter(lesson => lesson.status === 'completed')
+        .reduce((sum, lesson) => sum + parseFloat(lesson.price), 0);
+
+      return {
+        totalLessons,
+        completedLessons,
+        totalRevenue,
+        averageRating: undefined // TODO: Add rating system later
+      };
+    } catch (error) {
+      console.error(`❌ Error getting instructor stats for ${instructorId}:`, error);
+      return {
+        totalLessons: 0,
+        completedLessons: 0,
+        totalRevenue: 0
+      };
     }
   }
 }

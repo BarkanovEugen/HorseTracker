@@ -87,6 +87,18 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Instructors table for lesson instructors
+export const instructors = pgTable("instructors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  email: text("email"),
+  specialization: text("specialization"), // прогулка, иппотерапия, верховая езда новичок, верховая езда опытный
+  hourlyRate: numeric("hourly_rate"), // per hour in rubles
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Lessons table for riding lesson bookings
 export const lessons = pgTable("lessons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -94,6 +106,7 @@ export const lessons = pgTable("lessons", {
   clientPhone: text("client_phone"),
   lessonType: text("lesson_type").notNull(), // прогулка, иппотерапия, верховая езда новичок, верховая езда опытный
   horseId: varchar("horse_id").notNull().references(() => horses.id),
+  instructorId: varchar("instructor_id").references(() => instructors.id),
   lessonDate: timestamp("lesson_date").notNull(), // Date and time of the lesson
   duration: numeric("duration").notNull().default("60"), // Duration in minutes
   price: numeric("price").notNull(), // Price in rubles
@@ -139,6 +152,11 @@ export const insertSettingsSchema = createInsertSchema(settings).omit({
   updatedAt: true,
 });
 
+export const insertInstructorSchema = createInsertSchema(instructors).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertLessonSchema = createInsertSchema(lessons).omit({
   id: true,
   createdAt: true,
@@ -151,6 +169,7 @@ export const apiLessonSchema = z.object({
   clientPhone: z.string().optional(),
   lessonType: z.string().min(1, "Lesson type is required"), 
   horseId: z.string().min(1, "Horse ID is required"),
+  instructorId: z.string().optional(),
   lessonDate: z.string().transform((str) => new Date(str)),
   duration: z.string().min(1, "Duration is required"),
   price: z.string().min(1, "Price is required"),
@@ -179,6 +198,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Settings = typeof settings.$inferSelect;
 export type InsertSettings = z.infer<typeof insertSettingsSchema>;
+
+export type Instructor = typeof instructors.$inferSelect;
+export type InsertInstructor = z.infer<typeof insertInstructorSchema>;
 
 export type Lesson = typeof lessons.$inferSelect;
 export type InsertLesson = z.infer<typeof insertLessonSchema>;

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import passport from "./auth";
 import { storage } from "./storage";
-import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDeviceSchema, insertGpsLocationSchema, insertLessonSchema, apiLessonSchema } from "@shared/schema";
+import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDeviceSchema, insertGpsLocationSchema, insertLessonSchema, apiLessonSchema, insertInstructorSchema } from "@shared/schema";
 import { z } from "zod";
 import type { User } from "@shared/schema";
 
@@ -515,6 +515,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(lessons);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch lessons for horse" });
+    }
+  });
+
+  // Instructors API endpoints
+  app.get("/api/instructors", requireViewer, async (req, res) => {
+    try {
+      const instructors = await storage.getInstructors();
+      res.json(instructors);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch instructors" });
+    }
+  });
+
+  app.get("/api/instructors/:id", requireViewer, async (req, res) => {
+    try {
+      const instructor = await storage.getInstructor(req.params.id);
+      if (!instructor) {
+        return res.status(404).json({ message: "Instructor not found" });
+      }
+      res.json(instructor);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch instructor" });
+    }
+  });
+
+  app.post("/api/instructors", requireAdmin, async (req, res) => {
+    try {
+      const validation = insertInstructorSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid instructor data",
+          errors: validation.error.errors 
+        });
+      }
+
+      const instructor = await storage.createInstructor(validation.data);
+      res.status(201).json(instructor);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create instructor" });
+    }
+  });
+
+  app.put("/api/instructors/:id", requireAdmin, async (req, res) => {
+    try {
+      const validation = insertInstructorSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid instructor data",
+          errors: validation.error.errors 
+        });
+      }
+
+      const instructor = await storage.updateInstructor(req.params.id, validation.data);
+      if (!instructor) {
+        return res.status(404).json({ message: "Instructor not found" });
+      }
+      res.json(instructor);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update instructor" });
+    }
+  });
+
+  app.delete("/api/instructors/:id", requireAdmin, async (req, res) => {
+    try {
+      const success = await storage.deleteInstructor(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Instructor not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete instructor" });
+    }
+  });
+
+  app.get("/api/instructors/:id/stats", requireViewer, async (req, res) => {
+    try {
+      const stats = await storage.getInstructorStats(req.params.id);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch instructor stats" });
     }
   });
 

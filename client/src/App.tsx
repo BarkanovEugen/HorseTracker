@@ -12,6 +12,7 @@ import BottomNavigation from "@/components/layout/bottom-navigation";
 import Dashboard from "@/pages/dashboard";
 import Horses from "@/pages/horses";
 import Calendar from "@/pages/calendar";
+import Instructors from "@/pages/instructors";
 import History from "@/pages/history";
 import Settings from "@/pages/settings";
 import Login from "@/pages/login";
@@ -44,6 +45,7 @@ function AppContent() {
           <Route path="/" component={Dashboard} />
           <Route path="/horses" component={Horses} />
           <Route path="/calendar" component={Calendar} />
+          <Route path="/instructors" component={Instructors} />
           <Route path="/history" component={History} />
           <Route path="/settings" component={Settings} />
           <Route path="/admin" component={Admin} />

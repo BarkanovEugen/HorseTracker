@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertLessonSchema, type Lesson, type Horse } from "@shared/schema";
+import { insertLessonSchema, type Lesson, type Horse, type Instructor } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useCanEdit } from "@/hooks/use-permissions";
 import { format, startOfDay, endOfDay, isSameDay, isAfter, startOfToday } from "date-fns";
@@ -62,6 +62,7 @@ export default function CalendarPage() {
       clientPhone: "",
       lessonType: "",
       horseId: "",
+      instructorId: "",
       lessonDate: "",
       duration: "60",
       price: "",
@@ -76,6 +77,10 @@ export default function CalendarPage() {
 
   const { data: horses = [], isLoading: horsesLoading } = useQuery<Horse[]>({
     queryKey: ['/api/horses'],
+  });
+
+  const { data: instructors = [], isLoading: instructorsLoading } = useQuery<Instructor[]>({
+    queryKey: ['/api/instructors'],
   });
 
   const createLessonMutation = useMutation({
@@ -191,6 +196,7 @@ export default function CalendarPage() {
       clientPhone: "",
       lessonType: "",
       horseId: "",
+      instructorId: "",
       lessonDate: format(selectedDate, "yyyy-MM-dd'T'HH:mm"),
       duration: "60",
       price: "",
@@ -207,6 +213,7 @@ export default function CalendarPage() {
       clientPhone: lesson.clientPhone || "",
       lessonType: lesson.lessonType,
       horseId: lesson.horseId,
+      instructorId: lesson.instructorId || "",
       lessonDate: format(new Date(lesson.lessonDate), "yyyy-MM-dd'T'HH:mm"),
       duration: lesson.duration,
       price: lesson.price,
@@ -667,6 +674,31 @@ export default function CalendarPage() {
                   )}
                 />
               </div>
+              
+              <FormField
+                control={form.control}
+                name="instructorId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Инструктор</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="lesson-instructor-select">
+                          <SelectValue placeholder="Выберите инструктора" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {instructors.filter(instructor => instructor.active).map(instructor => (
+                          <SelectItem key={instructor.id} value={instructor.id}>
+                            {instructor.name} {instructor.specialization && `(${instructor.specialization})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
