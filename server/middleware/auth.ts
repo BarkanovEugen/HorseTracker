@@ -1,5 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 
+// Development role state (only for testing)
+let devUserRole: 'admin' | 'instructor' | 'viewer' = 'admin';
+
+// Function to change dev user role (only for development)
+export function setDevUserRole(role: 'admin' | 'instructor' | 'viewer') {
+  if (process.env.VK_CLIENT_ID && process.env.VK_CLIENT_SECRET) {
+    throw new Error('Role switching is only available in development mode');
+  }
+  devUserRole = role;
+}
+
+export function getDevUserRole() {
+  return devUserRole;
+}
+
 // Extend Express Request interface to include user with role
 declare global {
   namespace Express {
@@ -31,14 +46,19 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   // Temporary bypass for development when VK auth is not configured
   if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
-    // Create a mock user for development
+    // Create a mock user for development with current dev role
     req.user = { 
       id: 'dev-user', 
-      role: 'admin', 
+      role: devUserRole, 
       firstName: 'Development',
       lastName: 'User',
       isActive: true
     } as Express.User;
+    
+    // Check if current dev role has admin access
+    if (devUserRole !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
     return next();
   }
   
@@ -57,10 +77,10 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
 export function requireViewer(req: Request, res: Response, next: NextFunction) {
   // Temporary bypass for development when VK auth is not configured
   if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
-    // Create a mock user for development
+    // Create a mock user for development with current dev role
     req.user = { 
       id: 'dev-user', 
-      role: 'admin', 
+      role: devUserRole, 
       firstName: 'Development',
       lastName: 'User',
       isActive: true
@@ -78,6 +98,37 @@ export function requireViewer(req: Request, res: Response, next: NextFunction) {
   }
   
   res.status(403).json({ error: "Access denied" });
+}
+
+// Middleware to check if user has instructor or admin role
+export function requireInstructor(req: Request, res: Response, next: NextFunction) {
+  // Temporary bypass for development when VK auth is not configured
+  if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
+    // Create a mock user for development with current dev role
+    req.user = { 
+      id: 'dev-user', 
+      role: devUserRole, 
+      firstName: 'Development',
+      lastName: 'User',
+      isActive: true
+    } as Express.User;
+    
+    // Check if current dev role has instructor+ access
+    if (devUserRole !== 'admin' && devUserRole !== 'instructor') {
+      return res.status(403).json({ error: "Instructor access required" });
+    }
+    return next();
+  }
+  
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  
+  if (req.user.role !== 'admin' && req.user.role !== 'instructor') {
+    return res.status(403).json({ error: "Instructor access required" });
+  }
+  
+  next();
 }
 
 // Utility function to check if user can edit (admin only)
@@ -159,29 +210,3 @@ export function getUserPermissions(user: Express.User | undefined) {
   }
 }
 
-// Middleware for instructor-level access
-export function requireInstructor(req: Request, res: Response, next: NextFunction) {
-  // Temporary bypass for development when VK auth is not configured
-  if (!process.env.VK_CLIENT_ID || !process.env.VK_CLIENT_SECRET) {
-    // Create a mock user for development
-    req.user = { 
-      id: 'dev-user', 
-      role: 'admin', 
-      firstName: 'Development',
-      lastName: 'User',
-      isActive: true
-    } as Express.User;
-    return next();
-  }
-  
-  if (!req.isAuthenticated() || !req.user) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
-  
-  // Admin and instructor can access instructor-level content
-  if (req.user.role === 'admin' || req.user.role === 'instructor') {
-    return next();
-  }
-  
-  res.status(403).json({ error: "Instructor access required" });
-}

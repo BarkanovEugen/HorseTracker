@@ -8,7 +8,7 @@ import { z } from "zod";
 import type { User } from "@shared/schema";
 
 // Import authentication middleware
-import { requireAuth, requireAdmin, requireViewer, requireInstructor, getUserPermissions } from "./middleware/auth";
+import { requireAuth, requireAdmin, requireViewer, requireInstructor, getUserPermissions, setDevUserRole, getDevUserRole } from "./middleware/auth";
 
 // Global type declarations for development mode
 declare global {
@@ -84,6 +84,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       configured: isVKIDConfigured(),
       available: true 
     });
+  });
+
+  // Development-only role switching API
+  app.get('/api/dev/role', (req, res) => {
+    // Only available in development mode (when VK auth is not configured)
+    if (process.env.VK_CLIENT_ID && process.env.VK_CLIENT_SECRET) {
+      return res.status(403).json({ error: "Role switching is only available in development mode" });
+    }
+    
+    res.json({ 
+      currentRole: getDevUserRole(),
+      availableRoles: ['admin', 'instructor', 'viewer'],
+      isDevelopmentMode: true
+    });
+  });
+
+  app.post('/api/dev/role', (req, res) => {
+    // Only available in development mode (when VK auth is not configured)
+    if (process.env.VK_CLIENT_ID && process.env.VK_CLIENT_SECRET) {
+      return res.status(403).json({ error: "Role switching is only available in development mode" });
+    }
+    
+    const { role } = req.body;
+    
+    if (!role || !['admin', 'instructor', 'viewer'].includes(role)) {
+      return res.status(400).json({ 
+        error: "Invalid role. Must be 'admin', 'instructor', or 'viewer'" 
+      });
+    }
+    
+    try {
+      setDevUserRole(role);
+      console.log(`🔄 Development role switched to: ${role}`);
+      res.json({ 
+        success: true,
+        newRole: role,
+        message: `Role switched to ${role}` 
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to switch role" });
+    }
   });
 
   // ESP32 Device Data Endpoint
@@ -772,55 +813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Permissions endpoint for frontend
-  app.get("/api/auth/permissions", (req, res) => {
-    // Debug environment variables
-    console.log('VK_CLIENT_ID:', process.env.VK_CLIENT_ID ? 'SET' : 'NOT_SET');
-    console.log('VK_CLIENT_SECRET:', process.env.VK_CLIENT_SECRET ? 'SET' : 'NOT_SET');
-    
-    // Always bypass in development for now
-    console.log('🔓 Development mode: bypassing authentication for permissions');
-    return res.json({
-      canEdit: true,
-      canView: true,
-      canManageUsers: true,
-      role: 'admin'
-    });
-    
-    // Original logic (commented out for now)
-    /*
-    const hasVkKeys = process.env.VK_CLIENT_ID && process.env.VK_CLIENT_SECRET && 
-                      process.env.VK_CLIENT_ID.trim() !== '' && process.env.VK_CLIENT_SECRET.trim() !== '';
-    
-    if (!hasVkKeys) {
-      console.log('🔓 Development mode: bypassing authentication for permissions');
-      return res.json({
-        canEdit: true,
-        canView: true,
-        canManageUsers: true,
-        role: 'admin'
-      });
-    }
-    */
-    
-    // Production code - require authentication
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-    
-    try {
-      const user = req.user as any;
-      const permissions = {
-        canEdit: user.role === 'admin',
-        canView: true, // All authenticated users can view
-        canManageUsers: user.role === 'admin',
-        role: user.role || 'admin'
-      };
-      res.json(permissions);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch permissions" });
-    }
-  });
+
 
   // Auth user endpoint for frontend
   app.get("/api/auth/user", (req, res) => {
@@ -828,7 +821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('🔓 Development mode: bypassing authentication for user');
     return res.json({ 
       id: 'dev-user', 
-      role: 'admin', 
+      role: getDevUserRole(), 
       firstName: 'Development',
       lastName: 'User',
       isActive: true,
@@ -855,6 +848,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     if (req.isAuthenticated() && req.user) {
       res.json(req.user);
+    } else {
+      res.status(401).json({ error: "Not authenticated" });
+    }
+  });
+
+  // Auth permissions endpoint for frontend
+  app.get("/api/auth/permissions", (req, res) => {
+    // Always bypass in development for now
+    console.log('🔓 Development mode: bypassing authentication for permissions');
+    
+    // Create mock user with current dev role for permission calculation
+    const mockUser = { 
+      id: 'dev-user', 
+      role: getDevUserRole(), 
+      firstName: 'Development',
+      lastName: 'User',
+      isActive: true
+    } as Express.User;
+    
+    const permissions = getUserPermissions(mockUser);
+    return res.json(permissions);
+    
+    // Original logic (commented out for now)
+    /*
+    const hasVkKeys = process.env.VK_CLIENT_ID && process.env.VK_CLIENT_SECRET && 
+                      process.env.VK_CLIENT_ID.trim() !== '' && process.env.VK_CLIENT_SECRET.trim() !== '';
+    
+    if (!hasVkKeys) {
+      console.log('🔓 Development mode: bypassing authentication for permissions');
+      const mockUser = { 
+        id: 'dev-user', 
+        role: getDevUserRole(), 
+        firstName: 'Development',
+        lastName: 'User',
+        isActive: true
+      } as Express.User;
+      
+      const permissions = getUserPermissions(mockUser);
+      return res.json(permissions);
+    }
+    */
+    
+    if (req.isAuthenticated() && req.user) {
+      const permissions = getUserPermissions(req.user);
+      res.json(permissions);
     } else {
       res.status(401).json({ error: "Not authenticated" });
     }
