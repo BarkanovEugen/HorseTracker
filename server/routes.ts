@@ -154,25 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/users/:userId/role", requireAdmin, async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const { role } = req.body;
-      
-      if (!['admin', 'viewer'].includes(role)) {
-        return res.status(400).json({ error: "Invalid role. Must be 'admin' or 'viewer'" });
-      }
-      
-      const updatedUser = await storage.updateUserRole(userId, role);
-      if (!updatedUser) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      
-      res.json(updatedUser);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update user role" });
-    }
-  });
+
 
   // Horses API - View access for all authenticated users
   app.get("/api/horses", requireViewer, async (req, res) => {
@@ -651,21 +633,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/users/:id/role", requireAdmin, async (req, res) => {
+  app.put("/api/users/:userId/role", requireAdmin, async (req, res) => {
     try {
+      const { userId } = req.params;
       const { role } = req.body;
+      
       if (!['admin', 'instructor', 'viewer'].includes(role)) {
-        return res.status(400).json({ message: "Invalid role" });
+        return res.status(400).json({ error: "Invalid role. Must be 'admin', 'instructor', or 'viewer'" });
       }
       
-      const user = await storage.updateUserRole(req.params.id, role);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      const updatedUser = await storage.updateUserRole(userId, role);
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
       }
       
-      res.json(user);
+      res.json(updatedUser);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update user role" });
+      res.status(500).json({ error: "Failed to update user role" });
     }
   });
 
