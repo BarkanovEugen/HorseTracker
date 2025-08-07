@@ -94,7 +94,6 @@ export const instructors = pgTable("instructors", {
   phone: text("phone"),
   email: text("email"),
   specialization: text("specialization"), // прогулка, иппотерапия, верховая езда новичок, верховая езда опытный
-  hourlyRate: numeric("hourly_rate"), // per hour in rubles
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });

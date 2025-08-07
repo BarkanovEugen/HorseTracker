@@ -43,7 +43,6 @@ export default function InstructorsPage() {
       phone: undefined,
       email: undefined,
       specialization: undefined,
-      hourlyRate: undefined,
       active: true,
     },
   });
@@ -106,7 +105,6 @@ export default function InstructorsPage() {
       phone: instructor.phone || undefined,
       email: instructor.email || undefined,
       specialization: instructor.specialization || undefined,
-      hourlyRate: instructor.hourlyRate || undefined,
       active: instructor.active,
     });
     setIsDialogOpen(true);
@@ -125,7 +123,6 @@ export default function InstructorsPage() {
       phone: undefined,
       email: undefined,
       specialization: undefined,
-      hourlyRate: undefined,
       active: true,
     });
     setIsDialogOpen(true);
@@ -230,19 +227,6 @@ export default function InstructorsPage() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="hourlyRate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Оплата за час (₽)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="2000" {...field} value={field.value || ""} data-testid="input-hourly-rate" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
 
                 <FormField
@@ -361,12 +345,7 @@ function InstructorCard({
             <span>{instructor.email}</span>
           </div>
         )}
-        {instructor.hourlyRate && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <DollarSign className="h-4 w-4" />
-            <span>{instructor.hourlyRate} ₽/час</span>
-          </div>
-        )}
+
       </div>
 
       {stats && (
