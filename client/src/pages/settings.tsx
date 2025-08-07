@@ -134,14 +134,24 @@ export default function Settings() {
 
   // Update escalation settings when system settings load
   useEffect(() => {
-    if (systemSettings) {
-      setEscalationSettings(prev => ({
-        ...prev,
-        geofenceEscalationTimeMinutes: systemSettings.geofenceEscalationTimeMinutes || '2',
-        deviceOfflineTimeMinutes: systemSettings.deviceOfflineTimeMinutes || '10'
-      }));
+    if (systemSettings && Object.keys(systemSettings).length > 0) {
+      const newGeofenceTime = systemSettings.geofenceEscalationTimeMinutes || '2';
+      const newDeviceTime = systemSettings.deviceOfflineTimeMinutes || '10';
+      
+      setEscalationSettings(prev => {
+        // Only update if values actually changed
+        if (prev.geofenceEscalationTimeMinutes !== newGeofenceTime || 
+            prev.deviceOfflineTimeMinutes !== newDeviceTime) {
+          return {
+            ...prev,
+            geofenceEscalationTimeMinutes: newGeofenceTime,
+            deviceOfflineTimeMinutes: newDeviceTime
+          };
+        }
+        return prev;
+      });
     }
-  }, [systemSettings]);
+  }, [systemSettings?.geofenceEscalationTimeMinutes, systemSettings?.deviceOfflineTimeMinutes]);
 
   const deleteGeofenceMutation = useMutation({
     mutationFn: async (id: string) => {
