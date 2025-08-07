@@ -43,6 +43,7 @@ type LessonFormData = z.infer<typeof lessonFormSchema>;
 
 interface LessonWithHorse extends Lesson {
   horse?: Horse;
+  instructor?: Instructor;
 }
 
 type StatsPeriod = 'week' | 'month' | 'quarter' | 'year' | 'custom';
@@ -63,6 +64,13 @@ export default function CalendarPage() {
     endDate: endOfMonth(new Date())
   });
   const [showCustomDates, setShowCustomDates] = useState(false);
+  
+  // Фильтры для списка занятий
+  const [filterDateFrom, setFilterDateFrom] = useState<string>('');
+  const [filterDateTo, setFilterDateTo] = useState<string>('');
+  const [filterHorse, setFilterHorse] = useState<string>('');
+  const [filterInstructor, setFilterInstructor] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>('');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -182,13 +190,36 @@ export default function CalendarPage() {
     isSameDay(new Date(lesson.lessonDate), selectedDate)
   ).sort((a, b) => new Date(a.lessonDate).getTime() - new Date(b.lessonDate).getTime());
 
-  // Будущие занятия (начиная с сегодняшнего дня)
+  // Будущие запланированные занятия (только статус "scheduled")
   const upcomingLessons = lessons.filter(lesson => 
-    isAfter(new Date(lesson.lessonDate), startOfToday()) || isSameDay(new Date(lesson.lessonDate), startOfToday())
+    lesson.status === 'scheduled' && 
+    (isAfter(new Date(lesson.lessonDate), startOfToday()) || isSameDay(new Date(lesson.lessonDate), startOfToday()))
   ).sort((a, b) => new Date(a.lessonDate).getTime() - new Date(b.lessonDate).getTime()).slice(0, 5);
 
+  // Фильтрованные и отсортированные занятия
+  const filteredAllLessons = lessons.filter(lesson => {
+    const lessonDate = new Date(lesson.lessonDate);
+    const dateFrom = filterDateFrom ? new Date(filterDateFrom) : null;
+    const dateTo = filterDateTo ? new Date(filterDateTo) : null;
+    
+    // Фильтр по дате
+    if (dateFrom && lessonDate < dateFrom) return false;
+    if (dateTo && lessonDate > dateTo) return false;
+    
+    // Фильтр по лошади
+    if (filterHorse && lesson.horseId !== filterHorse) return false;
+    
+    // Фильтр по инструктору
+    if (filterInstructor && lesson.instructorId !== filterInstructor) return false;
+    
+    // Фильтр по типу
+    if (filterType && lesson.lessonType !== filterType) return false;
+    
+    return true;
+  }).sort((a, b) => new Date(b.lessonDate).getTime() - new Date(a.lessonDate).getTime());
+
   // Все занятия отсортированные по дате
-  const allLessons = lessons.sort((a, b) => new Date(b.lessonDate).getTime() - new Date(a.lessonDate).getTime());
+  const allLessons = filteredAllLessons;
 
   // Функция для получения диапазона дат для статистики
   const getStatsDateRange = (): { start: Date; end: Date } => {
@@ -359,6 +390,7 @@ export default function CalendarPage() {
               ) : (
                 upcomingLessons.map((lesson) => {
                   const horse = horses.find(h => h.id === lesson.horseId);
+                  const instructor = instructors.find(i => i.id === lesson.instructorId);
                   return (
                     <div key={lesson.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                       <div className="flex-1">
@@ -384,6 +416,11 @@ export default function CalendarPage() {
                           {horse && (
                             <p className="text-xs text-blue-600 dark:text-blue-400">
                               Лошадь: {horse.name}
+                            </p>
+                          )}
+                          {instructor && (
+                            <p className="text-xs text-green-600 dark:text-green-400">
+                              Инструктор: {instructor.name}
                             </p>
                           )}
                         </div>
@@ -422,13 +459,84 @@ export default function CalendarPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Все занятия ({totalLessons})
+              Все занятия ({allLessons.length})
             </CardTitle>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mt-4">
+              <div>
+                <label className="text-xs text-gray-600 dark:text-gray-400">От даты</label>
+                <Input
+                  type="date"
+                  value={filterDateFrom}
+                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                  className="text-sm"
+                  data-testid="filter-date-from"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 dark:text-gray-400">До даты</label>
+                <Input
+                  type="date"
+                  value={filterDateTo}
+                  onChange={(e) => setFilterDateTo(e.target.value)}
+                  className="text-sm"
+                  data-testid="filter-date-to"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 dark:text-gray-400">Лошадь</label>
+                <Select value={filterHorse} onValueChange={setFilterHorse}>
+                  <SelectTrigger className="text-sm" data-testid="filter-horse-select">
+                    <SelectValue placeholder="Все лошади" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Все лошади</SelectItem>
+                    {horses.map(horse => (
+                      <SelectItem key={horse.id} value={horse.id}>
+                        {horse.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 dark:text-gray-400">Инструктор</label>
+                <Select value={filterInstructor} onValueChange={setFilterInstructor}>
+                  <SelectTrigger className="text-sm" data-testid="filter-instructor-select">
+                    <SelectValue placeholder="Все инструкторы" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Все инструкторы</SelectItem>
+                    {instructors.map(instructor => (
+                      <SelectItem key={instructor.id} value={instructor.id}>
+                        {instructor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 dark:text-gray-400">Тип</label>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="text-sm" data-testid="filter-type-select">
+                    <SelectValue placeholder="Все типы" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Все типы</SelectItem>
+                    {lessonTypes.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="max-h-96 overflow-y-auto">
             <div className="space-y-2">
               {allLessons.map((lesson) => {
                 const horse = horses.find(h => h.id === lesson.horseId);
+                const instructor = instructors.find(i => i.id === lesson.instructorId);
                 return (
                   <div key={lesson.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800">
                     <div className="flex-1">
@@ -442,6 +550,7 @@ export default function CalendarPage() {
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         {getLessonTypeLabel(lesson.lessonType)} • {lesson.price}₽
                         {horse && <span> • {horse.name}</span>}
+                        {instructor && <span className="text-green-600 dark:text-green-400"> • {instructor.name}</span>}
                       </div>
                     </div>
                     {canEdit && (
@@ -600,6 +709,7 @@ export default function CalendarPage() {
             ) : (
               selectedDayLessons.map((lesson) => {
                 const horse = horses.find(h => h.id === lesson.horseId);
+                const instructor = instructors.find(i => i.id === lesson.instructorId);
                 return (
                   <div key={lesson.id} className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                     <div className="flex items-start justify-between">
@@ -632,6 +742,11 @@ export default function CalendarPage() {
                           <span className="text-sm text-gray-600">
                             • {horse?.name || "Лошадь не найдена"}
                           </span>
+                          {instructor && (
+                            <span className="text-sm text-green-600 dark:text-green-400">
+                              • {instructor.name}
+                            </span>
+                          )}
                         </div>
                         
                         <div className="flex items-center gap-2">
@@ -708,7 +823,7 @@ export default function CalendarPage() {
                     <FormItem>
                       <FormLabel>Телефон</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value ?? ""} data-testid="lesson-client-phone" />
+                        <Input {...field} value={field.value || ""} data-testid="lesson-client-phone" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
