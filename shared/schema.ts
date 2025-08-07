@@ -111,6 +111,7 @@ export const lessons = pgTable("lessons", {
   duration: numeric("duration").notNull().default("60"), // Duration in minutes
   price: numeric("price").notNull(), // Price in rubles
   status: text("status").notNull().default("scheduled"), // scheduled, completed, cancelled
+  paid: boolean("paid").notNull().default(false), // Payment status
   notes: text("notes"), // Additional notes about the lesson
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -174,6 +175,7 @@ export const apiLessonSchema = z.object({
   duration: z.string().min(1, "Duration is required"),
   price: z.string().min(1, "Price is required"),
   status: z.string().default("scheduled"),
+  paid: z.boolean().default(false),
   notes: z.string().optional(),
 });
 

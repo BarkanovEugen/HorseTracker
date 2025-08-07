@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertLessonSchema, type Lesson, type Horse, type Instructor } from "@shared/schema";
@@ -90,6 +91,7 @@ export default function CalendarPage() {
       duration: "60",
       price: "",
       status: "scheduled",
+      paid: false,
       notes: ""
     }
   });
@@ -253,7 +255,11 @@ export default function CalendarPage() {
   const totalLessons = filteredLessons.length;
   const completedLessons = filteredLessons.filter(l => l.status === 'completed').length;
   const scheduledLessons = filteredLessons.filter(l => l.status === 'scheduled').length;
+  const paidLessons = filteredLessons.filter(l => l.status === 'completed' && l.paid).length;
+  const unpaidLessons = filteredLessons.filter(l => l.status === 'completed' && !l.paid).length;
   const totalRevenue = filteredLessons.filter(l => l.status === 'completed').reduce((sum, l) => sum + parseInt(l.price), 0);
+  const paidRevenue = filteredLessons.filter(l => l.status === 'completed' && l.paid).reduce((sum, l) => sum + parseInt(l.price), 0);
+  const unpaidRevenue = filteredLessons.filter(l => l.status === 'completed' && !l.paid).reduce((sum, l) => sum + parseInt(l.price), 0);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -273,6 +279,7 @@ export default function CalendarPage() {
       duration: "60",
       price: "",
       status: "scheduled",
+      paid: false,
       notes: ""
     });
     setEditingLesson(null);
@@ -290,6 +297,7 @@ export default function CalendarPage() {
       duration: lesson.duration,
       price: lesson.price,
       status: lesson.status,
+      paid: lesson.paid,
       notes: lesson.notes ?? ""
     });
     setEditingLesson(lesson);
@@ -555,6 +563,14 @@ export default function CalendarPage() {
                         <Badge variant="secondary" className="text-xs">
                           {lesson.duration} мин
                         </Badge>
+                        {lesson.status === 'completed' && (
+                          <Badge 
+                            variant={lesson.paid ? "default" : "destructive"} 
+                            className="text-xs"
+                          >
+                            {lesson.paid ? "Оплачено" : "Долг"}
+                          </Badge>
+                        )}
                         {getStatusBadge(lesson.status)}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -678,13 +694,37 @@ export default function CalendarPage() {
               </div>
 
               {canViewFinancialData && (
-                <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Доход</p>
-                    <p className="text-2xl font-bold text-purple-600">{totalRevenue.toLocaleString()}₽</p>
+                <>
+                  <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Доход</p>
+                      <p className="text-2xl font-bold text-purple-600">{totalRevenue.toLocaleString()}₽</p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-purple-600" />
                   </div>
-                  <DollarSign className="w-8 h-8 text-purple-600" />
-                </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Оплачено</p>
+                      <p className="text-xl font-bold text-green-600">{paidLessons} занятий</p>
+                      <p className="text-sm text-green-600">{paidRevenue.toLocaleString()}₽</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center">
+                      <div className="w-3 h-3 rounded-full bg-green-600"></div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Долги</p>
+                      <p className="text-xl font-bold text-red-600">{unpaidLessons} занятий</p>
+                      <p className="text-sm text-red-600">{unpaidRevenue.toLocaleString()}₽</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center">
+                      <div className="w-3 h-3 rounded-full bg-red-600"></div>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </CardContent>
@@ -993,6 +1033,29 @@ export default function CalendarPage() {
                   </FormItem>
                 )}
               />
+              
+              {form.watch("status") === "completed" && canViewFinancialData && (
+                <FormField
+                  control={form.control}
+                  name="paid"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="lesson-paid-checkbox"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Оплачено
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              )}
               
               <FormField
                 control={form.control}
