@@ -96,6 +96,31 @@ export function ClientAutocomplete({
     setOpen(false);
   };
 
+  const handleCreateFromSearch = (name: string) => {
+    if (name.trim()) {
+      createClientMutation.mutate({
+        name: name.trim(),
+        phone: undefined
+      });
+    }
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      // Check if the search query matches any existing client
+      const existingClient = filteredClients.find((client: Client) => 
+        client.name.toLowerCase() === searchQuery.toLowerCase()
+      );
+      
+      if (existingClient) {
+        handleClientSelect(existingClient);
+      } else {
+        // Create new client automatically
+        handleCreateFromSearch(searchQuery);
+      }
+    }
+  };
+
   const handleCreateClient = () => {
     if (newClientName.trim()) {
       createClientMutation.mutate({
@@ -131,6 +156,7 @@ export function ClientAutocomplete({
               placeholder="Поиск клиентов..." 
               value={searchQuery}
               onValueChange={setSearchQuery}
+              onKeyDown={handleInputKeyDown}
               data-testid="client-search-input"
             />
             <CommandList>
@@ -139,18 +165,9 @@ export function ClientAutocomplete({
                   <p className="text-sm text-muted-foreground mb-2">
                     Клиент не найден
                   </p>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setNewClientName(searchQuery);
-                      setShowCreateForm(true);
-                    }}
-                    className="gap-2"
-                    data-testid="create-new-client-button"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Создать клиента
-                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Нажмите Enter, чтобы создать "{searchQuery}"
+                  </p>
                 </div>
               </CommandEmpty>
               
@@ -187,13 +204,10 @@ export function ClientAutocomplete({
                     )}
                   </CommandGroup>
                   
-                  {searchQuery && !isLoading && (
+                  {searchQuery && !isLoading && filteredClients.length > 0 && (
                     <CommandGroup>
                       <CommandItem
-                        onSelect={() => {
-                          setNewClientName(searchQuery);
-                          setShowCreateForm(true);
-                        }}
+                        onSelect={() => handleCreateFromSearch(searchQuery)}
                         className="cursor-pointer border-t"
                         data-testid="create-client-from-search"
                       >

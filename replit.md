@@ -5,6 +5,7 @@ A GPS horse tracking application providing real-time monitoring, polygon-based g
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+UX Preferences: Minimize clicks and manual steps - auto-create clients when typing new names instead of requiring button clicks.
 
 # System Architecture
 
@@ -46,6 +47,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Lesson Booking System
 - **Functionality**: Calendar interface for scheduling lessons (various types), client tracking, horse assignment, pricing, and status management.
+- **Client Management**: Smart autocomplete system with automatic client creation on Enter key or text input. Seamless UX without extra clicks.
 - **Instructor Management**: CRUD operations for instructors with historical data preservation.
 - **Statistics**: Enhanced statistics with flexible period selection for analytics.
 - **Payment Tracking**: Status tracking for lessons with indicators and detailed breakdowns.
