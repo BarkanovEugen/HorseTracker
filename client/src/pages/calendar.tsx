@@ -35,10 +35,19 @@ const lessonStatuses = [
 ];
 
 // Extended form schema with additional validation
-const lessonFormSchema = insertLessonSchema.extend({
+const lessonFormSchema = z.object({
+  clientName: z.string().min(1, "Укажите имя клиента"),
+  clientPhone: z.string().optional(),
+  lessonType: z.string().min(1, "Выберите тип занятия"),
+  horseId: z.string().min(1, "Выберите лошадь"),
+  instructorId: z.string().optional(),
+  instructorName: z.string().optional(),
   lessonDate: z.string().min(1, "Выберите дату и время"),
   price: z.string().min(1, "Укажите цену"),
-  duration: z.string().min(1, "Укажите продолжительность")
+  duration: z.string().min(1, "Укажите продолжительность"),
+  status: z.string().default("scheduled"),
+  paid: z.boolean().default(false),
+  notes: z.string().optional()
 });
 
 type LessonFormData = z.infer<typeof lessonFormSchema>;
@@ -89,8 +98,8 @@ export default function CalendarPage() {
       horseId: "",
       instructorId: "",
       lessonDate: "",
-      duration: "60",
-      price: "",
+      duration: "45",
+      price: "1500",
       status: "scheduled",
       paid: false,
       notes: ""
@@ -138,8 +147,8 @@ export default function CalendarPage() {
       const lessonData = {
         ...data,
         lessonDate: data.lessonDate,
-        price: parseFloat(data.price) || 0,
-        duration: parseInt(data.duration) || 60
+        price: data.price,
+        duration: data.duration
       };
       
       const response = await fetch('/api/lessons', {
@@ -171,8 +180,8 @@ export default function CalendarPage() {
       const lessonData = {
         ...data,
         lessonDate: data.lessonDate,
-        price: parseFloat(data.price) || 0,
-        duration: parseInt(data.duration) || 60
+        price: data.price,
+        duration: data.duration
       };
       
       const response = await fetch(`/api/lessons/${id}`, {
@@ -302,8 +311,8 @@ export default function CalendarPage() {
       horseId: "",
       instructorId: "",
       lessonDate: format(selectedDate, "yyyy-MM-dd'T'HH:mm"),
-      duration: "60",
-      price: "",
+      duration: "45",
+      price: "1500",
       status: "scheduled",
       paid: false,
       notes: ""
