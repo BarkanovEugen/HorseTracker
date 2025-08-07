@@ -68,9 +68,9 @@ export default function CalendarPage() {
   // Фильтры для списка занятий
   const [filterDateFrom, setFilterDateFrom] = useState<string>('');
   const [filterDateTo, setFilterDateTo] = useState<string>('');
-  const [filterHorse, setFilterHorse] = useState<string>('');
-  const [filterInstructor, setFilterInstructor] = useState<string>('');
-  const [filterType, setFilterType] = useState<string>('');
+  const [filterHorse, setFilterHorse] = useState<string>('all');
+  const [filterInstructor, setFilterInstructor] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -207,13 +207,13 @@ export default function CalendarPage() {
     if (dateTo && lessonDate > dateTo) return false;
     
     // Фильтр по лошади
-    if (filterHorse && lesson.horseId !== filterHorse) return false;
+    if (filterHorse !== 'all' && lesson.horseId !== filterHorse) return false;
     
     // Фильтр по инструктору
-    if (filterInstructor && lesson.instructorId !== filterInstructor) return false;
+    if (filterInstructor !== 'all' && lesson.instructorId !== filterInstructor) return false;
     
     // Фильтр по типу
-    if (filterType && lesson.lessonType !== filterType) return false;
+    if (filterType !== 'all' && lesson.lessonType !== filterType) return false;
     
     return true;
   }).sort((a, b) => new Date(b.lessonDate).getTime() - new Date(a.lessonDate).getTime());
@@ -489,7 +489,7 @@ export default function CalendarPage() {
                     <SelectValue placeholder="Все лошади" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Все лошади</SelectItem>
+                    <SelectItem value="all">Все лошади</SelectItem>
                     {horses.map(horse => (
                       <SelectItem key={horse.id} value={horse.id}>
                         {horse.name}
@@ -505,7 +505,7 @@ export default function CalendarPage() {
                     <SelectValue placeholder="Все инструкторы" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Все инструкторы</SelectItem>
+                    <SelectItem value="all">Все инструкторы</SelectItem>
                     {instructors.map(instructor => (
                       <SelectItem key={instructor.id} value={instructor.id}>
                         {instructor.name}
@@ -521,7 +521,7 @@ export default function CalendarPage() {
                     <SelectValue placeholder="Все типы" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Все типы</SelectItem>
+                    <SelectItem value="all">Все типы</SelectItem>
                     {lessonTypes.map(type => (
                       <SelectItem key={type.value} value={type.value}>
                         {type.label}
