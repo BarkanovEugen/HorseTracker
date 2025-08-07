@@ -59,12 +59,17 @@ export default function DevRoleSwitcher() {
 
     setIsLoading(true);
     try {
-      const response = await apiRequest('/api/dev/role', {
+      const response = await fetch('/api/dev/role', {
         method: 'POST',
-        body: { role: selectedRole }
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: selectedRole })
       });
 
-      if (response.success) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         setRoleInfo(prev => prev ? { ...prev, currentRole: selectedRole as any } : null);
         toast({
           title: "Роль изменена",
@@ -76,11 +81,14 @@ export default function DevRoleSwitcher() {
         setTimeout(() => {
           window.location.reload();
         }, 1000);
+      } else {
+        throw new Error(data.message || 'Не удалось сменить роль');
       }
     } catch (error) {
+      console.error('Role switch error:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось сменить роль",
+        description: error instanceof Error ? error.message : "Не удалось сменить роль",
         variant: "destructive",
       });
     } finally {
@@ -131,7 +139,7 @@ export default function DevRoleSwitcher() {
             <SelectTrigger className="bg-white dark:bg-amber-950">
               <SelectValue placeholder="Выберите роль" />
             </SelectTrigger>
-            <SelectContent className="z-[100]">
+            <SelectContent className="z-[1000] max-h-[200px] overflow-y-auto">
               {roleInfo.availableRoles.map((role) => {
                 const Icon = roleIcons[role as keyof typeof roleIcons];
                 return (
