@@ -114,8 +114,8 @@ export default function CalendarPage() {
       const lessonData = {
         ...data,
         lessonDate: data.lessonDate,
-        price: data.price,
-        duration: data.duration
+        price: parseFloat(data.price) || 0,
+        duration: parseInt(data.duration) || 60
       };
       
       const response = await fetch('/api/lessons', {
@@ -146,8 +146,8 @@ export default function CalendarPage() {
       const lessonData = {
         ...data,
         lessonDate: data.lessonDate,
-        price: data.price,
-        duration: data.duration
+        price: parseFloat(data.price) || 0,
+        duration: parseInt(data.duration) || 60
       };
       
       const response = await fetch(`/api/lessons/${id}`, {
@@ -295,8 +295,8 @@ export default function CalendarPage() {
       horseId: lesson.horseId,
       instructorId: lesson.instructorId || "",
       lessonDate: format(new Date(lesson.lessonDate), "yyyy-MM-dd'T'HH:mm"),
-      duration: lesson.duration,
-      price: lesson.price,
+      duration: lesson.duration.toString(),
+      price: lesson.price.toString(),
       status: lesson.status,
       paid: lesson.paid,
       notes: lesson.notes ?? ""
