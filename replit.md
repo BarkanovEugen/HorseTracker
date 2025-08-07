@@ -39,6 +39,9 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Critical-Only Telegram Notifications**: Selective notification system that only sends alerts for escalated (critical) situations and their resolutions, preventing spam from regular geofence alerts
 - **Automatic Alert Escalation**: Fixed missing escalation timer with 30-second interval checks that properly escalate geofence alerts after 2 minutes, triggering critical Telegram notifications
 - **Configurable Escalation Settings**: Complete settings management system allowing users to customize escalation timing through database-stored configuration (geofence: 1-15 minutes, device offline: 5-60 minutes)
+- **Lesson Booking Calendar**: Complete lesson management system with calendar interface for scheduling riding lessons (прогулка, иппотерапия, верховая езда новичок/опытный), client tracking, horse assignment, pricing, and status management
+- **Calendar Database Schema**: Full lessons table with client information, lesson types, horse assignments, pricing, duration, and status tracking for comprehensive reporting
+- **Calendar API Endpoints**: Complete CRUD operations for lessons with date range queries, horse-specific filtering, and proper authentication/authorization
 
 # User Preferences
 

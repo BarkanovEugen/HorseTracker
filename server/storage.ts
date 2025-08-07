@@ -12,11 +12,13 @@ import {
   type User,
   type InsertUser,
   type Settings,
-  type InsertSettings
+  type InsertSettings,
+  type Lesson,
+  type InsertLesson
 } from "@shared/schema";
 import { db } from "./db";
-import { horses, gpsLocations, alerts, geofences, devices, users, settings } from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { horses, gpsLocations, alerts, geofences, devices, users, settings, lessons } from "@shared/schema";
+import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { telegramService } from "./telegram-bot";
 
@@ -80,6 +82,15 @@ export interface IStorage {
   
   // ESP32 Integration
   processDeviceData(deviceId: string, latitude: number, longitude: number, batteryLevel: number): Promise<{device: Device, location: GpsLocation}>;
+
+  // Lessons
+  getLessons(): Promise<Lesson[]>;
+  getLesson(id: string): Promise<Lesson | undefined>;
+  createLesson(lesson: InsertLesson): Promise<Lesson>;
+  updateLesson(id: string, lesson: Partial<InsertLesson>): Promise<Lesson | undefined>;
+  deleteLesson(id: string): Promise<boolean>;
+  getLessonsByDateRange(startDate: Date, endDate: Date): Promise<Lesson[]>;
+  getLessonsByHorse(horseId: string): Promise<Lesson[]>;
 }
 
 export class MemStorage {
@@ -1394,6 +1405,81 @@ export class DatabaseStorage implements IStorage {
       console.log('✓ Default settings initialized');
     } catch (error) {
       console.error('❌ Error initializing default settings:', error);
+    }
+  }
+
+  // Lessons
+  async getLessons(): Promise<Lesson[]> {
+    try {
+      return await db.select().from(lessons).orderBy(desc(lessons.lessonDate));
+    } catch (error) {
+      console.error('❌ Error getting lessons:', error);
+      return [];
+    }
+  }
+
+  async getLesson(id: string): Promise<Lesson | undefined> {
+    try {
+      const result = await db.select().from(lessons).where(eq(lessons.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error(`❌ Error getting lesson ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async createLesson(lesson: InsertLesson): Promise<Lesson> {
+    try {
+      const result = await db.insert(lessons).values(lesson).returning();
+      return result[0];
+    } catch (error) {
+      console.error('❌ Error creating lesson:', error);
+      throw error;
+    }
+  }
+
+  async updateLesson(id: string, lesson: Partial<InsertLesson>): Promise<Lesson | undefined> {
+    try {
+      const result = await db.update(lessons)
+        .set({ ...lesson, updatedAt: new Date() })
+        .where(eq(lessons.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error(`❌ Error updating lesson ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteLesson(id: string): Promise<boolean> {
+    try {
+      const result = await db.delete(lessons).where(eq(lessons.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error(`❌ Error deleting lesson ${id}:`, error);
+      return false;
+    }
+  }
+
+  async getLessonsByDateRange(startDate: Date, endDate: Date): Promise<Lesson[]> {
+    try {
+      return await db.select().from(lessons)
+        .where(and(gte(lessons.lessonDate, startDate), lte(lessons.lessonDate, endDate)))
+        .orderBy(desc(lessons.lessonDate));
+    } catch (error) {
+      console.error('❌ Error getting lessons by date range:', error);
+      return [];
+    }
+  }
+
+  async getLessonsByHorse(horseId: string): Promise<Lesson[]> {
+    try {
+      return await db.select().from(lessons)
+        .where(eq(lessons.horseId, horseId))
+        .orderBy(desc(lessons.lessonDate));
+    } catch (error) {
+      console.error(`❌ Error getting lessons for horse ${horseId}:`, error);
+      return [];
     }
   }
 }

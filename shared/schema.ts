@@ -87,6 +87,22 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Lessons table for riding lesson bookings
+export const lessons = pgTable("lessons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientName: text("client_name").notNull(),
+  clientPhone: text("client_phone"),
+  lessonType: text("lesson_type").notNull(), // прогулка, иппотерапия, верховая езда новичок, верховая езда опытный
+  horseId: varchar("horse_id").notNull().references(() => horses.id),
+  lessonDate: timestamp("lesson_date").notNull(), // Date and time of the lesson
+  duration: numeric("duration").notNull().default("60"), // Duration in minutes
+  price: numeric("price").notNull(), // Price in rubles
+  status: text("status").notNull().default("scheduled"), // scheduled, completed, cancelled
+  notes: text("notes"), // Additional notes about the lesson
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertHorseSchema = createInsertSchema(horses).omit({
   id: true,
@@ -123,6 +139,12 @@ export const insertSettingsSchema = createInsertSchema(settings).omit({
   updatedAt: true,
 });
 
+export const insertLessonSchema = createInsertSchema(lessons).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Horse = typeof horses.$inferSelect;
 export type InsertHorse = z.infer<typeof insertHorseSchema>;
@@ -144,3 +166,6 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Settings = typeof settings.$inferSelect;
 export type InsertSettings = z.infer<typeof insertSettingsSchema>;
+
+export type Lesson = typeof lessons.$inferSelect;
+export type InsertLesson = z.infer<typeof insertLessonSchema>;

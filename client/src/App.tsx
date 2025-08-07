@@ -11,6 +11,7 @@ import Navigation from "@/components/layout/navigation";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import Dashboard from "@/pages/dashboard";
 import Horses from "@/pages/horses";
+import Calendar from "@/pages/calendar";
 import History from "@/pages/history";
 import Settings from "@/pages/settings";
 import Login from "@/pages/login";
@@ -42,6 +43,7 @@ function AppContent() {
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/horses" component={Horses} />
+          <Route path="/calendar" component={Calendar} />
           <Route path="/history" component={History} />
           <Route path="/settings" component={Settings} />
           <Route path="/admin" component={Admin} />

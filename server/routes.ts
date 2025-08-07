@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import passport from "./auth";
 import { storage } from "./storage";
-import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDeviceSchema, insertGpsLocationSchema } from "@shared/schema";
+import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDeviceSchema, insertGpsLocationSchema, insertLessonSchema } from "@shared/schema";
 import { z } from "zod";
 import type { User } from "@shared/schema";
 
@@ -417,6 +417,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(setting);
     } catch (error) {
       res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
+  // Lessons API endpoints
+  app.get("/api/lessons", requireViewer, async (req, res) => {
+    try {
+      const lessons = await storage.getLessons();
+      res.json(lessons);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch lessons" });
+    }
+  });
+
+  app.get("/api/lessons/:id", requireViewer, async (req, res) => {
+    try {
+      const lesson = await storage.getLesson(req.params.id);
+      if (!lesson) {
+        return res.status(404).json({ message: "Lesson not found" });
+      }
+      res.json(lesson);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch lesson" });
+    }
+  });
+
+  app.post("/api/lessons", requireAdmin, async (req, res) => {
+    try {
+      const validation = insertLessonSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid lesson data",
+          errors: validation.error.errors 
+        });
+      }
+
+      const lesson = await storage.createLesson(validation.data);
+      res.status(201).json(lesson);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create lesson" });
+    }
+  });
+
+  app.put("/api/lessons/:id", requireAdmin, async (req, res) => {
+    try {
+      const validation = insertLessonSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid lesson data",
+          errors: validation.error.errors 
+        });
+      }
+
+      const lesson = await storage.updateLesson(req.params.id, validation.data);
+      if (!lesson) {
+        return res.status(404).json({ message: "Lesson not found" });
+      }
+      res.json(lesson);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update lesson" });
+    }
+  });
+
+  app.delete("/api/lessons/:id", requireAdmin, async (req, res) => {
+    try {
+      const success = await storage.deleteLesson(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Lesson not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete lesson" });
+    }
+  });
+
+  // Additional lesson endpoints for date range and horse queries
+  app.get("/api/lessons/range/:startDate/:endDate", requireViewer, async (req, res) => {
+    try {
+      const { startDate, endDate } = req.params;
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({ message: "Invalid date format" });
+      }
+
+      const lessons = await storage.getLessonsByDateRange(start, end);
+      res.json(lessons);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch lessons by date range" });
+    }
+  });
+
+  app.get("/api/lessons/horse/:horseId", requireViewer, async (req, res) => {
+    try {
+      const lessons = await storage.getLessonsByHorse(req.params.horseId);
+      res.json(lessons);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch lessons for horse" });
     }
   });
 

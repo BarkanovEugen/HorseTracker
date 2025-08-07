@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { BarChart3, Rabbit, History, Settings } from "lucide-react";
+import { BarChart3, Rabbit, History, Settings, Calendar } from "lucide-react";
 
 const navItems = [
   {
@@ -14,6 +14,12 @@ const navItems = [
     href: "/horses",
     icon: Rabbit,
     testId: "nav-horses"
+  },
+  {
+    name: "Календарь",
+    href: "/calendar",
+    icon: Calendar,
+    testId: "nav-calendar"
   },
   {
     name: "История",
