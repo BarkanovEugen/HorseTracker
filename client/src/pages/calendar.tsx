@@ -549,6 +549,12 @@ export default function CalendarPage() {
                         <Badge variant="outline" className="text-xs">
                           {format(new Date(lesson.lessonDate), "d MMM", { locale: ru })}
                         </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {format(new Date(lesson.lessonDate), "HH:mm", { locale: ru })}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {lesson.duration} мин
+                        </Badge>
                         {getStatusBadge(lesson.status)}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
