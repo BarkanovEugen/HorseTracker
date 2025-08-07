@@ -53,7 +53,7 @@ export default function InstructorsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertInstructor) => apiRequest("/api/instructors", { method: "POST", body: data }),
+    mutationFn: (data: InsertInstructor) => apiRequest("POST", "/api/instructors", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/instructors"] });
       setIsDialogOpen(false);
@@ -67,7 +67,7 @@ export default function InstructorsPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<InsertInstructor> }) =>
-      apiRequest(`/api/instructors/${id}`, { method: "PUT", body: data }),
+      apiRequest("PUT", `/api/instructors/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/instructors"] });
       setIsDialogOpen(false);
@@ -81,7 +81,7 @@ export default function InstructorsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/instructors/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/instructors/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/instructors"] });
       toast({ description: "Инструктор успешно удален" });
