@@ -29,6 +29,12 @@ const navItems = [
     testId: "nav-instructors"
   },
   {
+    name: "История",
+    href: "/history",
+    icon: History,
+    testId: "nav-history"
+  },
+  {
     name: "Настройки",
     href: "/settings",
     icon: Settings,

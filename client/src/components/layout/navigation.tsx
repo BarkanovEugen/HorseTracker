@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { BarChart3, Rabbit, History, Settings, Shield, Calendar, Users } from "lucide-react";
-import { useCanManageUsers } from "@/hooks/use-permissions";
+import { useCanManageUsers, useCanManageSettings, useCanManageInstructors, useUserRole } from "@/hooks/use-permissions";
 
 const navItems = [
   {
@@ -51,10 +51,27 @@ const navItems = [
 export default function Navigation() {
   const [location] = useLocation();
   const canManageUsers = useCanManageUsers();
+  const canManageSettings = useCanManageSettings();
+  const canManageInstructors = useCanManageInstructors();
+  const role = useUserRole();
+
+  // Filter navigation items based on role permissions
+  const filteredNavItems = navItems.filter(item => {
+    switch (item.href) {
+      case "/settings":
+        return canManageSettings; // Only admin can access settings
+      case "/instructors":
+        return canManageInstructors; // Admin and instructor can access instructors page
+      case "/history":
+        return role !== 'viewer'; // Viewers cannot access history
+      default:
+        return true; // Dashboard, horses, and calendar are available to all roles
+    }
+  });
 
   // Add admin item conditionally
   const dynamicNavItems = [
-    ...navItems,
+    ...filteredNavItems,
     ...(canManageUsers ? [{
       name: "Админ",
       nameFull: "Администрирование",
