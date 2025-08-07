@@ -183,15 +183,12 @@ export default function HorseStatus({ onHorseSelect, selectedHorse }: HorseStatu
               )}
 
               <div className="space-y-2">
-                {/* Horse name and info - compact single line */}
+                {/* Horse name - compact single line */}
                 <div className="flex items-center justify-between pr-8">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">
                       {horse.name}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 truncate">
-                      {horse.breed} • {horse.age} лет
-                    </p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {horse.hasLocation && (
