@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, Plus, Edit, Trash2, Clock, Users, DollarSign } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Edit, Trash2, Clock, Users, DollarSign, TrendingUp, BarChart3 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,7 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertLessonSchema, type Lesson, type Horse } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useCanEdit } from "@/hooks/use-permissions";
-import { format, startOfDay, endOfDay, isSameDay } from "date-fns";
+import { format, startOfDay, endOfDay, isSameDay, isAfter, startOfToday } from "date-fns";
 import { ru } from "date-fns/locale";
 import { z } from "zod";
 
@@ -48,8 +48,8 @@ interface LessonWithHorse extends Lesson {
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showDialog, setShowDialog] = useState(false);
+  const [showDayDialog, setShowDayDialog] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
-  const [viewMode, setViewMode] = useState<"day" | "month">("month");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -98,10 +98,8 @@ export default function CalendarPage() {
       }
       return response.json();
     },
-    onSuccess: (newLesson) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/lessons'] });
-      queryClient.refetchQueries({ queryKey: ['/api/lessons'] });
-      console.log('Created lesson:', newLesson);
       setShowDialog(false);
       setEditingLesson(null);
       form.reset();
@@ -132,11 +130,10 @@ export default function CalendarPage() {
       }
       return response.json();
     },
-    onSuccess: (updatedLesson) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/lessons'] });
-      queryClient.refetchQueries({ queryKey: ['/api/lessons'] });
-      console.log('Updated lesson:', updatedLesson);
       setShowDialog(false);
+      setShowDayDialog(false);
       setEditingLesson(null);
       form.reset();
       toast({
@@ -162,17 +159,29 @@ export default function CalendarPage() {
     }
   });
 
-  const selectedDayLessons = lessons.filter(lesson => {
-    const lessonDate = new Date(lesson.lessonDate);
-    const isSame = isSameDay(lessonDate, selectedDate);
-    console.log('Filtering lesson:', lesson.clientName, 'Date:', lessonDate, 'Selected:', selectedDate, 'Same day:', isSame);
-    return isSame;
-  }).sort((a, b) => new Date(a.lessonDate).getTime() - new Date(b.lessonDate).getTime());
+  // Занятия на выбранный день
+  const selectedDayLessons = lessons.filter(lesson => 
+    isSameDay(new Date(lesson.lessonDate), selectedDate)
+  ).sort((a, b) => new Date(a.lessonDate).getTime() - new Date(b.lessonDate).getTime());
+
+  // Будущие занятия (начиная с сегодняшнего дня)
+  const upcomingLessons = lessons.filter(lesson => 
+    isAfter(new Date(lesson.lessonDate), startOfToday()) || isSameDay(new Date(lesson.lessonDate), startOfToday())
+  ).sort((a, b) => new Date(a.lessonDate).getTime() - new Date(b.lessonDate).getTime()).slice(0, 5);
+
+  // Все занятия отсортированные по дате
+  const allLessons = lessons.sort((a, b) => new Date(b.lessonDate).getTime() - new Date(a.lessonDate).getTime());
+
+  // Статистика
+  const totalLessons = lessons.length;
+  const completedLessons = lessons.filter(l => l.status === 'completed').length;
+  const scheduledLessons = lessons.filter(l => l.status === 'scheduled').length;
+  const totalRevenue = lessons.filter(l => l.status === 'completed').reduce((sum, l) => sum + parseInt(l.price), 0);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      setViewMode("day");
+      setShowDayDialog(true);
     }
   };
 
@@ -248,49 +257,25 @@ export default function CalendarPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CalendarIcon className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Календарь занятий</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Управление занятиями</h1>
         </div>
         
-        <div className="flex items-center gap-2">
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode("month")}
-              className={`px-3 py-1 rounded ${viewMode === "month" 
-                ? "bg-white dark:bg-gray-600 shadow" 
-                : "text-gray-600 dark:text-gray-400"
-              }`}
-            >
-              Месяц
-            </button>
-            <button
-              onClick={() => setViewMode("day")}
-              className={`px-3 py-1 rounded ${viewMode === "day" 
-                ? "bg-white dark:bg-gray-600 shadow" 
-                : "text-gray-600 dark:text-gray-400"
-              }`}
-            >
-              День
-            </button>
-          </div>
-          
-          {canEdit && (
-            <Button onClick={handleCreateLesson} data-testid="add-lesson-button">
-              <Plus className="w-4 h-4 mr-2" />
-              Добавить занятие
-            </Button>
-          )}
-        </div>
+        {canEdit && (
+          <Button onClick={handleCreateLesson} data-testid="add-lesson-button">
+            <Plus className="w-4 h-4 mr-2" />
+            Добавить занятие
+          </Button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Calendar */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {format(selectedDate, "LLLL yyyy", { locale: ru })}
-            </CardTitle>
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Calendar - Compact */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Календарь</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -304,109 +289,77 @@ export default function CalendarPage() {
               }}
               className="rounded-md border w-full"
             />
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Кликните на день для просмотра занятий
+            </p>
           </CardContent>
         </Card>
 
-        {/* Lessons for selected day */}
-        <Card>
+        {/* Upcoming Lessons */}
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>
-                Занятия на {format(selectedDate, "d MMMM", { locale: ru })}
-              </span>
-              <span className="text-sm font-normal text-gray-500">
-                {selectedDayLessons.length} занятий
-              </span>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Ближайшие занятия
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {selectedDayLessons.length === 0 ? (
+              {upcomingLessons.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p>На этот день занятий не запланировано</p>
-                  {canEdit && (
-                    <Button 
-                      variant="outline" 
-                      onClick={handleCreateLesson}
-                      className="mt-3"
-                    >
-                      Добавить занятие
-                    </Button>
-                  )}
+                  <Clock className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p>Нет запланированных занятий</p>
                 </div>
               ) : (
-                selectedDayLessons.map((lesson) => {
+                upcomingLessons.map((lesson) => {
                   const horse = horses.find(h => h.id === lesson.horseId);
                   return (
-                    <div
-                      key={lesson.id}
-                      className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-gray-500" />
-                            <span className="font-medium">
-                              {format(new Date(lesson.lessonDate), "HH:mm")}
+                    <div key={lesson.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-medium">{lesson.clientName}</h3>
+                          {getStatusBadge(lesson.status)}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                          <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-1">
+                              <CalendarIcon className="w-4 h-4" />
+                              {format(new Date(lesson.lessonDate), "d MMM, HH:mm", { locale: ru })}
                             </span>
-                            <span className="text-sm text-gray-600">
-                              ({lesson.duration} мин)
-                            </span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-gray-500" />
-                            <span>{lesson.clientName}</span>
-                            {lesson.clientPhone && (
-                              <span className="text-sm text-gray-600">
-                                • {lesson.clientPhone}
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
                               {getLessonTypeLabel(lesson.lessonType)}
                             </span>
-                            <span className="text-sm text-gray-600">
-                              • {horse?.name || "Лошадь не найдена"}
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="w-4 h-4" />
+                              {lesson.price}₽
                             </span>
                           </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-gray-500" />
-                            <span>{lesson.price} ₽</span>
-                            {getStatusBadge(lesson.status)}
-                          </div>
-                          
-                          {lesson.notes && (
-                            <p className="text-sm text-gray-600">{lesson.notes}</p>
+                          {horse && (
+                            <p className="text-xs text-blue-600 dark:text-blue-400">
+                              Лошадь: {horse.name}
+                            </p>
                           )}
                         </div>
-                        
-                        {canEdit && (
-                          <div className="flex gap-1 ml-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditLesson(lesson)}
-                              data-testid={`edit-lesson-${lesson.id}`}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteLessonMutation.mutate(lesson.id)}
-                              className="text-red-600 hover:text-red-700"
-                              data-testid={`delete-lesson-${lesson.id}`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
                       </div>
+                      {canEdit && (
+                        <div className="flex gap-2 ml-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditLesson(lesson)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteLessonMutation.mutate(lesson.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -415,6 +368,212 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Bottom Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* All Lessons */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Все занятия ({totalLessons})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="max-h-96 overflow-y-auto">
+            <div className="space-y-2">
+              {allLessons.map((lesson) => {
+                const horse = horses.find(h => h.id === lesson.horseId);
+                return (
+                  <div key={lesson.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium">{lesson.clientName}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {format(new Date(lesson.lessonDate), "d MMM", { locale: ru })}
+                        </Badge>
+                        {getStatusBadge(lesson.status)}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {getLessonTypeLabel(lesson.lessonType)} • {lesson.price}₽
+                        {horse && <span> • {horse.name}</span>}
+                      </div>
+                    </div>
+                    {canEdit && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditLesson(lesson)}
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteLessonMutation.mutate(lesson.id)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Statistics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Статистика
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Всего занятий</p>
+                  <p className="text-2xl font-bold text-blue-600">{totalLessons}</p>
+                </div>
+                <Users className="w-8 h-8 text-blue-600" />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Завершено</p>
+                  <p className="text-2xl font-bold text-green-600">{completedLessons}</p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-green-600" />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Запланировано</p>
+                  <p className="text-2xl font-bold text-yellow-600">{scheduledLessons}</p>
+                </div>
+                <Clock className="w-8 h-8 text-yellow-600" />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Доход</p>
+                  <p className="text-2xl font-bold text-purple-600">{totalRevenue.toLocaleString()}₽</p>
+                </div>
+                <DollarSign className="w-8 h-8 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Day Schedule Dialog */}
+      <Dialog open={showDayDialog} onOpenChange={setShowDayDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Занятия на {format(selectedDate, "d MMMM yyyy", { locale: ru })}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {selectedDayLessons.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p>На этот день занятий не запланировано</p>
+                {canEdit && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowDayDialog(false);
+                      handleCreateLesson();
+                    }}
+                    className="mt-3"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Добавить занятие
+                  </Button>
+                )}
+              </div>
+            ) : (
+              selectedDayLessons.map((lesson) => {
+                const horse = horses.find(h => h.id === lesson.horseId);
+                return (
+                  <div key={lesson.id} className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-gray-500" />
+                          <span className="font-medium">
+                            {format(new Date(lesson.lessonDate), "HH:mm")}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            ({lesson.duration} мин)
+                          </span>
+                          {getStatusBadge(lesson.status)}
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-gray-500" />
+                          <span className="font-medium">{lesson.clientName}</span>
+                          {lesson.clientPhone && (
+                            <span className="text-sm text-gray-600">
+                              • {lesson.clientPhone}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">
+                            {getLessonTypeLabel(lesson.lessonType)}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            • {horse?.name || "Лошадь не найдена"}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-gray-500" />
+                          <span>{lesson.price} ₽</span>
+                        </div>
+                        
+                        {lesson.notes && (
+                          <p className="text-sm text-gray-600">{lesson.notes}</p>
+                        )}
+                      </div>
+                      
+                      {canEdit && (
+                        <div className="flex gap-1 ml-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setShowDayDialog(false);
+                              handleEditLesson(lesson);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteLessonMutation.mutate(lesson.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Lesson Form Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
