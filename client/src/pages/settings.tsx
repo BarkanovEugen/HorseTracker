@@ -893,8 +893,7 @@ export default function Settings() {
           )}
         </CardContent>
       </Card>
-      </div>
-
+      
       {/* Escalation Settings Card */}
       <Card className="mt-4 sm:mt-6">
         <CardHeader className="pb-3 sm:pb-6">
