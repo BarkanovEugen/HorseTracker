@@ -187,7 +187,7 @@ export const apiLessonSchema = z.object({
   clientPhone: z.string().optional(),
   lessonType: z.string().min(1, "Lesson type is required"), 
   horseId: z.string().min(1, "Horse ID is required"),
-  instructorId: z.string().optional(),
+  instructorId: z.string().optional().transform(val => val && val.trim() !== "" ? val : null),
   lessonDate: z.string().transform((str) => new Date(str)),
   duration: z.string().min(1, "Duration is required"),
   price: z.string().min(1, "Price is required"),

@@ -1475,27 +1475,25 @@ export class DatabaseStorage implements IStorage {
 
   async updateLesson(id: string, lesson: Partial<InsertLesson>): Promise<Lesson | undefined> {
     try {
+      // Prepare clean update data
+      const updateData = { ...lesson, updatedAt: new Date() };
+      
       // Get instructor name if instructorId is being updated
-      let instructorName = undefined;
       if (lesson.instructorId !== undefined) {
         if (lesson.instructorId) {
           const instructor = await this.getInstructor(lesson.instructorId);
-          instructorName = instructor?.name || null;
+          updateData.instructorName = instructor?.name || null;
         } else {
-          instructorName = null;
+          updateData.instructorName = null;
         }
-      }
-      
-      const updateData = { ...lesson, updatedAt: new Date() };
-      if (instructorName !== undefined) {
-        updateData.instructorName = instructorName;
       }
       
       const result = await db.update(lessons)
         .set(updateData)
         .where(eq(lessons.id, id))
         .returning();
-      return result[0];
+      
+      return result[0] || undefined;
     } catch (error) {
       console.error(`❌ Error updating lesson ${id}:`, error);
       return undefined;
