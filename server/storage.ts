@@ -10,10 +10,12 @@ import {
   type Device,
   type InsertDevice,
   type User,
-  type InsertUser
+  type InsertUser,
+  type Settings,
+  type InsertSettings
 } from "@shared/schema";
 import { db } from "./db";
-import { horses, gpsLocations, alerts, geofences, devices, users } from "@shared/schema";
+import { horses, gpsLocations, alerts, geofences, devices, users, settings } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { telegramService } from "./telegram-bot";
@@ -68,9 +70,13 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   updateUserRole(id: string, role: 'admin' | 'viewer'): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
+
+  // Settings
+  getSetting(key: string): Promise<string | null>;
+  setSetting(key: string, value: string, description?: string, type?: string): Promise<Settings>;
+  getAllSettings(): Promise<Settings[]>;
+  initializeDefaultSettings(): Promise<void>;
   
   // ESP32 Integration
   processDeviceData(deviceId: string, latitude: number, longitude: number, batteryLevel: number): Promise<{device: Device, location: GpsLocation}>;
@@ -468,7 +474,7 @@ export class MemStorage {
     }
   }
 
-  // New method: Check and escalate alerts that have been active for more than 2 minutes
+  // New method: Check and escalate alerts that have been active for more than 2 minutes (MemStorage - legacy)
   async escalateOldAlerts(): Promise<Alert[]> {
     const escalatedAlerts: Alert[] = [];
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
@@ -486,8 +492,8 @@ export class MemStorage {
           severity: 'urgent',
           escalated: true,
           escalatedAt: new Date(),
-          title: `🚨 КРИТИЧНО: ${alert.title.replace('покинул', 'находится вне зоны более 2 минут')}`,
-          description: `Более 2 минут • Требуется немедленное внимание`,
+          title: `🚨 КРИТИЧНО: ${alert.title.replace('покинул', 'находится вне зоны более 2 мин')}`,
+          description: `Более 2 мин • Требуется немедленное внимание`,
         };
         
         this.alerts.set(alert.id, escalatedAlert);
@@ -985,10 +991,13 @@ export class DatabaseStorage implements IStorage {
     return { device, location };
   }
 
-  // New method: Check and escalate alerts that have been active for more than 2 minutes
+  // New method: Check and escalate alerts that have been active for more than configured minutes
   async escalateOldAlerts(): Promise<Alert[]> {
     const escalatedAlerts: Alert[] = [];
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    
+    // Get escalation timeout from settings (default to 2 minutes)
+    const escalationMinutes = parseInt(await this.getSetting('geofence_escalation_minutes') || '2');
+    const escalationThreshold = new Date(Date.now() - escalationMinutes * 60 * 1000);
     
     const oldAlerts = await db.select().from(alerts).where(
       and(
@@ -999,7 +1008,7 @@ export class DatabaseStorage implements IStorage {
     );
 
     for (const alert of oldAlerts) {
-      if (alert.createdAt && alert.createdAt < twoMinutesAgo) {
+      if (alert.createdAt && alert.createdAt < escalationThreshold) {
         // Escalate the alert
         const escalatedAlert: Alert = {
           ...alert,
@@ -1052,8 +1061,11 @@ export class DatabaseStorage implements IStorage {
       
       console.log(`⏰ Device ${device.deviceId}: ${Math.round(minutesSinceLastSignal)} minutes since last signal`);
       
-      // Check if device is offline for more than 10 minutes and had sufficient battery
-      if (minutesSinceLastSignal > 10 && device.batteryLevel && parseFloat(device.batteryLevel) > 20) {
+      // Get device offline threshold from settings (default to 10 minutes)
+      const offlineMinutes = parseInt(await this.getSetting('device_offline_escalation_minutes') || '10');
+      
+      // Check if device is offline for more than configured minutes and had sufficient battery
+      if (minutesSinceLastSignal > offlineMinutes && device.batteryLevel && parseFloat(device.batteryLevel) > 20) {
         console.log(`⚠️ Device ${device.deviceId} qualifies for offline alert: ${Math.round(minutesSinceLastSignal)} min offline, ${device.batteryLevel}% battery`);
         const horse = await this.getHorse(device.horseId);
         if (!horse) continue;
@@ -1299,6 +1311,91 @@ export class DatabaseStorage implements IStorage {
       console.error('❌ Error sending Telegram alert dismissal notifications:', error);
     }
   }
+
+  // Settings
+  async getSetting(key: string): Promise<string | null> {
+    try {
+      const result = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+      return result[0]?.value || null;
+    } catch (error) {
+      console.error(`❌ Error getting setting ${key}:`, error);
+      return null;
+    }
+  }
+
+  async setSetting(key: string, value: string, description?: string, type: string = "string"): Promise<Settings> {
+    try {
+      const existingSetting = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+      
+      if (existingSetting.length > 0) {
+        // Update existing setting
+        const result = await db.update(settings)
+          .set({ 
+            value, 
+            description: description || existingSetting[0].description,
+            type,
+            updatedAt: new Date()
+          })
+          .where(eq(settings.key, key))
+          .returning();
+        return result[0];
+      } else {
+        // Create new setting
+        const result = await db.insert(settings).values({
+          key,
+          value,
+          description,
+          type
+        }).returning();
+        return result[0];
+      }
+    } catch (error) {
+      console.error(`❌ Error setting ${key}:`, error);
+      throw error;
+    }
+  }
+
+  async getAllSettings(): Promise<Settings[]> {
+    try {
+      return await db.select().from(settings);
+    } catch (error) {
+      console.error('❌ Error getting all settings:', error);
+      return [];
+    }
+  }
+
+  async initializeDefaultSettings(): Promise<void> {
+    try {
+      console.log('🔧 Initializing default settings...');
+      
+      const defaultSettings = [
+        {
+          key: 'geofence_escalation_minutes',
+          value: '2',
+          description: 'Minutes before geofence alerts escalate to critical status',
+          type: 'number'
+        },
+        {
+          key: 'device_offline_escalation_minutes',
+          value: '10',
+          description: 'Minutes before device offline alerts are created',
+          type: 'number'
+        }
+      ];
+
+      for (const setting of defaultSettings) {
+        const existing = await this.getSetting(setting.key);
+        if (existing === null) {
+          await this.setSetting(setting.key, setting.value, setting.description, setting.type);
+          console.log(`✓ Initialized setting ${setting.key} = ${setting.value}`);
+        }
+      }
+      
+      console.log('✓ Default settings initialized');
+    } catch (error) {
+      console.error('❌ Error initializing default settings:', error);
+    }
+  }
 }
 
 // Initialize database with sample data
@@ -1431,6 +1528,9 @@ async function initializeDatabase() {
 
     const createdLocations = await db.insert(gpsLocations).values(sampleLocations).returning();
     console.log(`✓ Created ${createdLocations.length} locations`);
+
+    // Initialize default settings
+    await storage.initializeDefaultSettings();
 
     console.log("✅ Database initialization completed!");
 

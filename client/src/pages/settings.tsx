@@ -25,7 +25,9 @@ import {
   WifiOff,
   Battery,
   MessageSquare,
-  Settings as SettingsIcon 
+  Settings as SettingsIcon,
+  Clock,
+  Save
 } from "lucide-react";
 
 interface NotificationSettings {
@@ -63,6 +65,12 @@ export default function Settings() {
   const [telegramChatId, setTelegramChatId] = useState('');
   const [telegramName, setTelegramName] = useState('');
   const [telegramNotifications, setTelegramNotifications] = useState(false);
+
+  // Escalation settings
+  const [escalationSettings, setEscalationSettings] = useState({
+    geofenceEscalationTimeMinutes: '2',
+    deviceOfflineTimeMinutes: '10'
+  });
   
   // Mock notification settings - in a real app, this would come from user preferences API  
   const [notifications, setNotifications] = useState<NotificationSettings>({
@@ -111,6 +119,11 @@ export default function Settings() {
     queryKey: ['/api/telegram/recipients'],
   });
 
+  // Get system settings
+  const { data: systemSettings = {} } = useQuery<Record<string, any>>({
+    queryKey: ['/api/settings'],
+  });
+
   // Update local state when user data loads
   useEffect(() => {
     if (currentUser) {
@@ -118,6 +131,17 @@ export default function Settings() {
       setTelegramNotifications(currentUser.telegramNotifications || false);
     }
   }, [currentUser]);
+
+  // Update escalation settings when system settings load
+  useEffect(() => {
+    if (systemSettings) {
+      setEscalationSettings(prev => ({
+        ...prev,
+        geofenceEscalationTimeMinutes: systemSettings.geofenceEscalationTimeMinutes || '2',
+        deviceOfflineTimeMinutes: systemSettings.deviceOfflineTimeMinutes || '10'
+      }));
+    }
+  }, [systemSettings]);
 
   const deleteGeofenceMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -239,6 +263,27 @@ export default function Settings() {
     },
   });
 
+  const updateEscalationSettingMutation = useMutation({
+    mutationFn: async ({ key, value, description, type }: { key: string; value: string; description?: string; type?: string }) => {
+      const response = await apiRequest('PUT', `/api/settings/${key}`, { value, description, type });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      toast({
+        title: "Настройки обновлены",
+        description: "Настройки эскалации были сохранены",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось сохранить настройки",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleNotificationToggle = (key: keyof NotificationSettings) => {
     setNotifications(prev => ({
       ...prev,
@@ -272,6 +317,34 @@ export default function Settings() {
     if (confirm("Удалить этого получателя уведомлений?")) {
       removeTelegramRecipientMutation.mutate(id);
     }
+  };
+
+  const handleSaveEscalationSettings = () => {
+    const updates = [
+      {
+        key: 'geofenceEscalationTimeMinutes',
+        value: escalationSettings.geofenceEscalationTimeMinutes,
+        description: 'Время эскалации для алертов геозон (в минутах)',
+        type: 'number'
+      },
+      {
+        key: 'deviceOfflineTimeMinutes',
+        value: escalationSettings.deviceOfflineTimeMinutes,
+        description: 'Время офлайна устройства для создания алерта (в минутах)',
+        type: 'number'
+      }
+    ];
+
+    updates.forEach(setting => {
+      updateEscalationSettingMutation.mutate(setting);
+    });
+  };
+
+  const handleEscalationSettingChange = (key: keyof typeof escalationSettings, value: string) => {
+    setEscalationSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   const handleDeleteGeofence = (id: string) => {
@@ -818,6 +891,86 @@ export default function Settings() {
             </div>
             </>
           )}
+        </CardContent>
+      </Card>
+      </div>
+
+      {/* Escalation Settings Card */}
+      <Card className="mt-4 sm:mt-6">
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center text-base sm:text-lg">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" />
+            Настройки эскалации
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent className="space-y-4 sm:space-y-6 pt-0">
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            Настройте время автоматической эскалации алертов
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="geofence-escalation-time">
+                Время эскалации геозон (минуты)
+              </Label>
+              <Select
+                value={escalationSettings.geofenceEscalationTimeMinutes}
+                onValueChange={(value) => handleEscalationSettingChange('geofenceEscalationTimeMinutes', value)}
+              >
+                <SelectTrigger id="geofence-escalation-time" data-testid="geofence-escalation-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 минута</SelectItem>
+                  <SelectItem value="2">2 минуты</SelectItem>
+                  <SelectItem value="3">3 минуты</SelectItem>
+                  <SelectItem value="5">5 минут</SelectItem>
+                  <SelectItem value="10">10 минут</SelectItem>
+                  <SelectItem value="15">15 минут</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Время после которого геозонные алерты становятся критическими
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="device-offline-time">
+                Время офлайна устройства (минуты)
+              </Label>
+              <Select
+                value={escalationSettings.deviceOfflineTimeMinutes}
+                onValueChange={(value) => handleEscalationSettingChange('deviceOfflineTimeMinutes', value)}
+              >
+                <SelectTrigger id="device-offline-time" data-testid="device-offline-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 минут</SelectItem>
+                  <SelectItem value="10">10 минут</SelectItem>
+                  <SelectItem value="15">15 минут</SelectItem>
+                  <SelectItem value="30">30 минут</SelectItem>
+                  <SelectItem value="60">1 час</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Время после которого создается алерт о недоступности устройства
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex justify-end pt-4">
+            <Button
+              onClick={handleSaveEscalationSettings}
+              disabled={updateEscalationSettingMutation.isPending}
+              data-testid="save-escalation-settings"
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {updateEscalationSettingMutation.isPending ? "Сохранение..." : "Сохранить настройки"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

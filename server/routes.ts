@@ -384,6 +384,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Settings API endpoints
+  app.get("/api/settings", requireViewer, async (req, res) => {
+    try {
+      const settings = await storage.getAllSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.get("/api/settings/:key", requireViewer, async (req, res) => {
+    try {
+      const value = await storage.getSetting(req.params.key);
+      if (value === null) {
+        return res.status(404).json({ message: "Setting not found" });
+      }
+      res.json({ key: req.params.key, value });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch setting" });
+    }
+  });
+
+  app.put("/api/settings/:key", requireAdmin, async (req, res) => {
+    try {
+      const { value, description, type } = req.body;
+      if (!value) {
+        return res.status(400).json({ message: "Value is required" });
+      }
+      
+      const setting = await storage.setSetting(req.params.key, value, description, type);
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
   // Device monitoring API - Admin only
   app.post("/api/alerts/check-devices", requireAdmin, async (req, res) => {
     try {

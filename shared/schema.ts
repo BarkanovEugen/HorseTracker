@@ -77,6 +77,16 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Settings table for configurable system parameters
+export const settings = pgTable("settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
+  description: text("description"),
+  type: text("type").notNull().default("string"), // string, number, boolean
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertHorseSchema = createInsertSchema(horses).omit({
   id: true,
@@ -108,6 +118,11 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
 });
 
+export const insertSettingsSchema = createInsertSchema(settings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Types
 export type Horse = typeof horses.$inferSelect;
 export type InsertHorse = z.infer<typeof insertHorseSchema>;
@@ -126,3 +141,6 @@ export type InsertDevice = z.infer<typeof insertDeviceSchema>;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Settings = typeof settings.$inferSelect;
+export type InsertSettings = z.infer<typeof insertSettingsSchema>;
