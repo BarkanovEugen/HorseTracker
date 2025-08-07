@@ -69,7 +69,7 @@ export const users = pgTable("users", {
   username: text("username"),
   photoUrl: text("photo_url"),
   email: text("email"),
-  role: text("role", { enum: ["admin", "viewer"] }).notNull().default("viewer"), // admin, viewer
+  role: text("role", { enum: ["admin", "instructor", "viewer"] }).notNull().default("viewer"), // admin, instructor, viewer
   isActive: boolean("is_active").notNull().default(true),
   telegramChatId: text("telegram_chat_id"), // Telegram chat ID for notifications
   telegramNotifications: boolean("telegram_notifications").notNull().default(false), // Enable Telegram notifications

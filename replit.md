@@ -44,6 +44,10 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Calendar API Endpoints**: Complete CRUD operations for lessons with date range queries, horse-specific filtering, and proper authentication/authorization
 - **Instructor Management System**: Complete instructor management with CRUD operations, statistics tracking, and instructor assignment to lessons
 - **Calendar Statistics with Period Filters**: Enhanced statistics section with flexible period selection (week, month, quarter, year, custom) for detailed lesson and revenue analytics
+- **Three-Tier Role System**: Complete role-based access control with Administrator (full access), Instructor (lesson editing, view-only horses), and Observer (view-only, no financial data)
+- **Permission-Based UI**: Conditional interface rendering based on user roles with granular permissions for lessons, settings, financial data, and user management
+- **Role-Specific Navigation**: Dynamic navigation filtering with sections hidden/shown based on role permissions (observers cannot access history, only admins access settings)
+- **Financial Data Security**: Complete financial data protection system hiding prices and revenue from observers while maintaining full access for administrators and instructors
 
 # User Preferences
 

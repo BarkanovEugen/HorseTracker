@@ -8,7 +8,7 @@ import { z } from "zod";
 import type { User } from "@shared/schema";
 
 // Import authentication middleware
-import { requireAuth, requireAdmin, requireViewer, getUserPermissions } from "./middleware/auth";
+import { requireAuth, requireAdmin, requireViewer, requireInstructor, getUserPermissions } from "./middleware/auth";
 
 // Global type declarations for development mode
 declare global {
@@ -442,7 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/lessons", requireAdmin, async (req, res) => {
+  app.post("/api/lessons", requireInstructor, async (req, res) => {
     try {
       const validation = apiLessonSchema.safeParse(req.body);
       if (!validation.success) {
@@ -459,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/lessons/:id", requireAdmin, async (req, res) => {
+  app.put("/api/lessons/:id", requireInstructor, async (req, res) => {
     try {
       const validation = apiLessonSchema.partial().safeParse(req.body);
       if (!validation.success) {
@@ -479,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/lessons/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/lessons/:id", requireInstructor, async (req, res) => {
     try {
       const success = await storage.deleteLesson(req.params.id);
       if (!success) {
@@ -654,7 +654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/users/:id/role", requireAdmin, async (req, res) => {
     try {
       const { role } = req.body;
-      if (!['admin', 'viewer'].includes(role)) {
+      if (!['admin', 'instructor', 'viewer'].includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
       }
       

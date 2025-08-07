@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertLessonSchema, type Lesson, type Horse, type Instructor } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useCanEdit } from "@/hooks/use-permissions";
+import { useCanEdit, useCanEditLessons, useCanViewFinancialData } from "@/hooks/use-permissions";
 import { format, startOfDay, endOfDay, isSameDay, isAfter, startOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { ru } from "date-fns/locale";
 import { z } from "zod";
@@ -75,6 +75,8 @@ export default function CalendarPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const canEdit = useCanEdit();
+  const canEditLessons = useCanEditLessons();
+  const canViewFinancialData = useCanViewFinancialData();
 
   const form = useForm<LessonFormData>({
     resolver: zodResolver(lessonFormSchema),
@@ -337,7 +339,7 @@ export default function CalendarPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Управление занятиями</h1>
         </div>
         
-        {canEdit && (
+        {canEditLessons && (
           <Button onClick={handleCreateLesson} data-testid="add-lesson-button">
             <Plus className="w-4 h-4 mr-2" />
             Добавить занятие
@@ -408,10 +410,12 @@ export default function CalendarPage() {
                               <Users className="w-4 h-4" />
                               {getLessonTypeLabel(lesson.lessonType)}
                             </span>
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="w-4 h-4" />
-                              {lesson.price}₽
-                            </span>
+                            {canViewFinancialData && (
+                              <span className="flex items-center gap-1">
+                                <DollarSign className="w-4 h-4" />
+                                {lesson.price}₽
+                              </span>
+                            )}
                           </div>
                           {horse && (
                             <p className="text-xs text-blue-600 dark:text-blue-400">
@@ -425,7 +429,7 @@ export default function CalendarPage() {
                           )}
                         </div>
                       </div>
-                      {canEdit && (
+                      {canEditLessons && (
                         <div className="flex gap-2 ml-4">
                           <Button
                             variant="outline"
@@ -548,12 +552,13 @@ export default function CalendarPage() {
                         {getStatusBadge(lesson.status)}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {getLessonTypeLabel(lesson.lessonType)} • {lesson.price}₽
+                        {getLessonTypeLabel(lesson.lessonType)}
+                        {canViewFinancialData && <span> • {lesson.price}₽</span>}
                         {horse && <span> • {horse.name}</span>}
                         {instructor && <span className="text-green-600 dark:text-green-400"> • {instructor.name}</span>}
                       </div>
                     </div>
-                    {canEdit && (
+                    {canEditLessons && (
                       <div className="flex gap-1">
                         <Button
                           variant="ghost"
@@ -666,13 +671,15 @@ export default function CalendarPage() {
                 <Clock className="w-8 h-8 text-yellow-600" />
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Доход</p>
-                  <p className="text-2xl font-bold text-purple-600">{totalRevenue.toLocaleString()}₽</p>
+              {canViewFinancialData && (
+                <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Доход</p>
+                    <p className="text-2xl font-bold text-purple-600">{totalRevenue.toLocaleString()}₽</p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-purple-600" />
                 </div>
-                <DollarSign className="w-8 h-8 text-purple-600" />
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -692,7 +699,7 @@ export default function CalendarPage() {
               <div className="text-center py-8 text-gray-500">
                 <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                 <p>На этот день занятий не запланировано</p>
-                {canEdit && (
+                {canEditLessons && (
                   <Button 
                     variant="outline" 
                     onClick={() => {
@@ -749,17 +756,19 @@ export default function CalendarPage() {
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-gray-500" />
-                          <span>{lesson.price} ₽</span>
-                        </div>
+                        {canViewFinancialData && (
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-gray-500" />
+                            <span>{lesson.price} ₽</span>
+                          </div>
+                        )}
                         
                         {lesson.notes && (
                           <p className="text-sm text-gray-600">{lesson.notes}</p>
                         )}
                       </div>
                       
-                      {canEdit && (
+                      {canEditLessons && (
                         <div className="flex gap-1 ml-2">
                           <Button
                             variant="ghost"
@@ -889,7 +898,7 @@ export default function CalendarPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Инструктор</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger data-testid="lesson-instructor-select">
                           <SelectValue placeholder="Выберите инструктора" />
@@ -937,19 +946,21 @@ export default function CalendarPage() {
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Цена (₽) *</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} data-testid="lesson-price" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {canViewFinancialData && (
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Цена (₽) *</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} data-testid="lesson-price" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
               
               <FormField

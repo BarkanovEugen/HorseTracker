@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { BarChart3, Rabbit, History, Settings, Calendar, Users } from "lucide-react";
+import { useCanManageSettings, useCanManageInstructors, useUserRole } from "@/hooks/use-permissions";
 
 const navItems = [
   {
@@ -37,12 +38,29 @@ const navItems = [
 
 export default function BottomNavigation() {
   const [location] = useLocation();
+  const canManageSettings = useCanManageSettings();
+  const canManageInstructors = useCanManageInstructors();
+  const role = useUserRole();
+
+  // Filter navigation items based on role permissions
+  const filteredNavItems = navItems.filter(item => {
+    switch (item.href) {
+      case "/settings":
+        return canManageSettings; // Only admin can access settings
+      case "/instructors":
+        return canManageInstructors; // Admin and instructor can access instructors page
+      case "/history":
+        return role !== 'viewer'; // Viewers cannot access history
+      default:
+        return true; // Dashboard, horses, and calendar are available to all roles
+    }
+  });
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg" style={{ zIndex: 1000 }}>
       <div className="flex justify-around items-center py-2 px-1 pb-safe"
            style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const isActive = location === item.href;
           const Icon = item.icon;
           

@@ -16,7 +16,7 @@ interface User {
   username?: string;
   email?: string;
   photoUrl?: string;
-  role: 'admin' | 'viewer';
+  role: 'admin' | 'instructor' | 'viewer';
   isActive: boolean;
   lastLogin?: string;
   createdAt?: string;
@@ -39,7 +39,7 @@ export default function AdminPage() {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'viewer' }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'instructor' | 'viewer' }) => {
       const response = await fetch(`/api/users/${userId}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -64,16 +64,26 @@ export default function AdminPage() {
     },
   });
 
-  const handleRoleChange = (userId: string, newRole: 'admin' | 'viewer') => {
+  const handleRoleChange = (userId: string, newRole: 'admin' | 'instructor' | 'viewer') => {
     updateRoleMutation.mutate({ userId, role: newRole });
   };
 
   const getRoleBadgeVariant = (role: string) => {
-    return role === 'admin' ? 'default' : 'secondary';
+    switch (role) {
+      case 'admin': return 'default';
+      case 'instructor': return 'outline';
+      case 'viewer': return 'secondary';
+      default: return 'secondary';
+    }
   };
 
   const getRoleIcon = (role: string) => {
-    return role === 'admin' ? <Edit className="w-3 h-3" /> : <Eye className="w-3 h-3" />;
+    switch (role) {
+      case 'admin': return <Shield className="w-3 h-3" />;
+      case 'instructor': return <Edit className="w-3 h-3" />;
+      case 'viewer': return <Eye className="w-3 h-3" />;
+      default: return <Eye className="w-3 h-3" />;
+    }
   };
 
   if (isLoading) {
@@ -148,12 +158,13 @@ export default function AdminPage() {
                     data-testid={`user-role-badge-${user.id}`}
                   >
                     {getRoleIcon(user.role)}
-                    {user.role === 'admin' ? 'Администратор' : 'Наблюдатель'}
+                    {user.role === 'admin' ? 'Администратор' : 
+                     user.role === 'instructor' ? 'Инструктор' : 'Наблюдатель'}
                   </Badge>
 
                   <Select
                     value={user.role}
-                    onValueChange={(newRole: 'admin' | 'viewer') => handleRoleChange(user.id, newRole)}
+                    onValueChange={(newRole: 'admin' | 'instructor' | 'viewer') => handleRoleChange(user.id, newRole)}
                     disabled={updateRoleMutation.isPending}
                   >
                     <SelectTrigger className="w-40" data-testid={`role-select-${user.id}`}>
@@ -162,8 +173,14 @@ export default function AdminPage() {
                     <SelectContent>
                       <SelectItem value="admin" data-testid="role-option-admin">
                         <div className="flex items-center gap-2">
-                          <Edit className="w-3 h-3" />
+                          <Shield className="w-3 h-3" />
                           Администратор
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="instructor" data-testid="role-option-instructor">
+                        <div className="flex items-center gap-2">
+                          <Edit className="w-3 h-3" />
+                          Инструктор
                         </div>
                       </SelectItem>
                       <SelectItem value="viewer" data-testid="role-option-viewer">
@@ -193,10 +210,10 @@ export default function AdminPage() {
           <CardTitle>Роли и права доступа</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Edit className="w-4 h-4 text-blue-600" />
+                <Shield className="w-4 h-4 text-blue-600" />
                 <h3 className="font-medium">Администратор</h3>
               </div>
               <ul className="text-sm text-gray-600 space-y-1">
@@ -204,7 +221,21 @@ export default function AdminPage() {
                 <li>• Управление лошадьми и устройствами</li>
                 <li>• Создание и редактирование геозон</li>
                 <li>• Управление пользователями</li>
-                <li>• Закрытие оповещений</li>
+                <li>• Настройки системы</li>
+              </ul>
+            </div>
+
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Edit className="w-4 h-4 text-green-600" />
+                <h3 className="font-medium">Инструктор</h3>
+              </div>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Доступ к панели управления</li>
+                <li>• Просмотр лошадей (без изменений)</li>
+                <li>• Редактирование занятий в календаре</li>
+                <li>• Просмотр финансовых данных</li>
+                <li>• История и инструкторы</li>
               </ul>
             </div>
             
@@ -214,11 +245,11 @@ export default function AdminPage() {
                 <h3 className="font-medium">Наблюдатель</h3>
               </div>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Просмотр дэшборда</li>
-                <li>• Просмотр карты и местоположений</li>
-                <li>• Просмотр истории перемещений</li>
-                <li>• Просмотр активных оповещений</li>
-                <li>• Без права редактирования</li>
+                <li>• Доступ к панели управления</li>
+                <li>• Просмотр лошадей (без изменений)</li>
+                <li>• Календарь (без денежных данных)</li>
+                <li>• История и инструкторы</li>
+                <li>• Только просмотр оповещений</li>
               </ul>
             </div>
           </div>

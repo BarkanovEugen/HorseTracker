@@ -4,7 +4,14 @@ export interface UserPermissions {
   canEdit: boolean;
   canView: boolean;
   canManageUsers: boolean;
-  role: 'admin' | 'viewer' | 'guest';
+  canManageSettings: boolean;
+  canManageDevices: boolean;
+  canManageGeofences: boolean;
+  canViewFinancialData: boolean;
+  canEditLessons: boolean;
+  canManageHorses: boolean;
+  canManageInstructors: boolean;
+  role: 'admin' | 'instructor' | 'viewer' | 'guest';
 }
 
 export function usePermissions() {
@@ -33,4 +40,29 @@ export function useCanManageUsers() {
 export function useUserRole() {
   const { data: permissions } = usePermissions();
   return permissions?.role ?? 'guest';
+}
+
+export function useCanEditLessons() {
+  const { data: permissions } = usePermissions();
+  return permissions?.canEditLessons ?? false;
+}
+
+export function useCanViewFinancialData() {
+  const { data: permissions } = usePermissions();
+  return permissions?.canViewFinancialData ?? false;
+}
+
+export function useCanManageHorses() {
+  const { data: permissions } = usePermissions();
+  return permissions?.canManageHorses ?? false;
+}
+
+export function useCanManageInstructors() {
+  const { data: permissions } = usePermissions();
+  return permissions?.canManageInstructors ?? false;
+}
+
+export function useCanManageSettings() {
+  const { data: permissions } = usePermissions();
+  return permissions?.canManageSettings ?? false;
 }
