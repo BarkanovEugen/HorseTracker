@@ -34,9 +34,16 @@ export default function AdminPage() {
     return null;
   }
 
-  const { data: users, isLoading } = useQuery<User[]>({
+  const { data: usersData, isLoading } = useQuery<User[]>({
     queryKey: ['/api/users'],
   });
+
+  // Sort users alphabetically by first name, then by last name
+  const users = usersData?.sort((a, b) => {
+    const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+    const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+    return nameA.localeCompare(nameB);
+  }) || [];
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'instructor' | 'viewer' }) => {
