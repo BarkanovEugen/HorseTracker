@@ -607,7 +607,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Instructor not found" });
       }
       res.status(204).send();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error deleting instructor:', error);
+      
+      if (error.message && error.message.includes('занятий')) {
+        return res.status(400).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to delete instructor" });
     }
   });

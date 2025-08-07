@@ -49,6 +49,8 @@ A GPS horse tracking application built with React frontend and Express backend. 
 - **Permission-Based UI**: Conditional interface rendering based on user roles with granular permissions for lessons, settings, financial data, and user management
 - **Role-Specific Navigation**: Dynamic navigation filtering with sections hidden/shown based on role permissions (observers cannot access history, only admins access settings)
 - **Financial Data Security**: Complete financial data protection system hiding prices and revenue from observers while maintaining full access for administrators and instructors
+- **Payment Tracking System**: Added payment status tracking for lessons with "paid" boolean field, payment indicators in lesson lists, checkbox in forms, and detailed payment statistics showing paid/unpaid breakdown
+- **Instructor Deletion Protection**: Enhanced instructor deletion with proper validation - prevents deletion when instructor has associated lessons, shows clear error messages, and suggests reassigning lessons first
 
 # User Preferences
 

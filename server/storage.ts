@@ -1543,11 +1543,19 @@ export class DatabaseStorage implements IStorage {
 
   async deleteInstructor(id: string): Promise<boolean> {
     try {
+      // Check if instructor has any lessons
+      const instructorLessons = await db.select().from(lessons).where(eq(lessons.instructorId, id));
+      
+      if (instructorLessons.length > 0) {
+        console.error(`❌ Cannot delete instructor ${id}: has ${instructorLessons.length} associated lessons`);
+        throw new Error(`Нельзя удалить инструктора: за ним закреплено ${instructorLessons.length} занятий. Сначала переназначьте или удалите занятия.`);
+      }
+      
       const result = await db.delete(instructors).where(eq(instructors.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error(`❌ Error deleting instructor ${id}:`, error);
-      return false;
+      throw error; // Rethrow the error so it can be properly handled in the route
     }
   }
 
