@@ -96,15 +96,6 @@ export function ClientAutocomplete({
     setOpen(false);
   };
 
-  const handleCreateFromSearch = (name: string) => {
-    if (name.trim()) {
-      createClientMutation.mutate({
-        name: name.trim(),
-        phone: undefined
-      });
-    }
-  };
-
   const handleInputKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       // Check if the search query matches any existing client
@@ -115,8 +106,9 @@ export function ClientAutocomplete({
       if (existingClient) {
         handleClientSelect(existingClient);
       } else {
-        // Create new client automatically
-        handleCreateFromSearch(searchQuery);
+        // Just set the name, client will be created when lesson is saved
+        onValueChange(searchQuery.trim(), undefined);
+        setOpen(false);
       }
     }
   };
@@ -166,7 +158,7 @@ export function ClientAutocomplete({
                     Клиент не найден
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Нажмите Enter, чтобы создать "{searchQuery}"
+                    Нажмите Enter - "{searchQuery}" будет создан при сохранении занятия
                   </p>
                 </div>
               </CommandEmpty>
@@ -204,18 +196,7 @@ export function ClientAutocomplete({
                     )}
                   </CommandGroup>
                   
-                  {searchQuery && !isLoading && filteredClients.length > 0 && (
-                    <CommandGroup>
-                      <CommandItem
-                        onSelect={() => handleCreateFromSearch(searchQuery)}
-                        className="cursor-pointer border-t"
-                        data-testid="create-client-from-search"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        <span>Создать "{searchQuery}"</span>
-                      </CommandItem>
-                    </CommandGroup>
-                  )}
+
                 </>
               ) : (
                 <div className="p-4 space-y-4">

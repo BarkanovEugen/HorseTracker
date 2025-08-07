@@ -111,6 +111,30 @@ export default function CalendarPage() {
 
   const createLessonMutation = useMutation({
     mutationFn: async (data: LessonFormData) => {
+      // First check if client exists, if not create it
+      const clientSearchResponse = await fetch(`/api/clients/search?q=${encodeURIComponent(data.clientName)}`);
+      const existingClients = await clientSearchResponse.json();
+      
+      const existingClient = existingClients.find((client: any) => 
+        client.name.toLowerCase() === data.clientName.toLowerCase()
+      );
+      
+      // If client doesn't exist, create it
+      if (!existingClient) {
+        const clientResponse = await fetch('/api/clients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.clientName,
+            phone: data.clientPhone || undefined
+          })
+        });
+        
+        if (!clientResponse.ok) {
+          throw new Error('Failed to create client');
+        }
+      }
+      
       const lessonData = {
         ...data,
         lessonDate: data.lessonDate,
@@ -131,6 +155,7 @@ export default function CalendarPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] }); // Refresh clients list
       setShowDialog(false);
       setEditingLesson(null);
       form.reset();
