@@ -1045,7 +1045,12 @@ export default function CalendarPage() {
                     <FormItem>
                       <FormLabel>Дата и время *</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" {...field} data-testid="lesson-date" />
+                        <Input 
+                          type="datetime-local" 
+                          step="1800"
+                          {...field} 
+                          data-testid="lesson-date" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
