@@ -98,8 +98,10 @@ export default function CalendarPage() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (newLesson) => {
       queryClient.invalidateQueries({ queryKey: ['/api/lessons'] });
+      queryClient.refetchQueries({ queryKey: ['/api/lessons'] });
+      console.log('Created lesson:', newLesson);
       setShowDialog(false);
       setEditingLesson(null);
       form.reset();
@@ -130,8 +132,10 @@ export default function CalendarPage() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (updatedLesson) => {
       queryClient.invalidateQueries({ queryKey: ['/api/lessons'] });
+      queryClient.refetchQueries({ queryKey: ['/api/lessons'] });
+      console.log('Updated lesson:', updatedLesson);
       setShowDialog(false);
       setEditingLesson(null);
       form.reset();
@@ -158,9 +162,12 @@ export default function CalendarPage() {
     }
   });
 
-  const selectedDayLessons = lessons.filter(lesson =>
-    isSameDay(new Date(lesson.lessonDate), selectedDate)
-  ).sort((a, b) => new Date(a.lessonDate).getTime() - new Date(b.lessonDate).getTime());
+  const selectedDayLessons = lessons.filter(lesson => {
+    const lessonDate = new Date(lesson.lessonDate);
+    const isSame = isSameDay(lessonDate, selectedDate);
+    console.log('Filtering lesson:', lesson.clientName, 'Date:', lessonDate, 'Selected:', selectedDate, 'Same day:', isSame);
+    return isSame;
+  }).sort((a, b) => new Date(a.lessonDate).getTime() - new Date(b.lessonDate).getTime());
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
