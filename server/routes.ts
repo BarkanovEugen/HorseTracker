@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import passport from "./auth";
 import { storage } from "./storage";
-import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDeviceSchema, insertGpsLocationSchema, insertLessonSchema, apiLessonSchema, insertInstructorSchema } from "@shared/schema";
+import { insertHorseSchema, insertAlertSchema, insertGeofenceSchema, insertDeviceSchema, insertGpsLocationSchema, insertLessonSchema, apiLessonSchema, insertInstructorSchema, insertClientSchema } from "@shared/schema";
 import { z } from "zod";
 import type { User } from "@shared/schema";
 
@@ -619,6 +619,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch instructor stats" });
+    }
+  });
+
+  // Client routes
+  app.get("/api/clients", requireViewer, async (req, res) => {
+    try {
+      const clientsList = await storage.getClients();
+      res.json(clientsList);
+    } catch (error) {
+      console.error('Error getting clients:', error);
+      res.status(500).json({ error: "Failed to retrieve clients" });
+    }
+  });
+
+  app.get("/api/clients/search", requireViewer, async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ error: "Query parameter 'q' is required" });
+      }
+      
+      const clientsList = await storage.searchClients(q);
+      res.json(clientsList);
+    } catch (error) {
+      console.error('Error searching clients:', error);
+      res.status(500).json({ error: "Failed to search clients" });
+    }
+  });
+
+  app.post("/api/clients", requireInstructor, async (req, res) => {
+    try {
+      const validation = insertClientSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: "Invalid input",
+          details: validation.error.errors
+        });
+      }
+
+      const client = await storage.createClient(validation.data);
+      res.status(201).json(client);
+    } catch (error: any) {
+      console.error('Error creating client:', error);
+      res.status(500).json({ error: "Failed to create client" });
+    }
+  });
+
+  // Migrate clients from lessons (admin only)
+  app.post("/api/clients/migrate", requireAdmin, async (req, res) => {
+    try {
+      await storage.migrateClientsFromLessons();
+      res.json({ success: true, message: "Clients migrated successfully" });
+    } catch (error: any) {
+      console.error('Error migrating clients:', error);
+      res.status(500).json({ error: "Failed to migrate clients" });
     }
   });
 

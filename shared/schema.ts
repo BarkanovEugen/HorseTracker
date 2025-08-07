@@ -98,6 +98,17 @@ export const instructors = pgTable("instructors", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Clients table for storing unique client information  
+export const clients = pgTable("clients", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  email: text("email"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Lessons table for riding lesson bookings
 export const lessons = pgTable("lessons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -158,6 +169,12 @@ export const insertInstructorSchema = createInsertSchema(instructors).omit({
   createdAt: true,
 });
 
+export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertLessonSchema = createInsertSchema(lessons).omit({
   id: true,
   createdAt: true,
@@ -203,6 +220,9 @@ export type InsertSettings = z.infer<typeof insertSettingsSchema>;
 
 export type Instructor = typeof instructors.$inferSelect;
 export type InsertInstructor = z.infer<typeof insertInstructorSchema>;
+
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = z.infer<typeof insertClientSchema>;
 
 export type Lesson = typeof lessons.$inferSelect;
 export type InsertLesson = z.infer<typeof insertLessonSchema>;

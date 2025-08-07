@@ -16,11 +16,13 @@ import {
   type Lesson,
   type InsertLesson,
   type Instructor,
-  type InsertInstructor
+  type InsertInstructor,
+  type Client,
+  type InsertClient
 } from "@shared/schema";
 import { db } from "./db";
-import { horses, gpsLocations, alerts, geofences, devices, users, settings, lessons, instructors } from "@shared/schema";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { horses, gpsLocations, alerts, geofences, devices, users, settings, lessons, instructors, clients } from "@shared/schema";
+import { eq, desc, and, gte, lte, or, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { telegramService } from "./telegram-bot";
 
@@ -106,6 +108,14 @@ export interface IStorage {
     totalRevenue: number;
     averageRating?: number;
   }>;
+
+  // Clients
+  getClients(): Promise<Client[]>;
+  getClient(id: string): Promise<Client | undefined>;
+  createClient(client: InsertClient): Promise<Client>;
+  updateClient(id: string, client: Partial<InsertClient>): Promise<Client | undefined>;
+  deleteClient(id: string): Promise<boolean>;
+  searchClients(query: string): Promise<Client[]>;
 }
 
 export class MemStorage {
@@ -1612,6 +1622,134 @@ export class DatabaseStorage implements IStorage {
         completedLessons: 0,
         totalRevenue: 0
       };
+    }
+  }
+
+  // Clients
+  async getClients(): Promise<Client[]> {
+    try {
+      return await db.select().from(clients);
+    } catch (error) {
+      console.error('❌ Error getting clients:', error);
+      return [];
+    }
+  }
+
+  async getClient(id: string): Promise<Client | undefined> {
+    try {
+      const result = await db.select().from(clients).where(eq(clients.id, id));
+      return result[0] || undefined;
+    } catch (error) {
+      console.error(`❌ Error getting client ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async createClient(client: InsertClient): Promise<Client> {
+    try {
+      const result = await db.insert(clients).values(client).returning();
+      return result[0];
+    } catch (error) {
+      console.error('❌ Error creating client:', error);
+      throw error;
+    }
+  }
+
+  async updateClient(id: string, client: Partial<InsertClient>): Promise<Client | undefined> {
+    try {
+      const result = await db.update(clients)
+        .set({ ...client, updatedAt: new Date() })
+        .where(eq(clients.id, id))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error(`❌ Error updating client ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteClient(id: string): Promise<boolean> {
+    try {
+      const result = await db.delete(clients).where(eq(clients.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error(`❌ Error deleting client ${id}:`, error);
+      return false;
+    }
+  }
+
+  async searchClients(query: string): Promise<Client[]> {
+    try {
+      if (!query.trim()) {
+        return await this.getClients();
+      }
+      
+      const result = await db.select().from(clients)
+        .where(or(
+          // Use proper SQL pattern matching for ILIKE
+          sql`${clients.name} ILIKE ${`%${query}%`}`,
+          sql`${clients.phone} ILIKE ${`%${query}%`}`
+        ));
+      return result;
+    } catch (error) {
+      console.error(`❌ Error searching clients with query "${query}":`, error);
+      return [];
+    }
+  }
+
+  // Helper method to migrate existing clients from lessons
+  async migrateClientsFromLessons(): Promise<void> {
+    try {
+      console.log('📋 Migrating clients from lessons...');
+      
+      // Get unique clients from lessons
+      const allLessons = await db.select().from(lessons);
+      console.log(`📋 Found ${allLessons.length} lessons to process`);
+      
+      const uniqueClients = new Map<string, { name: string; phone: string | null }>();
+      
+      for (const lesson of allLessons) {
+        const key = `${lesson.clientName}:${lesson.clientPhone || ''}`;
+        if (!uniqueClients.has(key)) {
+          uniqueClients.set(key, {
+            name: lesson.clientName,
+            phone: lesson.clientPhone
+          });
+          console.log(`📋 Added unique client: ${lesson.clientName} (${lesson.clientPhone || 'no phone'})`);
+        }
+      }
+      
+      console.log(`📋 Found ${uniqueClients.size} unique clients`);
+      
+      // Check existing clients to avoid duplicates
+      const existingClients = await this.getClients();
+      console.log(`📋 Found ${existingClients.length} existing clients in database`);
+      
+      const existingClientsMap = new Set(
+        existingClients.map(c => `${c.name}:${c.phone || ''}`)
+      );
+      
+      // Insert new clients
+      let migratedCount = 0;
+      for (const key of uniqueClients.keys()) {
+        if (!existingClientsMap.has(key)) {
+          const clientData = uniqueClients.get(key)!;
+          console.log(`📋 Creating client: ${clientData.name} (${clientData.phone || 'no phone'})`);
+          try {
+            await this.createClient(clientData);
+            migratedCount++;
+            console.log(`✓ Successfully created client: ${clientData.name}`);
+          } catch (createError) {
+            console.error(`❌ Failed to create client ${clientData.name}:`, createError);
+          }
+        } else {
+          console.log(`📋 Skipping existing client: ${uniqueClients.get(key)!.name}`);
+        }
+      }
+      
+      console.log(`✓ Migrated ${migratedCount} unique clients from lessons`);
+    } catch (error) {
+      console.error('❌ Error migrating clients from lessons:', error);
     }
   }
 }

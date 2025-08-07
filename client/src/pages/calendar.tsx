@@ -19,6 +19,7 @@ import { useCanEdit, useCanEditLessons, useCanViewFinancialData } from "@/hooks/
 import { format, startOfDay, endOfDay, isSameDay, isAfter, startOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { ru } from "date-fns/locale";
 import { z } from "zod";
+import { ClientAutocomplete } from "@/components/client-autocomplete";
 
 const lessonTypes = [
   { value: "прогулка", label: "Прогулка" },
@@ -868,15 +869,28 @@ export default function CalendarPage() {
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="clientName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Имя клиента *</FormLabel>
+                      <FormLabel>Клиент *</FormLabel>
                       <FormControl>
-                        <Input {...field} data-testid="lesson-client-name" />
+                        <ClientAutocomplete
+                          value={field.value}
+                          onValueChange={(name, phone) => {
+                            field.onChange(name);
+                            if (phone) {
+                              form.setValue("clientPhone", phone);
+                            }
+                          }}
+                          onPhoneChange={(phone) => {
+                            form.setValue("clientPhone", phone);
+                          }}
+                          placeholder="Выберите или создайте клиента..."
+                          className="w-full"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
