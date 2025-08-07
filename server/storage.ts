@@ -1731,7 +1731,7 @@ export class DatabaseStorage implements IStorage {
       
       // Insert new clients
       let migratedCount = 0;
-      for (const key of uniqueClients.keys()) {
+      for (const [key] of uniqueClients) {
         if (!existingClientsMap.has(key)) {
           const clientData = uniqueClients.get(key)!;
           console.log(`📋 Creating client: ${clientData.name} (${clientData.phone || 'no phone'})`);

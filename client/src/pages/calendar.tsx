@@ -145,10 +145,17 @@ export default function CalendarPage() {
       }
       
       const lessonData = {
-        ...data,
+        clientName: data.clientName,
+        clientPhone: data.clientPhone,
+        lessonType: data.lessonType,
+        horseId: data.horseId,
+        instructorId: data.instructorId,
         lessonDate: data.lessonDate,
         price: data.price,
-        duration: data.duration
+        duration: data.duration,
+        status: data.status,
+        paid: data.paid,
+        notes: data.notes
       };
       
       const response = await fetch('/api/lessons', {
@@ -177,17 +184,24 @@ export default function CalendarPage() {
 
   const updateLessonMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string, data: LessonFormData }) => {
-      const lessonData = {
-        ...data,
+      const updateLessonData = {
+        clientName: data.clientName,
+        clientPhone: data.clientPhone,
+        lessonType: data.lessonType,
+        horseId: data.horseId,
+        instructorId: data.instructorId,
         lessonDate: data.lessonDate,
         price: data.price,
-        duration: data.duration
+        duration: data.duration,
+        status: data.status,
+        paid: data.paid,
+        notes: data.notes
       };
       
       const response = await fetch(`/api/lessons/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lessonData)
+        body: JSON.stringify(updateLessonData)
       });
       if (!response.ok) {
         const errorData = await response.json();
